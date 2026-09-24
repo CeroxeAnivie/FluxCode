@@ -1,0 +1,14 @@
+node_modules/
+dist/
+target/
+.toolchains/
+work/
+test-results/
+playwright-report/
+*.local
+.env
+.DS_Store
+src-tauri/resources/engine/*
+!src-tauri/resources/engine/.gitkeep
+src-tauri/gen/
+*.tsbuildinfo

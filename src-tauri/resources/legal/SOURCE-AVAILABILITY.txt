@@ -1,0 +1,6 @@
+MPL-2.0 components: corresponding unmodified source archives are included in legal/sources/.
+cssparser 0.36.0: https://github.com/servo/rust-cssparser | sources/cssparser-0.36.0.crate
+cssparser-macros 0.6.1: https://github.com/servo/rust-cssparser | sources/cssparser-macros-0.6.1.crate
+dtoa-short 0.3.5: https://github.com/upsuper/dtoa-short | sources/dtoa-short-0.3.5.crate
+option-ext 0.2.0: https://github.com/soc/option-ext.git | sources/option-ext-0.2.0.crate
+selectors 0.36.1: https://github.com/servo/stylo | sources/selectors-0.36.1.crate

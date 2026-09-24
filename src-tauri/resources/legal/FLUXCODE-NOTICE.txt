@@ -1,0 +1,13 @@
+FluxCode
+Copyright 2026 FluxCode contributors
+
+Licensed under the Apache License, Version 2.0.
+
+This product bundles the unmodified Codex CLI 0.156.1 executable from OpenAI.
+Codex is licensed under Apache-2.0. Its LICENSE and NOTICE are retained in
+src-tauri/resources/legal and included in desktop distributions.
+
+Generated protocol bindings derive from the matching Codex release.
+No OpenAI or Codex Desktop trademarks or proprietary GUI assets are licensed here.
+Visual theme parameters were referenced from the user's sibling NeoLink project;
+the FluxCode GUI implementation is original.

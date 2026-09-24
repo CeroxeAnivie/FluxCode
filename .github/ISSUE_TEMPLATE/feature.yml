@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest an improvement to the coding workflow.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Where does the workflow feel interrupted?
+      description: Describe your task, the friction, and the outcome you need.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and alternatives

@@ -1,0 +1,39 @@
+# FluxCode configuration · schema 1
+# UTF-8. Runtime copy: <OS application data>/dev.fluxcode.desktop/fluxcode.toml
+# The settings dialog updates only [provider] and [network], preserving your comments.
+# Restart the app after changing terminal or UI options. Never put API keys in this file.
+schema_version = 1
+
+[provider]
+# Responses API base URL, normally ending in /v1 (do not append /responses).
+base_url = "https://api.openai.com/v1"
+model = ""
+api_key_env = "OPENAI_API_KEY"
+wire_api = "responses"
+
+[network]
+# All engine HTTP(S) traffic uses this proxy. Shells inherit the same proxy variables.
+proxy_url = "http://127.0.0.1:14455/"
+
+[execution]
+# This release intentionally supports only full access. No per-command approval.
+sandbox_mode = "danger-full-access"
+approval_policy = "never"
+
+[terminal]
+# Executable names or absolute paths. Arguments are passed as argv, never shell-built.
+windows_shell = "powershell.exe"
+unix_shell = "/bin/sh"
+timeout_seconds = 120
+output_limit_bytes = 1048576
+
+[terminal.environment]
+# Additional non-secret environment variables for the command panel.
+# HTTP_PROXY / HTTPS_PROXY / ALL_PROXY always come from [network].
+TERM = "xterm-256color"
+
+[ui]
+# Logical pixels. Valid ranges: font 11..18, sidebar 190..360, inspector 230..600.
+font_size = 14
+sidebar_width = 246
+inspector_width = 294

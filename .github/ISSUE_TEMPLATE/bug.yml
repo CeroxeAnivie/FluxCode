@@ -1,0 +1,21 @@
+name: Bug report
+description: Report an observed problem with FluxCode.
+title: "[Bug]: "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: FluxCode version and operating system
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include expected and actual behavior. Remove credentials and private code.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or sanitized diagnostics

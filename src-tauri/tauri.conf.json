@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "FluxCode",
+  "version": "0.1.0",
+  "identifier": "dev.fluxcode.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{
+      "title": "FluxCode",
+      "width": 1440,
+      "height": 940,
+      "minWidth": 960,
+      "minHeight": 640,
+      "decorations": false,
+      "backgroundColor": "#121214",
+      "dragDropEnabled": false
+    }],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: http://asset.localhost; connect-src ipc: http://ipc.localhost; font-src 'self' data:; frame-src 'none'; object-src 'none'; base-uri 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "resources": { "resources/engine/": "engine/", "resources/legal/": "legal/" },
+    "icon": ["icons/icon.ico", "icons/icon.png"]
+  }
+}

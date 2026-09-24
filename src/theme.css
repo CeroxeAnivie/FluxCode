@@ -1,0 +1,19 @@
+/* Visual tokens derived from NeoLink ModernTheme. Layout is independently implemented. */
+:root {
+  color-scheme: dark;
+  --background: #121214;
+  --surface: #1e1e20;
+  --surface-hover: #252528;
+  --border: #2c2c2e;
+  --primary: #3b82f6;
+  --text: #e4e4e7;
+  --muted: #a1a1aa;
+  --success: #10b981;
+  --warning: #facc15;
+  --error: #ef4444;
+  --input: #18181b;
+  --terminal: #0f0f10;
+  --divider: #27272a;
+  --radius-small: 6px;
+  --radius-medium: 10px;
+}
