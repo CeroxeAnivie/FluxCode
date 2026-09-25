@@ -3,6 +3,24 @@ import { hydrateItems, reduceEvent } from './conversation';
 import { defaultSettings, emptyConversation, validateSettings } from './types';
 
 describe('conversation lifecycle', () => {
+  it('ignores delayed completion, errors and deltas belonging to an older turn', () => {
+    const active = { ...emptyConversation(), busy: true, turnId: 'new-turn' };
+    for (const event of [
+      { method: 'turn/completed', params: { turn: { id: 'old-turn', status: 'completed' } } },
+      { method: 'error', params: { turnId: 'old-turn', error: { message: 'old error' } } },
+      {
+        method: 'item/agentMessage/delta',
+        params: { turnId: 'old-turn', itemId: 'old', delta: 'old output' },
+      },
+    ])
+      expect(reduceEvent(active, event)).toBe(active);
+    const completed = reduceEvent(active, {
+      method: 'turn/completed',
+      params: { turn: { id: 'new-turn', status: 'completed' } },
+    });
+    expect(completed.busy).toBe(false);
+    expect(completed.lastTurnStatus).toBe('completed');
+  });
   it('merges streaming output into one canonical completed item', () => {
     let c = reduceEvent(emptyConversation(), {
       method: 'turn/started',

@@ -1,0 +1,997 @@
+{
+  "checkedAt": "2026-09-25T06:51:10.000822+00:00",
+  "source": "OSV",
+  "upstreamTag": "rust-v0.156.1",
+  "lockSha256": "a3f317c9b011d62e0df281f90a22ac27f470620e6c5edd522882e82793efe1ed",
+  "packageCount": 1338,
+  "scope": "Pinned upstream all-platform source lock; not a binary SBOM. Git fork findings require revision-level review. First-party code and non-Cargo assets are outside this advisory lookup.",
+  "findings": [
+    {
+      "name": "actix-http",
+      "version": "3.11.2",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-xhj4-vrgc-hr34"
+      ]
+    },
+    {
+      "name": "atomic-polyfill",
+      "version": "1.0.3",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2023-0089"
+      ]
+    },
+    {
+      "name": "bincode",
+      "version": "1.3.3",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2025-0141"
+      ]
+    },
+    {
+      "name": "cmov",
+      "version": "0.5.3",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-3rjw-m598-pq24"
+      ]
+    },
+    {
+      "name": "derivative",
+      "version": "2.2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2024-0388"
+      ]
+    },
+    {
+      "name": "event-listener",
+      "version": "5.4.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0221"
+      ]
+    },
+    {
+      "name": "faster-hex",
+      "version": "0.10.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0306"
+      ]
+    },
+    {
+      "name": "fxhash",
+      "version": "0.2.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2025-0057"
+      ]
+    },
+    {
+      "name": "gix",
+      "version": "0.81.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-f26g-jm89-4g65",
+        "GHSA-fr8x-3vfx-f45h",
+        "GHSA-p3hw-mv63-rf9w",
+        "GHSA-pg4w-g64p-qwhj"
+      ]
+    },
+    {
+      "name": "gix-fs",
+      "version": "0.19.2",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-f89h-2fjh-2r9q"
+      ]
+    },
+    {
+      "name": "gix-pack",
+      "version": "0.68.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-x494-mj8g-cj27"
+      ]
+    },
+    {
+      "name": "gix-packetline",
+      "version": "0.21.2",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-2vh6-hw4j-32ww"
+      ]
+    },
+    {
+      "name": "gix-sec",
+      "version": "0.13.2",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-7rhf-42qf-vrvc"
+      ]
+    },
+    {
+      "name": "gix-transport",
+      "version": "0.55.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-9857-6mw7-fq2m"
+      ]
+    },
+    {
+      "name": "gix-validate",
+      "version": "0.11.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-p3hw-mv63-rf9w"
+      ]
+    },
+    {
+      "name": "hickory-proto",
+      "version": "0.25.2",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-3v94-mw7p-v465",
+        "GHSA-q2qq-hmj6-3wpp",
+        "RUSTSEC-2026-0118",
+        "RUSTSEC-2026-0119"
+      ]
+    },
+    {
+      "name": "jsonwebtoken",
+      "version": "9.3.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-h395-gr6q-cpjc"
+      ]
+    },
+    {
+      "name": "memmap2",
+      "version": "0.9.10",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0186"
+      ]
+    },
+    {
+      "name": "openssl",
+      "version": "0.10.75",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-8c75-8mhr-p7r9",
+        "GHSA-ghm9-cr32-g9qj",
+        "GHSA-hppc-g8h3-xhp3",
+        "GHSA-phqj-4mhp-q6mq",
+        "GHSA-pqf5-4pqq-29f5",
+        "GHSA-xmgf-hq76-4vx2",
+        "GHSA-xp3w-r5p5-63rr",
+        "GHSA-xv59-967r-8726"
+      ]
+    },
+    {
+      "name": "opentelemetry_sdk",
+      "version": "0.31.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-w9wp-h8wv-79jx"
+      ]
+    },
+    {
+      "name": "paste",
+      "version": "1.0.15",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2024-0436"
+      ]
+    },
+    {
+      "name": "proc-macro-error2",
+      "version": "2.0.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0173"
+      ]
+    },
+    {
+      "name": "quick-xml",
+      "version": "0.39.4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0194",
+        "RUSTSEC-2026-0195"
+      ]
+    },
+    {
+      "name": "scc",
+      "version": "2.4.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0205"
+      ]
+    },
+    {
+      "name": "serde_with",
+      "version": "3.17.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-7gcf-g7xr-8hxj"
+      ]
+    },
+    {
+      "name": "tar",
+      "version": "0.4.45",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "GHSA-3pv8-6f4r-ffg2"
+      ]
+    },
+    {
+      "name": "yaml-rust",
+      "version": "0.4.5",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2024-0320"
+      ]
+    }
+  ],
+  "advisoryDetails": [
+    {
+      "id": "GHSA-2vh6-hw4j-32ww",
+      "summary": "gix-packetline: reachable panic on empty side-band packet (pre-auth network DoS)",
+      "aliases": [
+        "CVE-2026-82250"
+      ],
+      "published": "2026-08-28T16:09:59Z",
+      "modified": "2026-09-10T03:51:12.813155267Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-191"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-08-28T16:09:59Z"
+      }
+    },
+    {
+      "id": "GHSA-3pv8-6f4r-ffg2",
+      "summary": "tar has a PAX header desynchronization issue",
+      "published": "2026-05-29T19:16:12Z",
+      "modified": "2026-09-10T03:51:04.454810375Z",
+      "database_specific": {
+        "cwe_ids": [
+          "CWE-20",
+          "CWE-843"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-29T19:16:12Z",
+        "nvd_published_at": null
+      }
+    },
+    {
+      "id": "GHSA-3rjw-m598-pq24",
+      "summary": "Cmov/CmovEq on aarch64 can produce wrong results if high-bits of registers are set ",
+      "aliases": [
+        "CVE-2026-50185"
+      ],
+      "published": "2026-07-02T17:18:11Z",
+      "modified": "2026-09-10T03:51:10.250390903Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N/E:P"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed_at": "2026-07-02T17:18:11Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-758"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true
+      }
+    },
+    {
+      "id": "GHSA-3v94-mw7p-v465",
+      "summary": "hickory-proto: NSEC3 closest-encloser proof validation enters unbounded loop on cross-zone responses",
+      "aliases": [
+        "RUSTSEC-2026-0118",
+        "RUSTSEC-2026-0120"
+      ],
+      "published": "2026-05-07T02:59:20Z",
+      "modified": "2026-09-10T03:50:45.304576252Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-07T02:59:20Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-835"
+        ],
+        "severity": "HIGH"
+      }
+    },
+    {
+      "id": "GHSA-7gcf-g7xr-8hxj",
+      "summary": "serde_with: KeyValueMap serialization panics on empty sequence or map entries",
+      "published": "2026-07-15T22:41:01Z",
+      "modified": "2026-09-10T03:51:10.897685062Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-07-15T22:41:01Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-20"
+        ]
+      }
+    },
+    {
+      "id": "GHSA-7rhf-42qf-vrvc",
+      "summary": "gix-sec safe.directory protections absent for elevated administrators",
+      "aliases": [
+        "CVE-2025-24890"
+      ],
+      "published": "2026-09-09T16:34:35Z",
+      "modified": "2026-09-09T17:06:56.644729Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:U/C:H/I:H/A:L"
+        }
+      ],
+      "database_specific": {
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-09-09T16:34:35Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-283"
+        ]
+      }
+    },
+    {
+      "id": "GHSA-8c75-8mhr-p7r9",
+      "summary": "rust-openssl has incorrect bounds assertion in aes key wrap",
+      "aliases": [
+        "CVE-2026-41678"
+      ],
+      "published": "2026-04-22T21:17:32Z",
+      "modified": "2026-09-10T03:50:43.807790048Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed_at": "2026-04-22T21:17:32Z",
+        "nvd_published_at": "2026-04-24T18:16:29Z",
+        "cwe_ids": [
+          "CWE-787"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true
+      }
+    },
+    {
+      "id": "GHSA-9857-6mw7-fq2m",
+      "summary": "gix-transport: HTTP credentials leaked to redirected host in curl backend",
+      "published": "2026-05-05T19:16:35Z",
+      "modified": "2026-09-10T03:50:11.649893142Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:N"
+        }
+      ],
+      "database_specific": {
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-05T19:16:35Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-522"
+        ]
+      }
+    },
+    {
+      "id": "GHSA-f26g-jm89-4g65",
+      "summary": "gitoxide: CommandForbiddenInModulesConfiguration Bypass in gix_submodule::File::update() Enables Arbitrary Command Execution via .gitmodules",
+      "aliases": [
+        "CVE-2026-40034"
+      ],
+      "published": "2026-05-05T19:23:45Z",
+      "modified": "2026-09-10T03:51:05.286549483Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
+        },
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed_at": "2026-05-05T19:23:45Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-183",
+          "CWE-349",
+          "CWE-501",
+          "CWE-77"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true
+      }
+    },
+    {
+      "id": "GHSA-f89h-2fjh-2r9q",
+      "summary": "gix-fs: Symlink prefix-reuse allows worktree escape during checkout",
+      "aliases": [
+        "CVE-2026-44471"
+      ],
+      "published": "2026-05-07T00:01:28Z",
+      "modified": "2026-09-10T03:50:46.653073494Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-07T00:01:28Z",
+        "nvd_published_at": "2026-05-13T22:16:46Z",
+        "cwe_ids": [
+          "CWE-59"
+        ],
+        "severity": "HIGH"
+      }
+    },
+    {
+      "id": "GHSA-fr8x-3vfx-f45h",
+      "summary": "gix and gitoxide: unvalidated submodule name traverses out of .git/modules and redirects state() / open() to another repository",
+      "aliases": [
+        "CVE-2026-82251"
+      ],
+      "published": "2026-05-05T19:27:51Z",
+      "modified": "2026-09-10T03:51:05.722846150Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N/E:P"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-22"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-05T19:27:51Z"
+      }
+    },
+    {
+      "id": "GHSA-ghm9-cr32-g9qj",
+      "summary": "rust-openssl: rustMdCtxRef::digest_final() writes past caller buffer with no length check",
+      "aliases": [
+        "CVE-2026-41681"
+      ],
+      "published": "2026-04-22T21:05:02Z",
+      "modified": "2026-09-10T03:51:01.732377930Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed_at": "2026-04-22T21:05:02Z",
+        "nvd_published_at": "2026-04-24T18:16:29Z",
+        "cwe_ids": [
+          "CWE-121"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true
+      }
+    },
+    {
+      "id": "GHSA-h395-gr6q-cpjc",
+      "summary": "jsonwebtoken has Type Confusion that leads to potential authorization bypass",
+      "aliases": [
+        "CVE-2026-25537"
+      ],
+      "published": "2026-02-03T18:47:40Z",
+      "modified": "2026-09-10T03:50:35.169824826Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N/E:P"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed_at": "2026-02-03T18:47:40Z",
+        "nvd_published_at": "2026-02-04T22:15:59Z",
+        "cwe_ids": [
+          "CWE-843"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true
+      }
+    },
+    {
+      "id": "GHSA-hppc-g8h3-xhp3",
+      "summary": "rust-openssl: Unchecked callback length in PSK/cookie trampolines leaks adjacent memory to peer",
+      "aliases": [
+        "CVE-2026-41898"
+      ],
+      "published": "2026-04-22T21:00:57Z",
+      "modified": "2026-09-10T03:51:02.103657748Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:N/VA:L/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": "2026-04-24T18:16:29Z",
+        "cwe_ids": [
+          "CWE-126",
+          "CWE-130"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-04-22T21:00:57Z"
+      }
+    },
+    {
+      "id": "GHSA-p3hw-mv63-rf9w",
+      "summary": "gix's submodule name validation bypass + trust inheritance flaw enables path traversal and credential disclosure",
+      "aliases": [
+        "CVE-2026-82253"
+      ],
+      "published": "2026-05-05T19:20:38Z",
+      "modified": "2026-09-10T03:50:47.163131243Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "cwe_ids": [
+          "CWE-200",
+          "CWE-22"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-05T19:20:38Z",
+        "nvd_published_at": null
+      }
+    },
+    {
+      "id": "GHSA-pg4w-g64p-qwhj",
+      "summary": "gix and gitoxide's symlinked .gitmodules are followed and parsed from outside of the repository",
+      "aliases": [
+        "CVE-2026-82252"
+      ],
+      "published": "2026-05-05T19:26:09Z",
+      "modified": "2026-09-10T03:51:06.546736627Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N/E:P"
+        }
+      ],
+      "database_specific": {
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-05T19:26:09Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-22"
+        ]
+      }
+    },
+    {
+      "id": "GHSA-phqj-4mhp-q6mq",
+      "summary": "rust-openssl: Potential out-of-bounds write in `CipherCtxRef::cipher_update_inplace` for AES-KW-PAD ciphers",
+      "aliases": [
+        "CVE-2026-45784"
+      ],
+      "published": "2026-05-19T19:50:11Z",
+      "modified": "2026-09-10T03:51:06.601254514Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:L/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-19T19:50:11Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-131",
+          "CWE-787"
+        ],
+        "severity": "MODERATE"
+      }
+    },
+    {
+      "id": "GHSA-pqf5-4pqq-29f5",
+      "summary": "rust-openssl: Deriver::derive and PkeyCtxRef::derive can overflow short buffers on OpenSSL 1.1.1",
+      "aliases": [
+        "CVE-2026-41676"
+      ],
+      "published": "2026-04-22T21:22:00Z",
+      "modified": "2026-09-10T03:51:02.503624598Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N/E:U"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": "2026-04-24T18:16:29Z",
+        "cwe_ids": [
+          "CWE-131",
+          "CWE-787"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-04-22T21:22:00Z"
+      }
+    },
+    {
+      "id": "GHSA-q2qq-hmj6-3wpp",
+      "summary": "hickory-proto vulnerable to CPU exhaustion during message encoding due to O(n²) name compression",
+      "aliases": [
+        "RUSTSEC-2026-0119"
+      ],
+      "published": "2026-05-07T02:59:48Z",
+      "modified": "2026-09-10T03:51:06.690531529Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-407",
+          "CWE-770"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-07T02:59:48Z"
+      }
+    },
+    {
+      "id": "GHSA-w9wp-h8wv-79jx",
+      "summary": "opentelemetry_sdk has unbounded memory allocation in W3C Baggage propagation",
+      "aliases": [
+        "CVE-2026-48504"
+      ],
+      "published": "2026-06-25T18:40:04Z",
+      "modified": "2026-09-10T03:50:50.807599062Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+        }
+      ],
+      "database_specific": {
+        "severity": "MODERATE",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-06-25T18:40:04Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-770"
+        ]
+      }
+    },
+    {
+      "id": "GHSA-x494-mj8g-cj27",
+      "summary": "gix-pack has multiple DoS vectors: unchecked indexing panics and uncapped OOM allocations from crafted pack data",
+      "aliases": [
+        "CVE-2026-82254"
+      ],
+      "published": "2026-05-05T19:24:15Z",
+      "modified": "2026-09-10T03:50:48.020282872Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-248",
+          "CWE-770"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-05T19:24:15Z"
+      }
+    },
+    {
+      "id": "GHSA-xhj4-vrgc-hr34",
+      "summary": "actix-http has HTTP/1.1 CL.TE Request Smuggling ",
+      "aliases": [
+        "CVE-2026-73051"
+      ],
+      "published": "2026-04-22T14:37:30Z",
+      "modified": "2026-09-10T03:51:04.036233161Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed_at": "2026-04-22T14:37:30Z",
+        "nvd_published_at": null,
+        "cwe_ids": [
+          "CWE-444"
+        ],
+        "severity": "MODERATE",
+        "github_reviewed": true
+      }
+    },
+    {
+      "id": "GHSA-xmgf-hq76-4vx2",
+      "summary": "rust-opennssl has an Out-of-bounds read in PEM password callback when returning an oversized length",
+      "aliases": [
+        "CVE-2026-41677"
+      ],
+      "published": "2026-04-22T21:20:04Z",
+      "modified": "2026-09-10T03:50:44.840710191Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:N/VA:L/SC:N/SI:N/SA:N/E:U"
+        }
+      ],
+      "database_specific": {
+        "cwe_ids": [
+          "CWE-125",
+          "CWE-1284"
+        ],
+        "severity": "LOW",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-04-22T21:20:04Z",
+        "nvd_published_at": "2026-04-24T18:16:29Z"
+      }
+    },
+    {
+      "id": "GHSA-xp3w-r5p5-63rr",
+      "summary": "rust-openssl has undefined behavior in X509Ref::ocsp_responders for certificates with non-UTF-8 OCSP URLs",
+      "aliases": [
+        "CVE-2026-42327"
+      ],
+      "published": "2026-05-05T21:46:38Z",
+      "modified": "2026-09-10T03:51:07.254489393Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:H/VA:N/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "nvd_published_at": "2026-05-14T21:16:45Z",
+        "cwe_ids": [
+          "CWE-20"
+        ],
+        "severity": "HIGH",
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-05T21:46:38Z"
+      }
+    },
+    {
+      "id": "GHSA-xv59-967r-8726",
+      "summary": "rust-openssl vulnerable to heap buffer overflow when encrypting with AES key-wrap-with-padding",
+      "aliases": [
+        "CVE-2026-44662"
+      ],
+      "published": "2026-05-07T22:33:51Z",
+      "modified": "2026-09-10T03:51:07.319185525Z",
+      "severity": [
+        {
+          "type": "CVSS_V4",
+          "score": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:L/SC:N/SI:N/SA:N"
+        }
+      ],
+      "database_specific": {
+        "github_reviewed": true,
+        "github_reviewed_at": "2026-05-07T22:33:51Z",
+        "nvd_published_at": "2026-05-14T21:16:47Z",
+        "cwe_ids": [
+          "CWE-122"
+        ],
+        "severity": "MODERATE"
+      }
+    },
+    {
+      "id": "RUSTSEC-2023-0089",
+      "summary": "atomic-polyfill is unmaintained",
+      "published": "2023-07-11T12:00:00Z",
+      "modified": "2025-04-29T08:31:10Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2024-0320",
+      "summary": "yaml-rust is unmaintained.",
+      "published": "2024-03-20T12:00:00Z",
+      "modified": "2024-11-01T12:31:51Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2024-0388",
+      "summary": "`derivative` is unmaintained; consider using an alternative",
+      "published": "2024-06-26T12:00:00Z",
+      "modified": "2024-11-10T13:34:40Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2024-0436",
+      "summary": "paste - no longer maintained",
+      "published": "2024-10-07T12:00:00Z",
+      "modified": "2026-01-27T22:03:15.694766Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2025-0057",
+      "summary": "fxhash - no longer maintained",
+      "published": "2025-09-05T12:00:00Z",
+      "modified": "2025-09-05T19:09:01Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2025-0141",
+      "summary": "Bincode is unmaintained",
+      "published": "2025-12-16T12:00:00Z",
+      "modified": "2026-01-16T11:07:28.867553Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0118",
+      "summary": "NSEC3 closest-encloser proof validation enters unbounded loop on cross-zone responses",
+      "aliases": [
+        "GHSA-3v94-mw7p-v465",
+        "RUSTSEC-2026-0120"
+      ],
+      "published": "2026-05-01T12:00:00Z",
+      "modified": "2026-05-07T09:11:25.511618979Z",
+      "database_specific": {
+        "license": "CC-BY-4.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0119",
+      "summary": "CPU exhaustion during message encoding due to O(n²) name compression",
+      "aliases": [
+        "GHSA-q2qq-hmj6-3wpp"
+      ],
+      "published": "2026-05-01T12:00:00Z",
+      "modified": "2026-05-07T08:56:41Z",
+      "database_specific": {
+        "license": "CC-BY-4.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0173",
+      "summary": "proc-macro-error2 is unmaintained",
+      "published": "2026-06-07T12:00:00Z",
+      "modified": "2026-06-07T21:00:04.318567692Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0186",
+      "summary": "Unchecked pointer offset in crate `memmap2`",
+      "published": "2026-06-20T12:00:00Z",
+      "modified": "2026-06-22T18:15:03.600280397Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0194",
+      "summary": "Quadratic run time when checking a start tag for duplicate attribute names",
+      "published": "2026-06-29T12:00:00Z",
+      "modified": "2026-07-02T08:00:03.849273679Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        }
+      ],
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0195",
+      "summary": "Unbounded namespace-declaration allocation in `NsReader` enables memory-exhaustion denial of service",
+      "published": "2026-06-29T12:00:00Z",
+      "modified": "2026-07-02T09:00:04.037478193Z",
+      "severity": [
+        {
+          "type": "CVSS_V3",
+          "score": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+        }
+      ],
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0205",
+      "summary": "`Array::insert` violates exception safety if compare function panics, leading to potential Double-Free",
+      "published": "2026-07-06T12:00:00Z",
+      "modified": "2026-07-07T09:30:04.274635773Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0221",
+      "summary": "`event-listener` allows `!Send` tags to cross thread boundaries via `StackSlot`",
+      "published": "2026-07-13T12:00:00Z",
+      "modified": "2026-07-31T12:15:04.629484145Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    },
+    {
+      "id": "RUSTSEC-2026-0306",
+      "summary": "`hex_decode_unchecked` AVX2 path reads past `src`",
+      "published": "2026-09-20T12:00:00Z",
+      "modified": "2026-09-23T14:15:03.274936959Z",
+      "database_specific": {
+        "license": "CC0-1.0"
+      }
+    }
+  ]
+}

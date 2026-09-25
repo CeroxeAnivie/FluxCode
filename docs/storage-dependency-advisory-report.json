@@ -1,0 +1,72 @@
+{
+  "source": "https://api.osv.dev/v1/querybatch",
+  "scope": "new storage migration dependencies, not a full application audit",
+  "queries": [
+    {
+      "package": {
+        "name": "rusqlite",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.37.0"
+    },
+    {
+      "package": {
+        "name": "libsqlite3-sys",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.35.0"
+    },
+    {
+      "package": {
+        "name": "hashlink",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.10.0"
+    },
+    {
+      "package": {
+        "name": "hashbrown",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.15.5"
+    },
+    {
+      "package": {
+        "name": "foldhash",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.1.5"
+    },
+    {
+      "package": {
+        "name": "fallible-iterator",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.3.0"
+    },
+    {
+      "package": {
+        "name": "fallible-streaming-iterator",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.1.9"
+    },
+    {
+      "package": {
+        "name": "vcpkg",
+        "ecosystem": "crates.io"
+      },
+      "version": "0.2.15"
+    }
+  ],
+  "results": [
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  ]
+}

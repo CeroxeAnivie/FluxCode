@@ -1,8 +1,13 @@
+import { Select } from './Select';
+import { useAppearance } from '../application/AppearanceProvider';
 import { ArrowUp, FolderOpen, ShieldCheck, Square } from 'lucide-react';
 import { useRef } from 'react';
 import { ModelPicker } from './ModelPicker';
 import { reasoningEfforts } from '../domain/modelSelection';
 import type { ModelSelection } from '../domain/modelSelection';
+import type { Attachment } from '../domain/attachments';
+import { AttachmentList } from './AttachmentList';
+import { shouldSubmitOnEnter } from '../domain/keyboard';
 
 interface Props {
   project?: string;
@@ -17,6 +22,14 @@ interface Props {
   onChange: (text: string) => void;
   onSend: (text: string) => Promise<boolean>;
   onStop: () => void;
+  onQueue: (text: string) => boolean | Promise<boolean>;
+  onSteer: (text: string) => Promise<boolean>;
+  attachments: Attachment[];
+  attachmentNotice: { added: number; duplicates: number } | null;
+  onAttach: () => void;
+  onRemoveAttachment: (id: string) => void;
+  onConfigureModel?: () => void;
+  onChooseProject: () => void;
 }
 
 export function Composer({
@@ -32,26 +45,54 @@ export function Composer({
   onChange,
   onSend,
   onStop,
+  onQueue,
+  onSteer,
+  attachments,
+  attachmentNotice,
+  onAttach,
+  onRemoveAttachment,
+  onConfigureModel,
+  onChooseProject,
 }: Props) {
+  const { t } = useAppearance();
   const input = useRef<HTMLTextAreaElement>(null);
+  const compositionEndedAt = useRef(0);
   const submit = async () => {
     const submitted = text;
-    if (!submitted.trim() || sending || busy || disabled) return;
+    if (!submitted.trim() || sending || disabled) return;
+    if (busy) {
+      if (await onQueue(submitted)) onChange('');
+      return;
+    }
     await onSend(submitted);
   };
   return (
     <div className="composer-wrap">
       <div className={`composer ${busy ? 'working' : ''}`}>
+        <AttachmentList
+          items={attachments}
+          notice={attachmentNotice}
+          onRemove={onRemoveAttachment}
+        />
         <textarea
           ref={input}
-          aria-label="任务描述"
-          placeholder="描述一个任务，或提出关于代码的问题…"
+          aria-label={t('任务描述')}
+          placeholder={t('描述一个任务，或提出关于代码的问题…')}
           value={text}
           maxLength={100_000}
           rows={3}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={() => {
+            compositionEndedAt.current = 0;
+          }}
+          onCompositionStart={() => {
+            compositionEndedAt.current = Number.POSITIVE_INFINITY;
+          }}
+          onCompositionEnd={() => {
+            compositionEndedAt.current = performance.now();
+          }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+            if (shouldSubmitOnEnter(e.nativeEvent, compositionEndedAt.current, performance.now())) {
               e.preventDefault();
               void submit();
             }
@@ -59,50 +100,98 @@ export function Composer({
         />
         <div className="composer-toolbar">
           <div className="composer-options">
-            <span className="composer-project">
+            <button
+              className="attach-button"
+              title={t('添加文件或图片')}
+              aria-label={t('添加文件或图片')}
+              onClick={onAttach}
+            >
+              ＋
+            </button>
+            <button
+              type="button"
+              className="composer-project"
+              onClick={onChooseProject}
+              aria-label={t('选择项目')}
+              title={t('打开项目')}
+            >
               <FolderOpen size={14} />
-              {project ?? '未选择项目'}
-            </span>
+              {project ?? t('未选择项目')}
+            </button>
             <span className="toolbar-divider" />
             <ModelPicker
+              onConfigure={onConfigureModel}
               model={model}
               models={models}
               disabled={busy || sending || disabled}
               onChange={(model) => onSelection({ ...selection, model })}
             />
-            <select
+            <Select
               className="effort-select"
-              aria-label="推理强度"
+              aria-label={t('推理强度')}
               value={selection.effort}
               disabled={busy || sending || disabled || !model}
               title={
                 busy || sending
-                  ? '任务结束后可更改推理强度'
-                  : 'Off：不发送 effort，由服务决定；None：显式不推理。支持的强度取决于模型。'
+                  ? t('任务结束后可更改推理强度')
+                  : t(
+                      '模型默认：不指定推理强度，由模型决定；不推理：明确请求关闭推理。可用档位取决于模型和服务。',
+                    )
               }
-              onChange={(e) =>
-                onSelection({ ...selection, effort: e.target.value as ModelSelection['effort'] })
+              onValueChange={(value) =>
+                onSelection({ ...selection, effort: value as ModelSelection['effort'] })
               }
             >
               {reasoningEfforts.map((effort) => (
                 <option key={effort} value={effort}>
                   {effort === 'off'
-                    ? 'Off · 服务默认'
+                    ? t('模型默认')
                     : effort === 'none'
-                      ? 'None · 不推理'
-                      : effort[0].toUpperCase() + effort.slice(1)}
+                      ? t('不推理')
+                      : t(
+                          (
+                            {
+                              minimal: '最低',
+                              low: '低',
+                              medium: '中',
+                              high: '高',
+                              xhigh: '极高',
+                              max: '最高',
+                            } as const
+                          )[effort],
+                        )}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           {busy ? (
-            <button className="send-button stop" aria-label="停止任务" onClick={onStop}>
-              <Square size={13} fill="currentColor" />
-            </button>
+            <div className="running-actions">
+              <button
+                disabled={!text.trim() || sending}
+                onClick={async () => {
+                  if (await onQueue(text)) onChange('');
+                }}
+              >
+                {t('排队发送')}
+              </button>
+              <button
+                disabled={!text.trim() || sending}
+                onClick={() =>
+                  void onSteer(text).then((ok) => {
+                    if (ok) onChange('');
+                  })
+                }
+              >
+                {t('立即补充')}
+              </button>
+              <button className="send-button stop" aria-label={t('停止任务')} onClick={onStop}>
+                <Square size={13} fill="currentColor" />
+              </button>
+            </div>
           ) : (
             <button
               className="send-button"
-              aria-label="发送任务"
+              aria-label={t('发送任务')}
               onClick={() => void submit()}
               disabled={!text.trim() || disabled || sending}
             >
@@ -114,9 +203,11 @@ export function Composer({
       <div className="composer-footnote">
         <span>
           <ShieldCheck size={12} />
-          完全访问
+          {t('完全访问')}
         </span>
-        <span>Enter 发送 · Shift Enter 换行</span>
+        <span>
+          {t(busy ? 'Enter 排队发送 · Shift Enter 换行' : 'Enter 发送 · Shift Enter 换行')}
+        </span>
       </div>
     </div>
   );

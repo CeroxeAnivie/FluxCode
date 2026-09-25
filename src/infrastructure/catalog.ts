@@ -1,5 +1,6 @@
 import type { Catalog } from '../domain/types';
 import { isModelSelection } from '../domain/modelSelection';
+import { readDurable, writeDurable } from './durableStorage';
 
 const KEY = 'fluxcode.catalog.v1';
 export const emptyCatalog = (): Catalog => ({ version: 1, projects: [], tasks: [] });
@@ -15,7 +16,13 @@ export function parseCatalog(json: string | null): Catalog {
     (c.lastModel !== undefined &&
       (typeof c.lastModel !== 'string' || !c.lastModel.trim() || c.lastModel.length > 200)) ||
     !c.projects.every(
-      (p) => typeof p.id === 'string' && typeof p.name === 'string' && typeof p.path === 'string',
+      (p) =>
+        typeof p.id === 'string' &&
+        typeof p.name === 'string' &&
+        typeof p.path === 'string' &&
+        (p.closed === undefined || typeof p.closed === 'boolean') &&
+        (p.worktreeParentId === undefined || typeof p.worktreeParentId === 'string') &&
+        (p.imported === undefined || typeof p.imported === 'boolean'),
     ) ||
     !c.tasks.every(
       (t) =>
@@ -24,13 +31,21 @@ export function parseCatalog(json: string | null): Catalog {
         typeof t.projectId === 'string' &&
         typeof t.updatedAt === 'number' &&
         typeof t.archived === 'boolean' &&
-        (t.selection === undefined || isModelSelection(t.selection)),
+        (t.pinned === undefined || typeof t.pinned === 'boolean') &&
+        (t.forkedFrom === undefined || (typeof t.forkedFrom === 'string' && !!t.forkedFrom)) &&
+        (t.selection === undefined || isModelSelection(t.selection)) &&
+        (t.imported === undefined ||
+          (typeof t.imported.fingerprint === 'string' &&
+            /^[a-f0-9]{64}$/.test(t.imported.fingerprint) &&
+            typeof t.imported.sourceId === 'string' &&
+            !!t.imported.sourceId &&
+            typeof t.imported.sourceProject === 'string' &&
+            t.imported.sourceProject.length <= 200)),
     )
   )
     throw new Error('项目索引数据损坏');
   return c;
 }
 
-export const loadCatalog = (): Catalog => parseCatalog(localStorage.getItem(KEY));
-export const saveCatalog = (catalog: Catalog): void =>
-  localStorage.setItem(KEY, JSON.stringify(catalog));
+export const loadCatalog = (): Catalog => readDurable(KEY, parseCatalog);
+export const saveCatalog = (catalog: Catalog): void => writeDurable(KEY, catalog, parseCatalog);

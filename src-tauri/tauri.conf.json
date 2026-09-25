@@ -11,6 +11,7 @@
   },
   "app": {
     "windows": [{
+      "create": false,
       "title": "FluxCode",
       "width": 1440,
       "height": 940,
@@ -18,7 +19,7 @@
       "minHeight": 640,
       "decorations": false,
       "backgroundColor": "#121214",
-      "dragDropEnabled": false
+      "dragDropEnabled": true
     }],
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: http://asset.localhost; connect-src ipc: http://ipc.localhost; font-src 'self' data:; frame-src 'none'; object-src 'none'; base-uri 'self'"
@@ -27,6 +28,12 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
+    "windows": {
+      "nsis": {
+        "languages": ["SimpChinese", "English"],
+        "installerHooks": "nsis/installer-hooks.nsh"
+      }
+    },
     "resources": { "resources/engine/": "engine/", "resources/legal/": "legal/" },
     "icon": ["icons/icon.ico", "icons/icon.png"]
   }

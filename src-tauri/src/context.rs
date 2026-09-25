@@ -30,13 +30,21 @@ pub fn environment(config: &AppConfig, cwd: &str) -> String {
     } else {
         &config.terminal.unix_shell
     };
+    let network = if config.network.proxy_url.trim().is_empty() {
+        "Use host network settings; no FluxCode proxy is configured.".to_owned()
+    } else {
+        format!(
+            "FluxCode proxy for outbound traffic: {}",
+            config.network.proxy_url
+        )
+    };
     format!(
-        "You are working inside FluxCode desktop.\nEnvironment facts:\n- OS: {}\n- Architecture: {}\n- Project root: {}\n- Interactive command-panel shell: {}\n- Agent shell tools: use the engine-provided schema and reported environment.\n- Bundled Codex engine: 0.156.1\n- Model transport: Responses API\n- Sandbox: danger-full-access\n- Approval policy: never\n- Network proxy for ALL outbound traffic: {}\n- Text encoding: UTF-8, explicit on read/write\n- Runtime: local desktop; inspect installed build tools before use.\nAsk for missing user information in normal messages. Do not invoke interactive question tools unsupported by this client.\n",
+        "You are working inside FluxCode desktop.\nEnvironment facts:\n- OS: {}\n- Architecture: {}\n- Project root: {}\n- Interactive command-panel shell: {}\n- Agent shell tools: use the engine-provided schema and reported environment.\n- Bundled Codex engine: 0.156.1\n- Model transport: Responses API\n- Sandbox: danger-full-access\n- Approval policy: never\n- Network: {}\n- Text encoding: UTF-8, explicit on read/write\n- Runtime: local desktop; inspect installed build tools before use.\nAsk for missing user information in normal messages. Do not invoke interactive question tools unsupported by this client.\n",
         std::env::consts::OS,
         std::env::consts::ARCH,
         cwd,
         shell,
-        config.network.proxy_url
+        network
     )
 }
 

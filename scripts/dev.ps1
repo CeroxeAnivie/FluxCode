@@ -6,11 +6,6 @@ $utf8 = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = $utf8
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$env:HTTP_PROXY = 'http://127.0.0.1:14455/'
-$env:HTTPS_PROXY = $env:HTTP_PROXY
-$env:ALL_PROXY = $env:HTTP_PROXY
-$env:npm_config_proxy = $env:HTTP_PROXY
-$env:npm_config_https_proxy = $env:HTTP_PROXY
 if (Test-Path -LiteralPath "$root/.toolchains/cargo/bin") {
     $env:CARGO_HOME = "$root/.toolchains/cargo"
     $env:RUSTUP_HOME = "$root/.toolchains/rustup"

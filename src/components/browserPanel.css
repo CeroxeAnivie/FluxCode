@@ -1,0 +1,111 @@
+.browser-panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 320px;
+  min-height: 0;
+  background: var(--background);
+  border-left: 1px solid var(--border);
+}
+.browser-heading {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.browser-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.browser-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 10px;
+}
+.browser-toolbar input {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input);
+  color: var(--text);
+  padding: 7px 9px;
+  font-size: calc(var(--font-size, 14px) - 1px);
+}
+.browser-toolbar input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.browser-toolbar button {
+  flex-shrink: 0;
+}
+.browser-progress {
+  height: 2px;
+  flex-shrink: 0;
+  background: var(--border);
+}
+.browser-progress.loading {
+  background: var(--primary);
+  animation: browser-loading 1.4s ease-in-out infinite;
+}
+.browser-viewport {
+  flex: 1;
+  min-height: 1px;
+  position: relative;
+}
+.browser-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+.browser-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: var(--warning);
+  font-size: 12px;
+}
+.browser-notice span {
+  flex: 1;
+}
+.browser-resize {
+  touch-action: none;
+}
+.browser-open .workspace-header {
+  height: auto;
+  min-height: 54px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+}
+.browser-open .workspace-actions {
+  flex-wrap: wrap;
+}
+@media (max-width: 1150px) {
+  .browser-open > .sidebar,
+  .browser-open > .sidebar + .panel-resize {
+    display: none;
+  }
+}
+@keyframes browser-loading {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .browser-progress.loading {
+    animation: none;
+  }
+}

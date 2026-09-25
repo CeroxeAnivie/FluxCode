@@ -1,3 +1,4 @@
+param([string]$ProxyUrl)
 $ErrorActionPreference = 'Stop'
 $utf8 = [System.Text.UTF8Encoding]::new($false)
 [Console]::InputEncoding = $utf8
@@ -5,20 +6,32 @@ $utf8 = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = $utf8
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
-$proxy = 'http://127.0.0.1:14455/'
+$effectiveProxy = if ($ProxyUrl) { $ProxyUrl } elseif ($env:HTTPS_PROXY) { $env:HTTPS_PROXY } else { $env:HTTP_PROXY }
+$requestOptions = if ($effectiveProxy) { @{ Proxy = $effectiveProxy } } else { @{} }
 $headers = @{ 'User-Agent' = 'FluxCode-license-audit' }
 $missing = Get-Content -LiteralPath work/missing-license-files.json -Raw -Encoding UTF8 | ConvertFrom-Json
 $metadata = Get-Content -LiteralPath work/rust-metadata.json -Raw -Encoding UTF8 | ConvertFrom-Json
+$windowsTree = & cargo tree --manifest-path src-tauri/Cargo.toml --locked --target x86_64-pc-windows-msvc --edges normal,build --prefix none --format '{p}'
+if ($LASTEXITCODE -ne 0) { throw 'Unable to resolve the Windows dependency tree.' }
+$windowsPackages = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+foreach ($line in $windowsTree) {
+    if ($line -match '^(\S+) v([^\s]+)') {
+        [void]$windowsPackages.Add("$($Matches[1])@$($Matches[2])")
+    }
+}
+$rustMissing = @($missing | Where-Object {
+    $windowsPackages.Contains("$($_.name)@$($_.version)")
+})
 $cache = @{}
 $text = [System.Text.StringBuilder]::new()
-foreach ($entry in $missing) {
+foreach ($entry in $rustMissing) {
     $package = $metadata.packages | Where-Object { $_.name -eq $entry.name -and $_.version -eq $entry.version } | Select-Object -First 1
     $vcs = Get-Content -LiteralPath (Join-Path $entry.directory '.cargo_vcs_info.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $repository = $package.repository.TrimEnd('/') -replace '\.git$', ''
     $slug = $repository -replace '^https://github.com/', ''
     $key = "$slug/$($vcs.git.sha1)"
     if (!$cache.ContainsKey($key)) {
-        $tree = Invoke-RestMethod -Proxy $proxy -Headers $headers -Uri "https://api.github.com/repos/$slug/git/trees/$($vcs.git.sha1)?recursive=1"
+        $tree = Invoke-RestMethod @requestOptions -Headers $headers -Uri "https://api.github.com/repos/$slug/git/trees/$($vcs.git.sha1)?recursive=1"
         $files = @($tree.tree | Where-Object { $_.type -eq 'blob' -and $_.path -match '(^|/)(LICENSE[^/]*|COPYING[^/]*)$' })
         $minDepth = ($files | ForEach-Object { ($_.path -split '/').Length } | Measure-Object -Minimum).Minimum
         $files = @($files | Where-Object { ($_.path -split '/').Length -eq $minDepth })
@@ -26,7 +39,7 @@ foreach ($entry in $missing) {
         $licenseText = [System.Text.StringBuilder]::new()
         foreach ($file in $files) {
             $url = "https://raw.githubusercontent.com/$slug/$($vcs.git.sha1)/$($file.path)"
-            $response = Invoke-WebRequest -UseBasicParsing -Proxy $proxy -Uri $url
+            $response = Invoke-WebRequest -UseBasicParsing @requestOptions -Uri $url
             [void]$licenseText.AppendLine("Source: $url")
             [void]$licenseText.AppendLine([string]$response.Content)
         }
@@ -50,4 +63,4 @@ foreach ($package in ($metadata.packages | Where-Object { $_.license -eq 'MPL-2.
     [void]$sourceNotice.AppendLine("$($package.name) $($package.version): $($package.repository) | sources/$archiveName")
 }
 [System.IO.File]::WriteAllText((Join-Path $legal 'SOURCE-AVAILABILITY.txt'), $sourceNotice.ToString(), $utf8)
-Write-Output "Supplemented $($missing.Count) license notices; included MPL source archives."
+Write-Output "Supplemented $($rustMissing.Count) Rust license notices; included MPL source archives."

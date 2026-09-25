@@ -1,16 +1,32 @@
 # Release process
 
+Current delivery scope is a Windows local desktop tool. Application updates are
+a disabled settings placeholder: there is no update endpoint, background check,
+download, or in-app installation. Distribute installer files manually. Configured
+Responses providers and explicitly invoked network tools still require network
+access; local operation does not imply an on-device language model.
+
 1. Pin the engine tag, asset digest, schema bindings and runtime version together.
    Run `scripts/prepare-engine.ps1`; any digest mismatch fails the preparation.
-2. Install the locked Node and Rust dependencies with the required proxy enabled.
+2. Install the locked Node and Rust dependencies. Configure a proxy in the
+   developer's environment only when that environment requires one.
 3. Run typecheck, domain tests, GUI tests, real-engine fixture smoke tests, formatting,
    Rust tests and Clippy. Inspect screenshots at normal and minimum window sizes.
 4. Refresh dependency inventory and bundled third-party license texts. Review
    advisories; do not equate a zero advisory count with absence of security risks.
 5. Build the Windows NSIS installer. Verify engine and legal resources are included.
+   Run `node --test scripts/lib/release-binary.test.mjs` and
+   `node scripts/verify-release.mjs`. The latter requires 7-Zip (the standard
+   Program Files location, or `SEVENZIP_BIN`) and retains extracted verification
+   evidence under `work/`. It compares the actual packaged executable and every
+   engine/legal resource with the current build; only Tauri's NSIS marker differs.
    Test on a clean Windows account with WebView2 and no global Codex installation.
 6. Exercise install, first-run configuration, credential save/delete, task resume,
    missing Git/model failures, command interruption, shutdown, upgrade and uninstall.
+   The NSIS uninstaller retains `data` by default. Its explicit delete-data checkbox
+   removes application-owned `data` only during a real uninstall, never during an
+   update. Test both choices and confirm an unknown or linked `data` directory is
+   not recursively removed.
 7. Configure a publisher-owned code-signing certificate and timestamp server before
    public distribution. No signing identity is fabricated or bundled in source.
 8. Publish checksums and release notes. Retain previous installer for rollback;

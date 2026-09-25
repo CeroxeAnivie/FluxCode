@@ -20,9 +20,9 @@ and interactive terminal commands go through the bundled engine's stdio protocol
 
 ## Network and environment
 
-All outbound network clients and commands must use `http://127.0.0.1:14455/`.
-Set HTTP_PROXY, HTTPS_PROXY, ALL_PROXY and tool-specific proxy settings before
-network activity. Do not bypass the proxy to hide a failing request.
+The optional TOML proxy is applied to network clients and commands only when set.
+The default is empty and uses normal host network settings. Development-only proxy
+settings belong in the developer's local environment, not source or release defaults.
 Use `scripts/dev.ps1` for the project-local Rust toolchain on Windows.
 All text is UTF-8 without BOM. PowerShell reads/writes must explicitly select UTF-8;
 set Console.InputEncoding, Console.OutputEncoding and $OutputEncoding before

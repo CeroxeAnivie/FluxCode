@@ -28,9 +28,13 @@ The catalog is embedded in the host and written into its isolated engine home.
 file downloaded through the configured proxy. Upstream LICENSE/NOTICE apply.
 
 Off omits **reasoning.effort**, not necessarily the entire `reasoning` object.
-Reasoning summaries remain managed by Codex. Native `none` is an explicit value
-and is never substituted for Off. Available native levels are not a claim that
-every model supports every level; provider errors are shown without silent fallback.
+This uses the model's default effort; it does not turn reasoning off. The
+[OpenAI reasoning guide](https://developers.openai.com/api/docs/guides/reasoning)
+states that omitted effort defaults to `medium` for GPT-5.6, but defaults vary
+by model. Reasoning summaries remain managed by Codex. Native `none` is an
+explicit value and is never substituted for Off. Available native levels are
+not a claim that every model supports every level; provider errors are shown
+without silent fallback.
 
 Run `node scripts/reasoning-smoke.mjs` for actual HTTP payload assertions against
 the bundled engine, including known/custom models, native levels, and returning

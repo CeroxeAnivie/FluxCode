@@ -34,11 +34,13 @@ The process is initialized once using `initialize` + `initialized`, followed by
 thread/turn operations. Notifications feed a pure conversation reducer. Completed
 items replace accumulated deltas by ID. History hydration buffers concurrent events.
 Unknown server requests receive explicit errors rather than hanging indefinitely.
+Provider request and stream retries are disabled: after an uncertain outcome the
+application reconciles the recorded turn, preserving input for explicit user retry.
 
 The renderer's RPC allowlist excludes configuration mutation and account APIs.
 The host enforces `danger-full-access` and `never` at thread and turn boundaries.
 Interactive commands go through a dedicated host command that resolves the configured
-shell, sets UTF-8 and proxy environment, and calls Codex `command/exec` with bounded
+shell, sets UTF-8 and an optional configured proxy environment, and calls Codex `command/exec` with bounded
 timeout/output. Commands are user-authorized shell input; filesystem previews remain
 project-scoped and reject traversal, binary content and oversized files.
 
@@ -57,7 +59,33 @@ a claim that macOS/Linux installers have been verified.
 The explicit Off behavior and pinned model catalog adaptation are documented in
 `ENGINE-COMPATIBILITY.md`. Font preferences persist in the TOML configuration.
 
-The terminal panel runs bounded commands and streams output. It is not yet a full
-interactive PTY for TUI programs. Files are previewed read-only; agent tools perform
-edits. Remote workers, auto-update, code signing and broad provider interoperability
-are separate release work, not implied by the current implementation.
+The terminal dock owns up to eight interactive PTY sessions through the bundled
+engine. Hiding the dock preserves sessions. Windows Job Objects bind engine/tool
+descendants to the desktop lifetime; a single-instance host avoids concurrent state
+owners. Structured JSON logs rotate daily and retain seven files without recording
+raw prompts, credentials or engine stderr.
+
+CodeMirror provides file editing, search, undo and syntax highlighting. Writes use
+optimistic disk-content checks; conflicts open an explicit merge editor before any
+overwrite. Diff review supports unified and side-by-side layouts. Long conversations
+use virtual rows and batched deltas; engine history remains authoritative.
+
+The Windows app is distributed locally. Updates are a disabled placeholder with no
+updater plugin or automatic network requests. Configured model APIs and user-invoked
+network tools remain available. Signing, clean-machine release acceptance and broad
+provider interoperability are not implied by local build success.
+
+Each workspace window can host a remote child WebView2 in its right browser panel.
+React owns the toolbar, resizing and focus return; the browser transport serializes
+creation, layout and closure. Rust validates URLs and bounds, blocks internal
+origins, reuses the same child for popup links, and denies downloads with an
+external-browser handoff. Remote content uses an incognito profile. Local
+capabilities target only `main` and the eight fixed workspace WebViews, not their
+containing windows; application IPC independently rejects remote child labels. Tauri is pinned to 2.11.6
+because its child-WebView API requires the upstream `unstable` feature.
+
+Multiwindow shared mutations go through the main renderer's single catalog/queue
+writer; native request correlation and per-window mirrors preserve ownership.
+See `MULTIWINDOW.md` for capacity, recovery and close behavior. System appearance
+uses the native Windows theme and native change events rather than WebView2's
+potentially different CSS media preference. Browser previews use media queries.

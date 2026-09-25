@@ -1,8 +1,21 @@
 {
-  "packageCount": 279,
-  "ecosystem": "crates.io",
-  "source": "OSV",
+  "checkedAt": "2026-09-25T06:49:47.8373802Z",
   "findings": [
+    {
+      "advisories": [
+        "GHSA-wrw7-89jp-8q8g",
+        "RUSTSEC-2024-0429"
+      ],
+      "name": "glib",
+      "version": "0.18.5"
+    },
+    {
+      "advisories": [
+        "RUSTSEC-2024-0370"
+      ],
+      "name": "proc-macro-error",
+      "version": "1.0.4"
+    },
     {
       "advisories": [
         "RUSTSEC-2025-0081"
@@ -39,5 +52,7 @@
       "version": "0.9.0"
     }
   ],
-  "checkedAt": "2026-09-24T01:36:58.7722906Z"
+  "ecosystem": "crates.io",
+  "packageCount": 574,
+  "source": "OSV"
 }

@@ -1,222 +1,288 @@
+import { Select } from './Select';
+import { ErrorNotice } from './ErrorNotice';
+import { useAppearance } from '../application/AppearanceProvider';
 import { useEffect, useRef, useState } from 'react';
-import { Check, ExternalLink, LoaderCircle, LockKeyhole, ShieldCheck, X } from 'lucide-react';
+import { ExternalLink, LoaderCircle, ShieldCheck, X } from 'lucide-react';
 import type { Settings } from '../domain/types';
 import { validateSettings } from '../domain/types';
 import { bridge } from '../infrastructure/bridge';
 import { errorText } from '../application/useFluxCode';
+import { PricingSettings } from './PricingSettings';
+import { ContextSettings } from './ContextSettings';
+import { AppearanceSettings } from './AppearanceSettings';
+import { UpdateSettings } from './UpdateSettings';
+import { BackupSettings } from './BackupSettings';
+import { RuntimeHealthSettings } from './RuntimeHealthSettings';
+import { useModalDialog } from './useModalDialog';
 
 export function SettingsDialog({
   initial,
+  onChannels,
   connecting,
   onClose,
   onConnect,
   fontSize,
   onFontSize,
+  settingsRevision,
+  busyWork,
+  hasUnsentDraft,
+  connectionError,
 }: {
   initial: Settings;
+  onChannels: () => void;
   connecting: boolean;
   onClose: () => void;
-  onConnect: (settings: Settings, apiKey?: string, rememberKey?: boolean) => Promise<boolean>;
+  onConnect: (
+    settings: Settings,
+    apiKey?: string,
+    rememberKey?: boolean,
+    expectedRevision?: number,
+  ) => Promise<boolean>;
+  settingsRevision?: number;
+  busyWork: boolean;
+  hasUnsentDraft: boolean;
+  connectionError?: string | null;
   fontSize: number;
   onFontSize: (size: number) => Promise<void>;
 }) {
+  const { t } = useAppearance();
   const [settings, setSettings] = useState(initial);
-  const [apiKey, setApiKey] = useState('');
-  const [rememberKey, setRememberKey] = useState(true);
-  const [notice, setNotice] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [savingFont, setSavingFont] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const savingSettingsRef = useRef(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<'close' | 'channels' | null>(null);
+  const errorNotice = useRef<HTMLParagraphElement>(null);
+  function navigate(destination: 'close' | 'channels') {
+    if (backupBusy || savingSettingsRef.current) return;
+    if (JSON.stringify(settings) !== JSON.stringify(baseline.current)) {
+      setPendingNavigation(destination);
+      return;
+    }
+    if (destination === 'channels') onChannels();
+    else onClose();
+  }
+  const baseline = useRef(initial);
+  const baselineRevision = useRef(settingsRevision);
+  const configurationChanged = JSON.stringify(baseline.current) !== JSON.stringify(initial);
+  const dialog = useModalDialog();
   useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
-  const field = (key: keyof Settings, value: string) =>
-    setSettings((s) => ({ ...s, [key]: value }));
+    if (error) errorNotice.current?.focus();
+  }, [error]);
+  useEffect(() => {
+    if (submitFailed && connectionError) setError(connectionError);
+  }, [submitFailed, connectionError]);
   return (
     <dialog
       className="settings-dialog"
+      aria-label={t('工作空间设置')}
       ref={dialog}
       onCancel={(e) => {
         e.preventDefault();
-        if (!connecting) onClose();
+        if (!connecting && !backupBusy && !savingSettings) navigate('close');
       }}
     >
       <form
+        noValidate
+        aria-busy={connecting || savingSettings || savingFont || backupBusy}
         onSubmit={(e) => {
           e.preventDefault();
+          if (connecting || backupBusy || savingSettingsRef.current) return;
+          setSubmitFailed(false);
+          if (configurationChanged) {
+            setError(t('配置已在其他位置更新，请先载入最新设置。当前输入仍保留。'));
+            return;
+          }
+          if (!settings.model) {
+            onClose();
+            return;
+          }
           const invalid = validateSettings(settings);
           setError(invalid);
-          if (!invalid)
-            void onConnect(settings, apiKey, rememberKey).then((ok) => {
-              if (ok) {
-                setApiKey('');
-                onClose();
-              }
-            });
+          if (!invalid) {
+            savingSettingsRef.current = true;
+            setSavingSettings(true);
+            void onConnect(settings, undefined, false, baselineRevision.current)
+              .then((ok) => {
+                if (ok) onClose();
+                else {
+                  setSubmitFailed(true);
+                  setError(t('设置未保存，请检查配置并重试。'));
+                }
+              })
+              .catch((cause) => setError(errorText(cause)))
+              .finally(() => {
+                savingSettingsRef.current = false;
+                setSavingSettings(false);
+              });
+          }
         }}
       >
         <header className="dialog-header">
           <div>
-            <span className="eyebrow">WORKSPACE SETTINGS</span>
-            <h2>连接你的模型服务</h2>
+            <span className="eyebrow">{t('工作空间设置')}</span>
+            <h2>{t('工作空间设置')}</h2>
           </div>
           <button
             type="button"
             className="icon-button"
-            aria-label="关闭设置"
-            onClick={onClose}
-            disabled={connecting}
+            aria-label={t('关闭设置')}
+            onClick={() => navigate('close')}
+            disabled={connecting || savingSettings || backupBusy}
           >
             <X size={19} />
           </button>
         </header>
-        <p className="dialog-intro">使用支持 Responses API 的服务，开始在本地项目中工作。</p>
-        <label className="form-field font-preference">
-          界面字号
-          <select
-            aria-label="界面字号"
-            value={fontSize}
-            disabled={savingFont}
-            onChange={(e) => {
-              setSavingFont(true);
-              void onFontSize(Number(e.target.value))
-                .catch((e) => setError(errorText(e)))
-                .finally(() => setSavingFont(false));
-            }}
-          >
-            {[11, 12, 13, 14, 15, 16, 17, 18].map((size) => (
-              <option key={size} value={size}>
-                {size} px{size === 14 ? ' · 默认' : ''}
-              </option>
-            ))}
-          </select>
-          <small>立即生效并记忆，正文和控件字号一起调整。</small>
-        </label>
-        <div className="protocol-badge">
-          <Check size={14} />
-          Responses API<span>当前支持的协议</span>
-        </div>
-        <label className="form-field">
-          服务地址
-          <input
-            value={settings.baseUrl}
-            onChange={(e) => field('baseUrl', e.target.value)}
-            placeholder="https://api.openai.com/v1"
-            required
-            spellCheck={false}
-          />
-        </label>
-        <label className="form-field">
-          模型 ID
-          <input
-            value={settings.model}
-            onChange={(e) => field('model', e.target.value)}
-            placeholder="填写服务商提供的模型 ID"
-            required
-            spellCheck={false}
-          />
-        </label>
-        <div className="form-columns">
-          <label className="form-field">
-            API Key 环境变量
-            <input
-              value={settings.apiKeyEnv}
-              onChange={(e) => field('apiKeyEnv', e.target.value)}
-              spellCheck={false}
-            />
-          </label>
-          <label className="form-field">
-            网络代理
-            <input
-              value={settings.proxyUrl}
-              onChange={(e) => field('proxyUrl', e.target.value)}
-              spellCheck={false}
-            />
-          </label>
-        </div>
-        <label className="form-field">
-          API Key <span className="field-optional">留空保留已保存的凭据</span>
-          <input
-            type="password"
-            autoComplete="off"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="从系统凭据库或环境变量读取"
-          />
-        </label>
-        <div className="credential-options">
-          <label>
-            <input
-              type="checkbox"
-              checked={rememberKey}
-              onChange={(e) => setRememberKey(e.target.checked)}
-            />
-            保存到系统凭据库
-          </label>
-          <button
-            type="button"
-            onClick={() =>
-              void bridge
-                .forgetApiKey(settings)
-                .then(() => setNotice('已删除保存的密钥；当前运行中的连接不受影响。'))
-                .catch((e) => setError(errorText(e)))
-            }
-          >
-            删除已保存密钥
-          </button>
-        </div>
-        <p className="field-help">
-          <LockKeyhole size={12} />
-          密钥不写入 TOML、日志或任务索引。
-        </p>
-        {notice && <p className="field-help">{notice}</p>}
-        <div className="access-setting">
-          <ShieldCheck size={19} />
-          <div>
-            <strong>终端与工具完全访问</strong>
-            <p>可执行命令、访问文件和网络，无需逐次审批。</p>
-          </div>
-          <span className="enabled-tag">已启用</span>
-        </div>
-        <details className="advanced-settings">
-          <summary>高级配置与个人指令</summary>
-          <p>在本地编辑 TOML 与个人指令。保存后重新连接生效；界面尺寸修改需重启。</p>
-          <div>
-            {(
-              [
-                ['config', '编辑 TOML'],
-                ['agent', '我的 AGENTS.md'],
-                ['environment', '环境说明'],
-              ] as const
-            ).map(([kind, label]) => (
+        <div className="settings-body">
+          {configurationChanged && (
+            <div className="configuration-notice" role="status">
+              <span>{t('配置已在其他位置更新，请先载入最新设置。当前输入仍保留。')}</span>
               <button
                 type="button"
-                key={kind}
-                onClick={() => void bridge.openUserFile(kind).catch((e) => setError(errorText(e)))}
+                onClick={() => {
+                  baseline.current = initial;
+                  baselineRevision.current = settingsRevision;
+                  setSettings(initial);
+                  setError(null);
+                }}
               >
-                {label}
+                {t('载入最新设置')}
               </button>
-            ))}
+            </div>
+          )}
+          <section className="settings-channel-link">
+            <div>
+              <h3>{t('模型渠道')}</h3>
+              <p>{t('添加或切换模型服务，请前往渠道管理。')}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('channels')}
+              disabled={backupBusy || savingSettings}
+            >
+              {t('管理渠道')}
+            </button>
+          </section>
+          {!settings.model && (
+            <p role="status">{t('先添加渠道，即可设置模型价格和上下文；外观现在就可以调整。')}</p>
+          )}
+          <fieldset
+            disabled={connecting || savingSettings || !settings.model}
+            className="settings-model-options"
+          >
+            <PricingSettings settings={settings} onChange={setSettings} />
+            <ContextSettings
+              settings={settings}
+              onChange={setSettings}
+              disabled={connecting || savingSettings || !settings.model}
+            />
+            <p className="field-help">{t('模型价格和上下文在点击“保存设置”后生效。')}</p>
+          </fieldset>
+          <AppearanceSettings />
+          <label className="form-field font-preference">
+            {t('界面字号')}
+            <Select
+              aria-label={t('界面字号')}
+              value={fontSize}
+              disabled={savingFont}
+              onValueChange={(value) => {
+                setSavingFont(true);
+                void onFontSize(Number(value))
+                  .catch((e) => setError(errorText(e)))
+                  .finally(() => setSavingFont(false));
+              }}
+            >
+              {[11, 12, 13, 14, 15, 16, 17, 18].map((size) => (
+                <option key={size} value={size}>
+                  {size} px{size === 14 ? t(' · 默认') : ''}
+                </option>
+              ))}
+            </Select>
+            <small>{t('立即生效并记忆，正文和控件字号一起调整。')}</small>
+          </label>
+          <div className="access-setting">
+            <ShieldCheck size={19} />
+            <div>
+              <strong>{t('终端与工具完全访问')}</strong>
+              <p>{t('可执行命令、访问文件和网络，无需逐次审批。')}</p>
+            </div>
+            <span className="enabled-tag">{t('已启用')}</span>
           </div>
-        </details>
-        {error && (
-          <p className="inline-error" role="alert">
-            {error}
-          </p>
-        )}
+          <details className="advanced-settings">
+            <summary>{t('高级配置与个人指令')}</summary>
+            <p>{t('TOML 修改会自动校验并载入；外观立即更新，连接变更等待任务与终端空闲。')}</p>
+            <div>
+              {(
+                [
+                  ['config', t('编辑 TOML')],
+                  ['agent', t('我的 AGENTS.md')],
+                  ['environment', t('环境说明')],
+                ] as const
+              ).map(([kind, label]) => (
+                <button
+                  type="button"
+                  key={kind}
+                  onClick={() =>
+                    void bridge.openUserFile(kind).catch((e) => setError(errorText(e)))
+                  }
+                >
+                  {t(label)}
+                </button>
+              ))}
+            </div>
+          </details>
+          {error && (
+            <p ref={errorNotice} tabIndex={-1} className="inline-error" role="alert">
+              <ErrorNotice message={error} />
+            </p>
+          )}
+          <UpdateSettings />
+          <BackupSettings
+            busyWork={busyWork}
+            unsavedSettings={JSON.stringify(settings) !== JSON.stringify(baseline.current)}
+            hasUnsentDraft={hasUnsentDraft}
+            onActivity={setBackupBusy}
+          />
+          <RuntimeHealthSettings />
+        </div>
         <footer className="dialog-footer">
+          {pendingNavigation && (
+            <div role="alert" className="settings-unsaved">
+              <p>{t('还有未保存的设置。继续编辑，或放弃本次修改？')}</p>
+              <button
+                type="button"
+                disabled={backupBusy}
+                onClick={() => setPendingNavigation(null)}
+              >
+                {t('继续编辑')}
+              </button>
+              <button
+                type="button"
+                disabled={backupBusy}
+                onClick={() => (pendingNavigation === 'channels' ? onChannels() : onClose())}
+              >
+                {t('放弃修改')}
+              </button>
+            </div>
+          )}
           <span>
             <ExternalLink size={12} />
             FluxCode 0.1.0 · Apache-2.0
           </span>
-          <button type="submit" className="primary-button" disabled={connecting}>
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={connecting || savingSettings || backupBusy}
+          >
             {connecting ? (
               <>
                 <LoaderCircle size={15} className="spin" />
-                正在连接
+                {t('正在连接')}
               </>
             ) : (
-              '保存并连接'
+              t('保存设置')
             )}
           </button>
         </footer>

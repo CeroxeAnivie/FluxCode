@@ -199,9 +199,154 @@ pub async fn diff(root: &str, relative: &str, staged: bool) -> Result<String, St
     Ok(String::from_utf8_lossy(&bytes).to_string())
 }
 
+#[derive(serde::Serialize)]
+pub struct SearchHit {
+    pub path: String,
+    pub line: usize,
+    pub preview: String,
+}
+#[derive(serde::Serialize)]
+pub struct SearchResults {
+    pub hits: Vec<SearchHit>,
+    pub truncated: bool,
+}
+pub async fn search(root: &str, query: &str, contents: bool) -> Result<SearchResults, String> {
+    if query.trim().is_empty() || query.len() > 200 {
+        return Err("搜索内容为空或过长".into());
+    }
+    let root_path = scoped_path(root, "")?;
+    let walk_root = root_path.clone();
+    let (mut paths, mut truncated) = tokio::task::spawn_blocking(move || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(8);
+        let mut paths = Vec::new();
+        let mut truncated = false;
+        let walker = ignore::WalkBuilder::new(&walk_root)
+            .hidden(false)
+            .follow_links(false)
+            .max_depth(Some(64))
+            .filter_entry(|entry| {
+                !matches!(
+                    entry.file_name().to_str(),
+                    Some(".git" | "node_modules" | "target" | ".toolchains")
+                )
+            })
+            .build();
+        for entry in walker {
+            if paths.len() >= 100_000 || std::time::Instant::now() >= deadline {
+                truncated = true;
+                break;
+            }
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(_) => {
+                    truncated = true;
+                    continue;
+                }
+            };
+            if entry.file_type().is_some_and(|kind| kind.is_file())
+                && let Ok(relative) = entry.path().strip_prefix(&walk_root)
+            {
+                paths.push(relative.to_string_lossy().replace('\\', "/"));
+            }
+        }
+        (paths, truncated)
+    })
+    .await
+    .map_err(|_| "搜索目录失败")?;
+    paths.sort();
+    paths.dedup();
+    let mut hits = vec![];
+    let lowercase_query = query.to_lowercase();
+    let mut scanned_bytes = 0_u64;
+    for path in paths {
+        if !contents {
+            if path.to_lowercase().contains(&lowercase_query) {
+                hits.push(SearchHit {
+                    path,
+                    line: 0,
+                    preview: String::new(),
+                });
+            }
+        } else {
+            let Ok(resolved) = scoped_path(root, &path) else {
+                continue;
+            };
+            let Ok(metadata) = tokio::fs::metadata(&resolved).await else {
+                continue;
+            };
+            if metadata.len() > 1_048_576 || !metadata.is_file() {
+                continue;
+            }
+            scanned_bytes += metadata.len();
+            if scanned_bytes > 128 * 1024 * 1024 {
+                truncated = true;
+                break;
+            }
+            let Ok(file) = tokio::fs::File::open(resolved).await else {
+                continue;
+            };
+            let mut bytes = Vec::new();
+            if file.take(1_048_577).read_to_end(&mut bytes).await.is_err()
+                || bytes.len() > 1_048_576
+            {
+                continue;
+            }
+            let Ok(text) = String::from_utf8(bytes) else {
+                continue;
+            };
+            if text.contains('\0') {
+                continue;
+            }
+            for (index, line) in text.lines().enumerate() {
+                if line.contains(query) {
+                    hits.push(SearchHit {
+                        path: path.clone(),
+                        line: index + 1,
+                        preview: line.chars().take(240).collect(),
+                    });
+                    if hits.len() >= 100 {
+                        break;
+                    }
+                }
+            }
+        }
+        if hits.len() >= 100 {
+            truncated = true;
+            break;
+        }
+    }
+    Ok(SearchResults { hits, truncated })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[tokio::test]
+    async fn search_respects_ignore_and_finds_files_past_old_limit() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().to_str().unwrap();
+        tokio::fs::create_dir(dir.path().join(".git"))
+            .await
+            .unwrap();
+        tokio::fs::write(dir.path().join(".gitignore"), "ignored.txt\n")
+            .await
+            .unwrap();
+        tokio::fs::write(dir.path().join("ignored.txt"), "needle")
+            .await
+            .unwrap();
+        for index in 0..5100 {
+            std::fs::write(dir.path().join(format!("file-{index:05}.txt")), "").unwrap();
+        }
+        tokio::fs::write(dir.path().join("z-needle.txt"), "needle")
+            .await
+            .unwrap();
+        let found = search(root, "z-needle", false).await.unwrap();
+        assert_eq!(found.hits.len(), 1);
+        assert!(!found.truncated);
+        let contents = search(root, "needle", true).await.unwrap();
+        assert_eq!(contents.hits.len(), 1);
+        assert_eq!(contents.hits[0].path, "z-needle.txt");
+    }
     #[test]
     fn traversal_is_rejected() {
         let dir = tempfile::tempdir().unwrap();

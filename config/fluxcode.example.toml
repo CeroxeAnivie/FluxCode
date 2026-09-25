@@ -1,7 +1,8 @@
 # FluxCode configuration · schema 1
-# UTF-8. Runtime copy: <OS application data>/dev.fluxcode.desktop/fluxcode.toml
-# The settings dialog updates only [provider] and [network], preserving your comments.
-# Restart the app after changing terminal or UI options. Never put API keys in this file.
+# UTF-8. Runtime copy: <executable directory>/data/fluxcode.toml
+# Settings writes preserve comments and unrelated sections. Never put API keys here.
+# External edits reload after validation. Appearance applies immediately; connection
+# changes wait until active tasks/commands finish. New terminals use updated settings.
 schema_version = 1
 
 [provider]
@@ -12,8 +13,8 @@ api_key_env = "OPENAI_API_KEY"
 wire_api = "responses"
 
 [network]
-# All engine HTTP(S) traffic uses this proxy. Shells inherit the same proxy variables.
-proxy_url = "http://127.0.0.1:14455/"
+# Optional HTTP(S) proxy. Leave empty to use the host's normal network settings.
+proxy_url = ""
 
 [execution]
 # This release intentionally supports only full access. No per-command approval.
@@ -29,7 +30,7 @@ output_limit_bytes = 1048576
 
 [terminal.environment]
 # Additional non-secret environment variables for the command panel.
-# HTTP_PROXY / HTTPS_PROXY / ALL_PROXY always come from [network].
+# An explicit [network].proxy_url is passed to new terminals.
 TERM = "xterm-256color"
 
 [ui]
@@ -37,3 +38,13 @@ TERM = "xterm-256color"
 font_size = 14
 sidebar_width = 246
 inspector_width = 294
+
+[appearance]
+language = "zh-CN"
+theme = "system"
+
+[context]
+# Omit to use model defaults. Reconnect after changing these settings.
+# This is an engine budget, not an increase in provider model capacity.
+# window_tokens = 200000
+# auto_compact_tokens = 160000

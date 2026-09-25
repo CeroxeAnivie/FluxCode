@@ -34,3 +34,27 @@ describe('catalog persistence boundary', () => {
     ).toThrow();
   });
 });
+
+describe('workspace catalog compatibility', () => {
+  const original = {
+    version: 1,
+    projects: [{ id: 'p', name: '旧项目', path: 'D:/project' }],
+    tasks: [],
+  };
+  it('accepts existing catalogs and round-trips closed worktree ownership without dropping projects', () => {
+    expect(parseCatalog(JSON.stringify(original))).toEqual(original);
+    const next = {
+      ...original,
+      projects: [{ ...original.projects[0], closed: true, worktreeParentId: 'parent' }],
+    };
+    expect(parseCatalog(JSON.stringify(next))).toEqual(next);
+  });
+  it('rejects invalid closure and parent metadata instead of silently changing visibility', () => {
+    for (const metadata of [{ closed: 'false' }, { worktreeParentId: 42 }])
+      expect(() =>
+        parseCatalog(
+          JSON.stringify({ ...original, projects: [{ ...original.projects[0], ...metadata }] }),
+        ),
+      ).toThrow();
+  });
+});

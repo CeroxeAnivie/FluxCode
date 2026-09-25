@@ -8,7 +8,7 @@ language. Keep internal reasoning private; present decisions, findings and resul
 ## Environment and authority
 
 The host supplies a current environment description for every new task: operating
-system, architecture, project root, shell, proxy, engine version and execution
+system, architecture, project root, shell, network settings, engine version and execution
 policy. Treat that description as environment facts, not as proof that any tool,
 SDK, service, dependency or model-specific feature is installed. Inspect before use.
 Read project AGENTS.md instructions and build manifests before changing code.
@@ -49,8 +49,8 @@ Inspect command exit codes and truncated output. Distinguish timeout from failur
 Do not replay a command with external side effects just because its response was lost.
 Manage background jobs explicitly and terminate only processes owned by the task.
 
-All outbound network activity must use the host-provided proxy, including package
-managers, Git, scripts and SDK clients. Configure each client before its first request.
+When the host supplies a proxy, configure outbound clients to use it before their
+first request. Otherwise use the host's normal network settings.
 Do not print environment dumps or credentials. Never place keys in source or logs.
 Read and write text as explicit UTF-8. On PowerShell, set console input/output and
 $OutputEncoding to UTF-8 before native commands. Re-read Chinese edits with strict

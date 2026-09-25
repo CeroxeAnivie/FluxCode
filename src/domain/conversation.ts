@@ -49,6 +49,30 @@ export function normalizeItem(value: unknown): ChatItem | null {
         kind: 'reasoning',
         text: Array.isArray(i.summary) ? i.summary.map(text).join('\n') : '',
       };
+    case 'collabAgentToolCall':
+      return {
+        id,
+        kind: 'agent',
+        text: text(i.prompt),
+        status: text(i.status),
+        detail: (Array.isArray(i.receiverThreadIds) ? i.receiverThreadIds.map(text) : []).join(
+          '\n',
+        ),
+        steps: Object.entries(record(i.agentsStates)).map(([id, value]) => ({
+          text: id,
+          status: text(record(value).status),
+        })),
+      };
+    case 'subAgentActivity':
+      return {
+        id,
+        kind: 'agent',
+        text: text(i.agentPath),
+        detail: text(i.agentThreadId),
+        status: text(i.kind),
+      };
+    case 'contextCompaction':
+      return { id, kind: 'compaction', text: '' };
     case 'plan':
       return { id, kind: 'plan', text: text(i.text) };
     case 'mcpToolCall':
@@ -72,13 +96,57 @@ export function upsert(items: ChatItem[], item: ChatItem): ChatItem[] {
 
 export function reduceEvent(state: Conversation, event: RpcEvent): Conversation {
   const p = event.params ?? {};
+  // A delayed completion or delta from an older turn must not stop or alter the active turn.
+  const eventTurnId = event.method === 'turn/completed' ? text(record(p.turn).id) : text(p.turnId);
+  if (
+    state.turnId &&
+    eventTurnId &&
+    state.turnId !== eventTurnId &&
+    event.method !== 'turn/started'
+  )
+    return state;
   switch (event.method) {
+    case 'thread/tokenUsage/updated': {
+      const usage = record(p.tokenUsage);
+      const total = record(usage.total);
+      const last = record(usage.last);
+      const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : 0);
+      return {
+        ...state,
+        usage: {
+          input: count(total.inputTokens),
+          output: count(total.outputTokens),
+          cached: count(total.cachedInputTokens),
+          reasoning: count(total.reasoningOutputTokens),
+          total: count(total.totalTokens),
+          context: typeof usage.modelContextWindow === 'number' ? usage.modelContextWindow : null,
+          lastInput: count(last.inputTokens),
+          lastTotal: count(last.totalTokens),
+          lastCached: count(last.cachedInputTokens),
+          lastOutput: count(last.outputTokens),
+          model: state.activeModel,
+        },
+      };
+    }
     case 'turn/started':
-      return { ...state, busy: true, turnId: text(record(p.turn).id), error: null };
+      return {
+        ...state,
+        recoveredTurn: undefined,
+        busy: true,
+        lastTurnStatus: 'inProgress',
+        turnId: text(record(p.turn).id),
+        error: null,
+      };
     case 'turn/completed':
       return {
         ...state,
         busy: false,
+        lastTurnStatus: text(record(p.turn).status),
+        items: state.items.map((item) =>
+          item.kind === 'compaction' && item.status === 'inProgress'
+            ? { ...item, status: 'interrupted' }
+            : item,
+        ),
         turnId: null,
         error: text(record(record(p.turn).error).message) || null,
       };
@@ -88,7 +156,15 @@ export function reduceEvent(state: Conversation, event: RpcEvent): Conversation 
     case 'item/completed': {
       const item = normalizeItem(p.item);
       if (!item) return state;
-      return { ...state, items: upsert(state.items, item) };
+      return {
+        ...state,
+        items: upsert(
+          state.items,
+          item.kind === 'compaction'
+            ? { ...item, status: event.method === 'item/started' ? 'inProgress' : 'completed' }
+            : item,
+        ),
+      };
     }
     case 'item/agentMessage/delta':
     case 'item/commandExecution/outputDelta':
@@ -106,6 +182,21 @@ export function reduceEvent(state: Conversation, event: RpcEvent): Conversation 
           ? { ...current, detail: cap((current.detail ?? '') + text(p.delta)) }
           : { ...current, text: cap(current.text + text(p.delta)) };
       return { ...state, items: upsert(state.items, item) };
+    }
+    case 'turn/plan/updated': {
+      const steps = (Array.isArray(p.plan) ? p.plan : []).map((value) => ({
+        text: text(record(value).step),
+        status: text(record(value).status),
+      }));
+      return {
+        ...state,
+        items: upsert(state.items, {
+          id: `plan:${text(p.turnId)}`,
+          kind: 'plan',
+          text: text(p.explanation),
+          steps,
+        }),
+      };
     }
     case 'turn/diff/updated':
       return { ...state, diff: text(p.diff) };
