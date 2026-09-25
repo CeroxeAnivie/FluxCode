@@ -648,6 +648,38 @@ test('keyboard reaches offscreen tasks in a large virtualized sidebar', async ({
   await expect(page.getByRole('button', { name: 'Keyboard task 498', exact: true })).toBeFocused();
 });
 
+test('settings load on demand without hiding the workspace or losing its draft', async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.url()));
+  await page.getByRole('button', { name: '打开项目', exact: true }).click();
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('设置加载期间保留的草稿');
+  expect(requests.some((url) => /\/SettingsDialog-[^/]+\.js/.test(url))).toBe(false);
+  let release!: () => void;
+  const loading = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/SettingsDialog-*.js', async (route) => {
+    await loading;
+    await route.continue();
+  });
+  try {
+    await page.getByRole('button', { name: '设置', exact: true }).click();
+    await expect(page.locator('.loading-overlay')).toBeVisible();
+    await expect(input).toBeVisible();
+    await expect(input).toHaveValue('设置加载期间保留的草稿');
+  } finally {
+    release();
+  }
+  await page.getByRole('button', { name: '关闭设置', exact: true }).click();
+  await expect(input).toHaveValue('设置加载期间保留的草稿');
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '关闭设置', exact: true }).click();
+  expect(requests.filter((url) => /\/SettingsDialog-[^/]+\.js/.test(url))).toHaveLength(1);
+});
+
 test('closing settings does not steal focus from the next chosen input', async ({ page }) => {
   await setup(page);
   await page.getByRole('button', { name: '设置', exact: true }).click();

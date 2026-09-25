@@ -1,5 +1,11 @@
-import { SchedulesDialog } from './components/SchedulesDialog';
-import { TaskActivityDialog } from './components/TaskActivityDialog';
+const SchedulesDialog = lazy(() =>
+  import('./components/SchedulesDialog').then((module) => ({ default: module.SchedulesDialog })),
+);
+const TaskActivityDialog = lazy(() =>
+  import('./components/TaskActivityDialog').then((module) => ({
+    default: module.TaskActivityDialog,
+  })),
+);
 import { ErrorNotice } from './components/ErrorNotice';
 import { useAppearance } from './application/AppearanceProvider';
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
@@ -30,13 +36,17 @@ import { useFluxCode } from './application/useFluxCode';
 import { emptyConversation } from './domain/types';
 import { TitleBar } from './components/TitleBar';
 import { Sidebar } from './components/Sidebar';
-import { WorkspaceManager } from './components/WorkspaceManager';
+const WorkspaceManager = lazy(() =>
+  import('./components/WorkspaceManager').then((module) => ({ default: module.WorkspaceManager })),
+);
 import { PanelResizeHandle } from './components/PanelResizeHandle';
 import { Composer } from './components/Composer';
 import { SharedWorkspaceNotice } from './components/SharedWorkspaceNotice';
 import { sharedWorkspaceTasks } from './domain/sharedWorkspace';
 import { Conversation, Welcome } from './components/Conversation';
-import { SettingsDialog } from './components/SettingsDialog';
+const SettingsDialog = lazy(() =>
+  import('./components/SettingsDialog').then((module) => ({ default: module.SettingsDialog })),
+);
 const ChannelsDialog = lazy(() =>
   import('./components/ChannelsDialog').then((module) => ({ default: module.ChannelsDialog })),
 );
@@ -53,9 +63,21 @@ import { QueuedMessages } from './components/QueuedMessages';
 import { useContextAttachments } from './application/useContextAttachments';
 import { useAutomaticBackup } from './application/useAutomaticBackup';
 import { UsageIndicator } from './components/UsageIndicator';
-import { CapabilitiesDialog } from './components/CapabilitiesDialog';
-import { ConversationSearchDialog } from './components/ConversationSearchDialog';
-import { ConversationImportDialog } from './components/ConversationImportDialog';
+const CapabilitiesDialog = lazy(() =>
+  import('./components/CapabilitiesDialog').then((module) => ({
+    default: module.CapabilitiesDialog,
+  })),
+);
+const ConversationSearchDialog = lazy(() =>
+  import('./components/ConversationSearchDialog').then((module) => ({
+    default: module.ConversationSearchDialog,
+  })),
+);
+const ConversationImportDialog = lazy(() =>
+  import('./components/ConversationImportDialog').then((module) => ({
+    default: module.ConversationImportDialog,
+  })),
+);
 import type { SearchHit } from './domain/conversationSearch';
 import { shortcutBelongsToEditor } from './domain/keyboard';
 import { routeDroppedItems } from './domain/dropRouting';
@@ -635,132 +657,140 @@ export default function App({
           />
         </Suspense>
       )}
-      {schedulesOpen && (
-        <SchedulesDialog
-          project={project?.path}
-          onClose={() => setSchedulesOpen(false)}
-          onOpen={app.openScheduledTask}
-        />
-      )}
-      {workspacesOpen && (
-        <WorkspaceManager
-          projects={app.catalog.projects}
-          onRename={app.renameProject}
-          onSelect={(id) => {
-            if (!app.selectProject(id)) throw new Error('请先保存当前编辑，再切换工作区。');
-          }}
-          onCloseProject={(id) => {
-            const tasks = app.catalog.tasks.filter((task) => task.projectId === id);
-            if (tasks.some((task) => app.conversations[task.id]?.busy))
-              throw new Error('请先停止此工作区中的运行任务。');
-            for (const task of tasks) {
-              if (
-                queue.items.some((item) => item.threadId === task.id && item.status === 'sending')
-              )
-                throw new Error('请先停止此工作区中的运行任务。');
-              if (
-                queue.items.some(
-                  (item) => item.threadId === task.id && item.status === 'waiting',
-                ) &&
-                !queue.pause(task.id)
-              )
-                throw new Error('待发送队列未能保存，请重试。');
-            }
-            app.closeProject(id);
-          }}
-          onClose={() => setWorkspacesOpen(false)}
-        />
-      )}
-      {activityOpen && (
-        <TaskActivityDialog
-          catalog={app.catalog}
-          conversations={app.conversations}
-          queue={queue.items}
-          waiting={
-            new Set(
-              [...interactions.requests, ...interactions.elicitations]
-                .map((request) => request.threadId)
-                .filter((id): id is string => !!id),
-            )
-          }
-          onSelect={app.selectTask}
-          onStop={async (id) => {
-            queue.pause(id);
-            await app.stopTask(id);
-          }}
-          onClose={() => setActivityOpen(false)}
-        />
-      )}
-      {conversationSearchOpen && (
-        <ConversationSearchDialog
-          catalog={app.catalog}
-          onClose={() => setConversationSearchOpen(false)}
-          onHit={async (hit) => {
-            if (!(await app.selectTask(hit.taskId)))
-              throw new Error(t('无法打开匹配的任务，请检查连接后重试。'));
-            setSearchTarget(hit);
-            setConversationSearchOpen(false);
-          }}
-        />
-      )}
-      {conversationImportOpen && (
-        <ConversationImportDialog
-          catalog={app.catalog}
-          onImport={app.importConversations}
-          onClose={() => setConversationImportOpen(false)}
-        />
-      )}
-      {settingsOpen && (
-        <SettingsDialog
-          hasUnsentDraft={app.hasUnsentDraft}
-          busyWork={
-            app.sending ||
-            Object.values(app.conversations).some((conversation) => conversation.busy)
-          }
-          onChannels={() => {
-            setSettingsOpen(false);
-            openChannels();
-          }}
-          settingsRevision={app.configurationUpdates.snapshot?.settingsRevision}
-          fontSize={app.fontSize}
-          onFontSize={app.changeFontSize}
-          initial={app.configurationUpdates.snapshot?.settings ?? app.settings}
-          connecting={app.connection === 'connecting'}
-          connectionError={app.error}
-          onClose={() => setSettingsOpen(false)}
-          onConnect={app.connect}
-        />
-      )}
-      {(channelsOpen || channelsMounted) && (
-        <Suspense
-          fallback={
-            <div role="status" className="loading-overlay">
-              {t('正在加载…')}
-            </div>
-          }
-        >
-          <ChannelsDialog
-            open={channelsOpen}
-            returnFocus={channelsReturnFocus.current}
-            connectionError={app.error}
-            settings={app.settings}
-            profiles={app.providerProfiles}
-            onProfiles={app.setProviderProfiles}
-            onConnect={(settings) => app.connect(settings, undefined, false, undefined, true)}
-            connected={app.connection === 'ready'}
-            locked={app.sending || Object.values(app.conversations).some((c) => c.busy)}
-            onClose={() => setChannelsOpen(false)}
+      <Suspense
+        fallback={
+          <div role="status" className="loading-overlay">
+            {t('正在加载…')}
+          </div>
+        }
+      >
+        {schedulesOpen && (
+          <SchedulesDialog
+            project={project?.path}
+            onClose={() => setSchedulesOpen(false)}
+            onOpen={app.openScheduledTask}
           />
-        </Suspense>
-      )}
-      {capabilitiesOpen && (
-        <CapabilitiesDialog
-          cwd={project?.path}
-          threadId={task?.id}
-          onClose={() => setCapabilitiesOpen(false)}
-          onModel={(model) => app.setSelection({ ...app.selection, model })}
-        />
-      )}
+        )}
+        {workspacesOpen && (
+          <WorkspaceManager
+            projects={app.catalog.projects}
+            onRename={app.renameProject}
+            onSelect={(id) => {
+              if (!app.selectProject(id)) throw new Error('请先保存当前编辑，再切换工作区。');
+            }}
+            onCloseProject={(id) => {
+              const tasks = app.catalog.tasks.filter((task) => task.projectId === id);
+              if (tasks.some((task) => app.conversations[task.id]?.busy))
+                throw new Error('请先停止此工作区中的运行任务。');
+              for (const task of tasks) {
+                if (
+                  queue.items.some((item) => item.threadId === task.id && item.status === 'sending')
+                )
+                  throw new Error('请先停止此工作区中的运行任务。');
+                if (
+                  queue.items.some(
+                    (item) => item.threadId === task.id && item.status === 'waiting',
+                  ) &&
+                  !queue.pause(task.id)
+                )
+                  throw new Error('待发送队列未能保存，请重试。');
+              }
+              app.closeProject(id);
+            }}
+            onClose={() => setWorkspacesOpen(false)}
+          />
+        )}
+        {activityOpen && (
+          <TaskActivityDialog
+            catalog={app.catalog}
+            conversations={app.conversations}
+            queue={queue.items}
+            waiting={
+              new Set(
+                [...interactions.requests, ...interactions.elicitations]
+                  .map((request) => request.threadId)
+                  .filter((id): id is string => !!id),
+              )
+            }
+            onSelect={app.selectTask}
+            onStop={async (id) => {
+              queue.pause(id);
+              await app.stopTask(id);
+            }}
+            onClose={() => setActivityOpen(false)}
+          />
+        )}
+        {conversationSearchOpen && (
+          <ConversationSearchDialog
+            catalog={app.catalog}
+            onClose={() => setConversationSearchOpen(false)}
+            onHit={async (hit) => {
+              if (!(await app.selectTask(hit.taskId)))
+                throw new Error(t('无法打开匹配的任务，请检查连接后重试。'));
+              setSearchTarget(hit);
+              setConversationSearchOpen(false);
+            }}
+          />
+        )}
+        {conversationImportOpen && (
+          <ConversationImportDialog
+            catalog={app.catalog}
+            onImport={app.importConversations}
+            onClose={() => setConversationImportOpen(false)}
+          />
+        )}
+        {settingsOpen && (
+          <SettingsDialog
+            hasUnsentDraft={app.hasUnsentDraft}
+            busyWork={
+              app.sending ||
+              Object.values(app.conversations).some((conversation) => conversation.busy)
+            }
+            onChannels={() => {
+              setSettingsOpen(false);
+              openChannels();
+            }}
+            settingsRevision={app.configurationUpdates.snapshot?.settingsRevision}
+            fontSize={app.fontSize}
+            onFontSize={app.changeFontSize}
+            initial={app.configurationUpdates.snapshot?.settings ?? app.settings}
+            connecting={app.connection === 'connecting'}
+            connectionError={app.error}
+            onClose={() => setSettingsOpen(false)}
+            onConnect={app.connect}
+          />
+        )}
+        {(channelsOpen || channelsMounted) && (
+          <Suspense
+            fallback={
+              <div role="status" className="loading-overlay">
+                {t('正在加载…')}
+              </div>
+            }
+          >
+            <ChannelsDialog
+              open={channelsOpen}
+              returnFocus={channelsReturnFocus.current}
+              connectionError={app.error}
+              settings={app.settings}
+              profiles={app.providerProfiles}
+              onProfiles={app.setProviderProfiles}
+              onConnect={(settings) => app.connect(settings, undefined, false, undefined, true)}
+              connected={app.connection === 'ready'}
+              locked={app.sending || Object.values(app.conversations).some((c) => c.busy)}
+              onClose={() => setChannelsOpen(false)}
+            />
+          </Suspense>
+        )}
+        {capabilitiesOpen && (
+          <CapabilitiesDialog
+            cwd={project?.path}
+            threadId={task?.id}
+            onClose={() => setCapabilitiesOpen(false)}
+            onModel={(model) => app.setSelection({ ...app.selection, model })}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

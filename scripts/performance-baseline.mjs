@@ -66,10 +66,18 @@ async function measure(page, label, action, ready) {
   // Navigation replaces the page's time origin; use one monotonic host clock.
   const before = performance.now();
   await action();
+  const actionEnd = performance.now();
   await ready();
+  const readyEnd = performance.now();
   await settle(page);
   const after = performance.now();
-  return { label, ms: Math.round((after - before) * 10) / 10 };
+  return {
+    label,
+    ms: Math.round((after - before) * 10) / 10,
+    actionMs: Math.round((actionEnd - before) * 10) / 10,
+    readyMs: Math.round((readyEnd - actionEnd) * 10) / 10,
+    paintWaitMs: Math.round((after - readyEnd) * 10) / 10,
+  };
 }
 
 async function memory(cdp, page) {
@@ -105,6 +113,15 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 940 } });
   const page = await context.newPage();
   page.setDefaultTimeout(30000);
+  // Measure Chromium's first compositor frames separately. On some Windows
+  // hosts even an empty document takes seconds to produce its first rAF.
+  // Retain this cost in the report; do not attribute it to application code.
+  const compositorControl = await measure(
+    page,
+    'emptyDocumentColdStart',
+    () => page.goto('data:text/html,<button>Compositor control</button>'),
+    () => page.getByRole('button', { name: 'Compositor control' }).waitFor(),
+  );
   await page.addInitScript(
     ({ taskCount, rootFileCount, directoryDepth, historyCount, longFileLines }) => {
       const tasks = Array.from({ length: taskCount }, (_, index) => ({
@@ -201,6 +218,10 @@ try {
   );
   const cdp = await context.newCDPSession(page);
   await cdp.send('Performance.enable');
+  if (process.env.FLUXCODE_PROFILE_STARTUP === '1') {
+    await cdp.send('Profiler.enable');
+    await cdp.send('Profiler.start');
+  }
   const timings = [];
   const startup = await measure(
     page,
@@ -209,6 +230,15 @@ try {
     () => page.getByRole('button', { name: 'Task 0000', exact: true }).waitFor(),
   );
   timings.push(startup);
+  if (process.env.FLUXCODE_PROFILE_STARTUP === '1') {
+    const { profile } = await cdp.send('Profiler.stop');
+    await writeFile(resolve(output, 'startup.cpuprofile'), JSON.stringify(profile), 'utf8');
+  }
+  const startupProfile = await page.evaluate(() => ({
+    navigation: performance.getEntriesByType('navigation').map((entry) => entry.toJSON()),
+    resources: performance.getEntriesByType('resource').map((entry) => entry.toJSON()),
+    paints: performance.getEntriesByType('paint').map((entry) => entry.toJSON()),
+  }));
   const initialMemory = await memory(cdp, page);
 
   const searchDurations = [];
@@ -353,6 +383,8 @@ try {
     environment: { platform: process.platform, node: process.version, browser: browser.version() },
     fixture: { taskCount, rootFileCount, directoryDepth, historyCount, longFileLines },
     timings,
+    compositorControl,
+    startupProfile,
     memory: {
       afterStartup: initialMemory,
       afterHistory: historyMemory,
