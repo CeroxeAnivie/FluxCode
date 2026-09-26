@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — Windows local desktop (2026-09-26)
 
 - Independent workspace windows with shared task state, private drafts, project
   selection and recovery; closing the main view preserves coordination until the
@@ -21,20 +21,15 @@
   browser handoff.
 - Improved localized error feedback, failed-save recovery and stale-turn routing.
 
-This section describes the working tree, not a released installer. Full keyboard,
-screen-reader, sleep/resume, extended fault/soak and clean-machine lifecycle
-acceptance remain open. Signing and broader real-provider verification also remain
-release requirements; local fixture success is not a substitute.
+- Codex 0.157.0 with reviewed dependency upgrades and security backports;
+  pinned binary hashes, protocol bindings and provider-default reasoning behavior.
+- Lazy-loaded settings and Inspector, terminal clear targeting the visible mode,
+  explicit upstream-overload errors and real-provider acceptance evidence.
+- Native V8 notices, engine dependency inventory, corresponding MPL source
+  archives and reproducible source patch recipe.
 
-## 0.1.0 — Initial public preview
-
-- Windows desktop workspace with bundled Codex 0.156.1; no separate CLI installation.
-- Local projects, conversations, streaming output, cancellation, history and archiving.
-- Responses providers, OS credential storage and editable TOML configuration.
-- Per-conversation model and reasoning selection; Off omits the wire effort field.
-- Adjustable, remembered typography and keyboard-accessible model controls.
-- File previews, Git changes and bounded terminal commands with full access.
-- Apache-2.0 licensing, third-party notices and documented verification evidence.
-
-This is the first public preview. Signing, clean-machine lifecycle acceptance,
-production-provider acceptance and macOS/Linux distribution remain release gates.
+The installer is unsigned. Clean-machine installation/upgrade, publisher signing,
+DPI/account matrices, prolonged soak and complete network/disk fault matrices
+remain explicitly deferred. One real Responses provider passed a scoped native
+acceptance run; this does not establish compatibility with every provider.
+Five upstream maintenance advisories remain documented.

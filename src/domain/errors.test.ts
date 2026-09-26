@@ -31,6 +31,14 @@ describe('actionable errors', () => {
     expect(errorMessage('The file changed on disk', 'en')).toContain('changed externally');
   });
 
+  it('keeps provider overload distinct from a local connection failure', () => {
+    const raw =
+      'stream disconnected before completion: Our servers are currently overloaded. Please try again later.';
+    expect(errorMessage(raw, 'zh-CN')).toBe('模型服务暂时不可用，请稍后重试。');
+    expect(errorMessage(raw, 'en')).toBe(english['模型服务暂时不可用，请稍后重试。']);
+    expect(errorMessage('stream disconnected: connection reset', 'zh-CN')).toContain('无法连接');
+  });
+
   it('translates Windows file and opener failures without mixing UI languages', () => {
     const failures = [
       ['The system cannot find the file specified. (os error 2)', '文件不存在', 'no longer exists'],

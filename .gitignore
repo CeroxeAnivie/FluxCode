@@ -13,3 +13,4 @@ src-tauri/resources/engine/*
 !src-tauri/resources/engine/.gitkeep
 src-tauri/gen/
 *.tsbuildinfo
+__pycache__/

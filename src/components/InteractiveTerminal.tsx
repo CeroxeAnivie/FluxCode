@@ -12,11 +12,13 @@ export function InteractiveTerminal({
   ready,
   fontSize,
   active,
+  clearGeneration,
 }: {
   cwd?: string;
   ready: boolean;
   fontSize: number;
   active: boolean;
+  clearGeneration: number;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const terminal = useRef<Terminal | null>(null);
@@ -126,6 +128,9 @@ export function InteractiveTerminal({
       if (started) void bridge.rpc('command/exec/terminate', { processId: id }).catch(() => {});
     };
   }, [cwd, ready, generation]);
+  useEffect(() => {
+    if (clearGeneration > 0) terminal.current?.clear();
+  }, [clearGeneration]);
   useEffect(() => {
     if (active) {
       resizeTerminal.current?.();

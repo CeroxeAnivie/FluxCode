@@ -27,6 +27,7 @@ jobs:
       - run: pnpm format:check
       - run: pnpm test
       - run: node --test scripts/lib/release-binary.test.mjs
+      - run: python scripts/test-prepare-engine.py
       - run: pnpm build
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4

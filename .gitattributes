@@ -1,3 +1,9 @@
 * text=auto eol=lf
 *.png binary
 *.ico binary
+*.crate binary
+*.tar binary
+# Unified diff context includes a single-space prefix on empty source lines.
+engine/security/*.patch whitespace=-blank-at-eol
+# Preserve upstream legal text verbatim, including its original whitespace.
+src-tauri/resources/legal/ENGINE-*.txt whitespace=-blank-at-eol,-blank-at-eof

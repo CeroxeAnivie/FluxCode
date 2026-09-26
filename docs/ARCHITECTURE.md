@@ -50,7 +50,8 @@ No global Codex installation or configuration is modified.
 
 ## Compatibility and release boundaries
 
-Codex 0.156.1 is locked by release SHA-256. The app-server protocol is upstream
+Codex 0.157.0 with the reviewed `engine/security` dependency patches is locked by
+SHA-256 in `config/engine-release.toml`. The app-server protocol is upstream
 experimental: compatibility is tested against this exact bundle, never an arbitrary
 user CLI. Updating it requires regenerating bindings and passing the real-engine
 fixture tests. Current packaging is Windows x86_64; cross-platform host code is not

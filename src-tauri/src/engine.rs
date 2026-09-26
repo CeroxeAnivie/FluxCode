@@ -268,7 +268,10 @@ impl Engine {
         engine
             .write(json!({"method":"initialized","params":{}}))
             .await?;
-        tracing::info!(engine_version = "0.156.1", "engine_connected");
+        tracing::info!(
+            engine_version = env!("FLUXCODE_ENGINE_VERSION"),
+            "engine_connected"
+        );
         Ok(engine)
     }
 

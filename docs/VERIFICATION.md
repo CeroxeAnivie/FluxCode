@@ -345,3 +345,43 @@ Six declared local engine faults (401, 429, 503, invalid SSE, truncated stream, 
 The native multiwindow flow additionally passed forced host termination and restart, restoring draft/index/engine conversation history without replay (`work/native-multiwindow-1790326891369/result.json`). This is scoped host-crash evidence, not every storage fault or indefinite soak.
 
 Final Windows installer verification passed: 102,582,732 bytes; SHA-256 recorded in RELEASE-CHECKSUMS.txt. Packaged executable matches the current optimized build, all 16 engine/legal resources match, and production test transport is disabled. Source checks: 34 Vitest files / 116 tests passed; full configured Prettier check passed. Installer is unsigned; clean-machine and external acceptance remain deferred.
+
+## Provider, terminal and patched engine follow-up (2026-09-26)
+
+- Real authorized provider acceptance is recorded in LIVE-ACCEPTANCE-2026-09-25.md:
+  model discovery, actual command/file output, remembered selection, stop,
+  compaction and continuation. One upstream overload needed an explicit retry;
+  server overload classification now has seven passing error-domain tests.
+- Native PTY acceptance is recorded in TERMINAL-ACCEPTANCE-2026-09-25.md:
+  Unicode, Python REPL, Ctrl+C, hidden-session retention, actual ConPTY resize,
+  Git, full-screen less, restart, explicit session termination and child cleanup.
+- Inspector lazy loading covers both main and workspace windows. Three related
+  GUI flows and TypeScript passed. Startup measurements retain cache/load limits
+  and are documented in PERFORMANCE.md; no unsupported speedup is claimed.
+- Codex 0.157.0 security build completed with Rust 1.98.1, release optimization,
+  static CRT and sandbox-enabled V8. Both engine executables were generated;
+  `codex --version` returned 0.157.0. Prior patch tests passed: two DNS bounds,
+  22 wire serialization and six OpenTelemetry baggage checks.
+- Before replacing resources, the candidate passed actual tool execution and
+  filesystem feedback, code-mode, all native effort values and omission/reset,
+  manual/automatic compaction, continued conversation and invalid-thread checks.
+  These used declared local Responses fixtures, not another paid model call.
+- Bundled binaries, generated protocol and model catalog now match the release
+  TOML. TypeScript passed after regeneration. Four filesystem regressions cover
+  pair replacement, rollback, new-file rollback and retained recovery originals.
+- Engine notices include native V8 dependencies and explicitly attributed
+  standard terms where crate archives omit standalone license files. Remaining
+  maintenance advisories and environment acceptance stay visible.
+
+Final delivery checks on 2026-09-26: strict Clippy and Rust formatting passed;
+34 Vitest files / 117 tests and the configured Prettier check passed. Both release
+and standalone debug desktop builds succeeded. The upgraded engine passed all ten
+native terminal checks (`work/native-terminal-1790404633714/result.json`). A fresh
+isolated native startup observation was 657.6 ms, with reloads 127.5/89.9/95.8 ms;
+PERFORMANCE.md records the measurement limitations.
+
+The new NSIS installer is 103,057,855 bytes. `verify-release.mjs` extracted it and
+verified the packaged executable against the optimized build, all 32 engine/legal
+resources against current files, engine identity 0.157.0 and absence of production
+test transport. SHA-256 is in RELEASE-CHECKSUMS.txt. This supersedes the earlier
+installer record above; signing and deferred environment matrices remain deferred.

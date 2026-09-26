@@ -114,18 +114,22 @@ for (const config of [
   'check_for_update_on_startup=false',
 ])
   args.push('-c', config);
-const child = spawn(resolve(root, 'src-tauri/resources/engine/codex.exe'), args, {
-  windowsHide: true,
-  env: {
-    ...process.env,
-    CODEX_HOME: home,
-    ...(proxy
-      ? { HTTP_PROXY: proxy, HTTPS_PROXY: proxy, ALL_PROXY: proxy, NO_PROXY: '', no_proxy: '' }
-      : {}),
-    FLUX_FIXTURE_KEY: 'fixture-not-a-real-secret',
+const child = spawn(
+  process.env.FLUXCODE_ENGINE_BIN || resolve(root, 'src-tauri/resources/engine/codex.exe'),
+  args,
+  {
+    windowsHide: true,
+    env: {
+      ...process.env,
+      CODEX_HOME: home,
+      ...(proxy
+        ? { HTTP_PROXY: proxy, HTTPS_PROXY: proxy, ALL_PROXY: proxy, NO_PROXY: '', no_proxy: '' }
+        : {}),
+      FLUX_FIXTURE_KEY: 'fixture-not-a-real-secret',
+    },
+    stdio: ['pipe', 'pipe', 'pipe'],
   },
-  stdio: ['pipe', 'pipe', 'pipe'],
-});
+);
 let nextId = 0;
 const pending = new Map();
 const events = [];

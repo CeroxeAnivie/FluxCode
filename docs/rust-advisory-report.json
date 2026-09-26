@@ -1,58 +1,24 @@
 {
-  "checkedAt": "2026-09-25T06:49:47.8373802Z",
   "findings": [
     {
+      "name": "glib",
       "advisories": [
         "GHSA-wrw7-89jp-8q8g",
         "RUSTSEC-2024-0429"
       ],
-      "name": "glib",
       "version": "0.18.5"
     },
     {
+      "name": "proc-macro-error",
       "advisories": [
         "RUSTSEC-2024-0370"
       ],
-      "name": "proc-macro-error",
       "version": "1.0.4"
-    },
-    {
-      "advisories": [
-        "RUSTSEC-2025-0081"
-      ],
-      "name": "unic-char-property",
-      "version": "0.9.0"
-    },
-    {
-      "advisories": [
-        "RUSTSEC-2025-0075"
-      ],
-      "name": "unic-char-range",
-      "version": "0.9.0"
-    },
-    {
-      "advisories": [
-        "RUSTSEC-2025-0080"
-      ],
-      "name": "unic-common",
-      "version": "0.9.0"
-    },
-    {
-      "advisories": [
-        "RUSTSEC-2025-0100"
-      ],
-      "name": "unic-ucd-ident",
-      "version": "0.9.0"
-    },
-    {
-      "advisories": [
-        "RUSTSEC-2025-0098"
-      ],
-      "name": "unic-ucd-version",
-      "version": "0.9.0"
     }
   ],
-  "ecosystem": "crates.io",
-  "packageCount": 574,
-  "source": "OSV"
+  "packageCount": 569,
+  "checkedAt": "2026-09-25T09:39:45.8824634Z",
+  "source": "OSV",
+  "scope": "All platforms, including local patches",
+  "ecosystem": "crates.io"
 }

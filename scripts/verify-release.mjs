@@ -4,23 +4,19 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { assertPackagedExecutable } from './lib/release-binary.mjs';
+import { readEngineRelease } from './lib/engine-release.mjs';
 
 const root = resolve(import.meta.dirname, '..');
+const release = readEngineRelease();
 const engine = await readFile(resolve(root, 'src-tauri/resources/engine/codex.exe'));
-assert.equal(
-  createHash('sha256').update(engine).digest('hex'),
-  '70bcb05f9bf1a4e7306edd0cd1b57d02af3267ad02a34b26f45c8c4bb20a3301',
-);
+assert.equal(createHash('sha256').update(engine).digest('hex'), release.engine_sha256);
 const codeModeHost = await readFile(
   resolve(root, 'src-tauri/resources/engine/codex-code-mode-host.exe'),
 );
-assert.equal(
-  createHash('sha256').update(codeModeHost).digest('hex'),
-  '0f83a73dc6d511d43bd3e52cc0a999cb383c19c645ef3fbd8fbdaddde3088138',
-);
+assert.equal(createHash('sha256').update(codeModeHost).digest('hex'), release.code_mode_sha256);
 for (const [name, digest] of [
-  ['CODEX-LICENSE.txt', 'd17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc'],
-  ['CODEX-NOTICE.txt', '9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915'],
+  ['CODEX-LICENSE.txt', release.license_sha256],
+  ['CODEX-NOTICE.txt', release.notice_sha256],
 ]) {
   const contents = await readFile(resolve(root, 'src-tauri/resources/legal', name));
   assert.equal(
@@ -42,6 +38,11 @@ for (const file of [
   'legal\\THIRD-PARTY-NOTICES.txt',
   'legal\\UPSTREAM-LICENSE-SUPPLEMENTS.txt',
   'legal\\SOURCE-AVAILABILITY.txt',
+  'legal\\ENGINE-THIRD-PARTY-NOTICES.txt',
+  'legal\\ENGINE-LICENSE-SUPPLEMENTS.txt',
+  'legal\\ENGINE-METADATA-LICENSES.txt',
+  'legal\\ENGINE-NATIVE-NOTICES.txt',
+  'legal\\ENGINE-SOURCE-AVAILABILITY.txt',
   'selectors-0.36.1.crate',
 ])
   assert.ok(installer.includes(file), `Missing installer resource: ${file}`);
@@ -138,7 +139,7 @@ console.log(
       verified: true,
       installerBytes: setup.length,
       sha256: createHash('sha256').update(setup).digest('hex'),
-      engineVersion: '0.156.1',
+      engineVersion: release.version,
       productionTestTransport: false,
       executableContentMatches: true,
       verifiedResources: resourceCount,

@@ -1,0 +1,8 @@
+{
+  "findings": [],
+  "packageCount": 323,
+  "checkedAt": "2026-09-25T09:39:40.0139896Z",
+  "source": "OSV",
+  "scope": "Windows x86_64 normal and build dependencies, including local patches",
+  "ecosystem": "crates.io"
+}

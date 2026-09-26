@@ -85467,41 +85467,6 @@ LICENSE
 
 
 ========================================================================
-unic-char-property 0.9.0
-License: MIT/Apache-2.0
-
-See SPDX license expression above; no standalone license file in this package.
-
-
-========================================================================
-unic-char-range 0.9.0
-License: MIT/Apache-2.0
-
-See SPDX license expression above; no standalone license file in this package.
-
-
-========================================================================
-unic-common 0.9.0
-License: MIT/Apache-2.0
-
-See SPDX license expression above; no standalone license file in this package.
-
-
-========================================================================
-unic-ucd-ident 0.9.0
-License: MIT/Apache-2.0
-
-See SPDX license expression above; no standalone license file in this package.
-
-
-========================================================================
-unic-ucd-version 0.9.0
-License: MIT/Apache-2.0
-
-See SPDX license expression above; no standalone license file in this package.
-
-
-========================================================================
 unicode-ident 1.0.26
 License: (MIT OR Apache-2.0) AND Unicode-3.0
 

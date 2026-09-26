@@ -51,7 +51,9 @@ const ChannelsDialog = lazy(() =>
   import('./components/ChannelsDialog').then((module) => ({ default: module.ChannelsDialog })),
 );
 import { sameProvider } from './domain/provider';
-import { Inspector } from './components/Inspector';
+const Inspector = lazy(() =>
+  import('./components/Inspector').then((module) => ({ default: module.Inspector })),
+);
 import { TerminalDock } from './components/TerminalDock';
 import { useAgentInteraction } from './application/useAgentInteraction';
 import { ElicitationCard } from './components/ElicitationCard';
@@ -595,13 +597,15 @@ export default function App({
         {inspector && !project?.imported && (
           <div style={{ display: browserRequest ? 'none' : 'contents' }}>
             <PanelResizeHandle panel="inspector" report={app.setError} />
-            <Inspector
-              onOpenWorkspace={(path) => void app.addProject(path, project?.id)}
-              onReference={(path, kind) => context.add(`${project!.path}/${path}`, kind)}
-              project={project}
-              revision={app.revision + revision}
-              onClose={() => app.togglePanel('inspector')}
-            />
+            <Suspense fallback={null}>
+              <Inspector
+                onOpenWorkspace={(path) => void app.addProject(path, project?.id)}
+                onReference={(path, kind) => context.add(`${project!.path}/${path}`, kind)}
+                project={project}
+                revision={app.revision + revision}
+                onClose={() => app.togglePanel('inspector')}
+              />
+            </Suspense>
           </div>
         )}
         <BrowserPanel />

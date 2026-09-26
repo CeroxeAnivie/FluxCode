@@ -1,6 +1,9 @@
 # Codex engine compatibility
 
-FluxCode bundles the unmodified Apache-2.0 Codex `rust-v0.156.1` executable.
+FluxCode bundles an Apache-2.0 Codex `rust-v0.157.0` build with the dependency
+upgrades and security backports recorded in `engine/security`. The exact binary
+digests are pinned in `config/engine-release.toml`. This is a FluxCode build,
+not an unmodified upstream executable.
 Protocol bindings are generated with `app-server generate-ts --experimental`.
 The experimental surface is pinned and covered by actual engine contract tests;
 an engine update requires regenerating bindings and rerunning those tests.

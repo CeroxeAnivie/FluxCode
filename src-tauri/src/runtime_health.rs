@@ -3,12 +3,10 @@ use sha2::{Digest, Sha256};
 use std::{ffi::OsStr, fs::File, io::Read, path::Path, process::Stdio, time::Duration};
 use tokio::{process::Command, time::timeout};
 
-const ENGINE_SHA256: &str = "70bcb05f9bf1a4e7306edd0cd1b57d02af3267ad02a34b26f45c8c4bb20a3301";
-const CODE_MODE_SHA256: &str = "0f83a73dc6d511d43bd3e52cc0a999cb383c19c645ef3fbd8fbdaddde3088138";
-const CODEX_LICENSE_SHA256: &str =
-    "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc";
-const CODEX_NOTICE_SHA256: &str =
-    "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915";
+const ENGINE_SHA256: &str = env!("FLUXCODE_ENGINE_ENGINE_SHA256");
+const CODE_MODE_SHA256: &str = env!("FLUXCODE_ENGINE_CODE_MODE_SHA256");
+const CODEX_LICENSE_SHA256: &str = env!("FLUXCODE_ENGINE_LICENSE_SHA256");
+const CODEX_NOTICE_SHA256: &str = env!("FLUXCODE_ENGINE_NOTICE_SHA256");
 const MAX_ENGINE_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_LEGAL_BYTES: u64 = 32 * 1024 * 1024;
 

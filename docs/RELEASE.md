@@ -7,7 +7,17 @@ Responses providers and explicitly invoked network tools still require network
 access; local operation does not imply an on-device language model.
 
 1. Pin the engine tag, asset digest, schema bindings and runtime version together.
-   Run `scripts/prepare-engine.ps1`; any digest mismatch fails the preparation.
+   The authoritative identity is `config/engine-release.toml`. Run
+   `scripts/prepare-engine.ps1`; any digest mismatch fails the preparation.
+   Preparation uses Python 3.12+ standard TOML parsing. Custom reviewed builds use
+   `-ArtifactDirectory` or the release manifest's verified asset distribution URL;
+   they never silently fall back to an unpatched upstream binary. The source build
+   recipe and backport provenance live in `engine/security`.
+   Close FluxCode before replacing its resources. Preparation verifies the full
+   staged batch first and rolls back ordinary replacement failures; multiple-file
+   publication is not power-loss atomic. A failed rollback retains original files
+   and reports their recovery directory. Run `python scripts/test-prepare-engine.py`
+   for the replacement failure regressions.
 2. Install the locked Node and Rust dependencies. Configure a proxy in the
    developer's environment only when that environment requires one.
 3. Run typecheck, domain tests, GUI tests, real-engine fixture smoke tests, formatting,

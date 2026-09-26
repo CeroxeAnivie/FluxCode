@@ -49,7 +49,7 @@
 ## 开始使用
 
 当前源码版本为 **0.1.0，Windows x86_64**。
-仓库提供源码和安装包构建流程；当前工作树的正式签名发行及干净系统验收尚未完成。
+从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases/tag/v0.1.0) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
 
 构建出的桌面安装包内置 Codex，使用者不必另外安装 Codex、Rust 或 Node.js。
 Windows 需要 WebView2，安装程序使用 Tauri 标准检查流程。
@@ -78,15 +78,15 @@ Git 功能需要本机 Git；项目自身的编译器和运行时仍由项目提
 
 ## 构建桌面应用
 
-| 层                          | 固定版本 / 职责                                      |
-| :-------------------------- | :--------------------------------------------------- |
-| Rust 1.98.1 + Tauri 2       | 进程生命周期、系统凭据、文件、配置与 IPC 边界        |
-| React 19.3 + TypeScript 7   | 会话交互、流式展示、文件和终端面板                   |
-| Node 24.13.1 + pnpm 10.23.0 | 前端构建与验证                                       |
-| Codex 0.156.1               | 内置执行引擎，通过 app-server 协议集成，SHA-256 固定 |
+| 层                          | 固定版本 / 职责                                          |
+| :-------------------------- | :------------------------------------------------------- |
+| Rust 1.98.1 + Tauri 2       | 进程生命周期、系统凭据、文件、配置与 IPC 边界            |
+| React 19.3 + TypeScript 7   | 会话交互、流式展示、文件和终端面板                       |
+| Node 24.13.1 + pnpm 10.23.0 | 前端构建与验证                                           |
+| Codex 0.157.0               | 内置安全补丁构建，通过 app-server 协议集成，SHA-256 固定 |
 
 Windows 开发机需安装 Rust/MSVC、Visual Studio C++ Build Tools、Windows SDK、Node 和 pnpm。
-项目提供 Rust 版本文件及依赖锁文件。
+项目提供 Rust 版本文件及依赖锁文件；引擎补丁与构建来源见 [安全构建说明](engine/security/README.md)。Python 3.12+ 用于开发阶段读取 TOML 和准备引擎，不是最终用户的运行依赖。
 
 ```powershell
 pnpm install --frozen-lockfile

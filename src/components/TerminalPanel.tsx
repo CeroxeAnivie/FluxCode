@@ -39,6 +39,7 @@ export function TerminalPanel({
   } | null>(null);
   const [interactiveOpened, setInteractiveOpened] = useState(true);
   const [mode, setMode] = useState<'command' | 'interactive'>('interactive');
+  const [clearGeneration, setClearGeneration] = useState(0);
   const processId = useRef<string | null>(null);
   const outputRef = useRef<HTMLPreElement>(null);
   const commandInput = useRef<HTMLInputElement>(null);
@@ -149,7 +150,14 @@ export function TerminalPanel({
           </button>
         </div>
         <div>
-          <button className="icon-button" aria-label={t('清空终端')} onClick={() => setOutput('')}>
+          <button
+            className="icon-button"
+            aria-label={t('清空终端')}
+            onClick={() => {
+              if (mode === 'interactive') setClearGeneration((value) => value + 1);
+              else setOutput('');
+            }}
+          >
             <Trash2 size={13} />
           </button>
           {running && (
@@ -170,6 +178,7 @@ export function TerminalPanel({
               ready={ready}
               fontSize={fontSize}
               active={active && mode === 'interactive'}
+              clearGeneration={clearGeneration}
             />
           </Suspense>
         )}

@@ -303,7 +303,7 @@ test.beforeEach(async ({ page }) => {
       },
       connect: async (value) => {
         localStorage.setItem('fixture-settings', JSON.stringify(value));
-        return { version: '0.156.1' };
+        return { version: '0.157.0' };
       },
       forgetApiKey: async () => {},
       openUserFile: async () => {},
@@ -2876,6 +2876,35 @@ test('Enter queues during execution and terminal shortcuts stay in the terminal'
   await page.keyboard.press('Control+`');
   await expect(page.getByRole('dialog', { name: '命令面板' })).toHaveCount(0);
   await expect(page.locator('.interactive-terminal')).toBeVisible();
+});
+
+test('clear terminal clears interactive scrollback without restarting its process', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.openTerminal = async (_cwd, processId) => {
+      localStorage.setItem('fixture-clear-process', processId);
+      return new Promise(() => {});
+    };
+  });
+  await page.getByRole('button', { name: '切换终端', exact: true }).click();
+  await expect(page.locator('.terminal-screen')).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('fixture-clear-process')))
+    .toBeTruthy();
+  const processId = await page.evaluate(() => localStorage.getItem('fixture-clear-process'));
+  await page.evaluate(async (id) => {
+    await window.__FLUX_TEST_BRIDGE__!.rpc('fixture/event', {
+      method: 'command/exec/outputDelta',
+      params: { processId: id, deltaBase64: btoa('OLD_TERMINAL_OUTPUT\r\nCURRENT_PROMPT> ') },
+    });
+  }, processId);
+  await expect(page.locator('.xterm-accessibility')).toContainText('OLD_TERMINAL_OUTPUT');
+  await page.getByRole('button', { name: '清空终端', exact: true }).click();
+  await expect(page.locator('.xterm-accessibility')).not.toContainText('OLD_TERMINAL_OUTPUT');
+  await expect(page.locator('.xterm-accessibility')).toContainText('CURRENT_PROMPT>');
+  expect(await page.evaluate(() => localStorage.getItem('fixture-clear-process'))).toBe(processId);
 });
 
 test('terminal foreground recovery synchronizes PTY dimensions without recreating the session', async ({

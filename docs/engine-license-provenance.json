@@ -1,0 +1,537 @@
+[
+  {
+    "packages": [
+      "Inflector"
+    ],
+    "source": "https://raw.githubusercontent.com/whatisinternet/inflector/a4a95eac75043f4bffb127c7c8ec886b5b106053/LICENSE.md",
+    "sha256": "03d1bd5bfbee8d44651e7f57faf9e5b4eda4233f0d4eda36a716f2f0533d230b",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "age"
+    ],
+    "source": "https://raw.githubusercontent.com/str4d/rage/1465e602c83c5e4d3db8f58d9bdfc2a10063f90d/LICENSE-APACHE",
+    "sha256": "3708458dee7f359ac6c9c5558023ed481be87e5372c43ebd7f2ca7ad23c12026",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "age"
+    ],
+    "source": "https://raw.githubusercontent.com/str4d/rage/1465e602c83c5e4d3db8f58d9bdfc2a10063f90d/LICENSE-MIT",
+    "sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "age-core"
+    ],
+    "source": "https://raw.githubusercontent.com/str4d/rage/17446612f865c705e44fe392d9d41dd102fed137/LICENSE-APACHE",
+    "sha256": "3708458dee7f359ac6c9c5558023ed481be87e5372c43ebd7f2ca7ad23c12026",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "age-core"
+    ],
+    "source": "https://raw.githubusercontent.com/str4d/rage/17446612f865c705e44fe392d9d41dd102fed137/LICENSE-MIT",
+    "sha256": "fe56c030c2d8c3404a37fe711cebb27ebea13d0aacf7e3524db4198335ad8cd1",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "allocative",
+      "allocative_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/facebookexperimental/allocative/c256f0bb074252ded51614aaa73a9a41cb38a2a4/LICENSE-APACHE",
+    "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "allocative",
+      "allocative_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/facebookexperimental/allocative/c256f0bb074252ded51614aaa73a9a41cb38a2a4/LICENSE-MIT",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "appcontainer_common",
+      "learning_mode_core",
+      "learning_mode_windows",
+      "mxc_config_contract",
+      "mxc_telemetry",
+      "process_security_environment_spec",
+      "sandbox_spec",
+      "wxc_common"
+    ],
+    "source": "LICENSE.md",
+    "sha256": "d9a1b1e30d633d5732ea18e3cba9538d293ebc53e1a9e4e96ab739e0c5c4f1cb",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "asn1-rs-impl"
+    ],
+    "source": "https://raw.githubusercontent.com/rusticata/asn1-rs/a20e5f7319c896737ad0f2557037817b91ad854f/LICENSE-APACHE",
+    "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "asn1-rs-impl"
+    ],
+    "source": "https://raw.githubusercontent.com/rusticata/asn1-rs/a20e5f7319c896737ad0f2557037817b91ad854f/LICENSE-MIT",
+    "sha256": "a5c61b93b6ee1d104af9920cf020ff3c7efe818e31fe562c72261847a728f513",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "base64-simd",
+      "vsimd"
+    ],
+    "source": "https://raw.githubusercontent.com/Nugine/simd/d74c030d9dc4f3cae02146d1f497ff62726ef09a/LICENSE",
+    "sha256": "71674605ec4c087fe9eb534e3e4f9e26eb2e4aabcd76a29fd156c6a844d44b3d",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "clipboard-win"
+    ],
+    "source": "https://raw.githubusercontent.com/DoumanAsh/clipboard-win/3b27cf2bfd1adcfa6e0264eb51c1025ddaf0f342/LICENSE",
+    "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "cookie-factory"
+    ],
+    "source": "https://raw.githubusercontent.com/rust-bakery/cookie-factory/d36b805dbd7dd65f2df947235c5bcc573afe2c76/LICENSES/MIT.txt",
+    "sha256": "d09216dc1ea5f273997667935a8d6514d80f00b89fb6954ecc3a43e0a6e360de",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "debugserver-types"
+    ],
+    "source": "https://raw.githubusercontent.com/Marwes/debugserver-types/d444f163123af5b4fbce7375d1afead7e9b8a224/README.md",
+    "sha256": "4604a717a7e8728c09d6b556327f17932f41464682eb4fb66f132edb980a5b9c",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "defmt"
+    ],
+    "source": "https://raw.githubusercontent.com/knurling-rs/defmt/f6decae6e09d1216aff052aa0733a6b5e632a100/LICENSE-APACHE",
+    "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "defmt"
+    ],
+    "source": "https://raw.githubusercontent.com/knurling-rs/defmt/f6decae6e09d1216aff052aa0733a6b5e632a100/LICENSE-MIT",
+    "sha256": "2710a622a896bba67356913d4d0492cab5465f61b2ecce6d880aeb483834fb50",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "defmt-parser"
+    ],
+    "source": "https://raw.githubusercontent.com/knurling-rs/defmt/4a8cdb44891ed57b8ff5a023b6bec7137c48708f/LICENSE-APACHE",
+    "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "defmt-parser"
+    ],
+    "source": "https://raw.githubusercontent.com/knurling-rs/defmt/4a8cdb44891ed57b8ff5a023b6bec7137c48708f/LICENSE-MIT",
+    "sha256": "2710a622a896bba67356913d4d0492cab5465f61b2ecce6d880aeb483834fb50",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "deno_core_icudata"
+    ],
+    "source": "https://raw.githubusercontent.com/denoland/deno_core_icudata/83537ba16a4bf1645fc8322e81f7aaf0149a8922/README.md",
+    "sha256": "3227421e62451436a2da8d5a35e0681b2b5eececb9be02fa8c59c9f77231a324",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "display_container"
+    ],
+    "source": "https://raw.githubusercontent.com/facebookincubator/gazebo/7c9c7304a1dbd451e9e448749228e88de1c193ce/LICENSE-APACHE",
+    "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "display_container"
+    ],
+    "source": "https://raw.githubusercontent.com/facebookincubator/gazebo/7c9c7304a1dbd451e9e448749228e88de1c193ce/LICENSE-MIT",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "eventsource-stream"
+    ],
+    "source": "https://raw.githubusercontent.com/jpopesculian/eventsource-stream/3d46f1c758f9ee4681e9da0427556d24c53f9c01/README.md",
+    "sha256": "f17f6cc26f19643dbadaaad9901d245d4645ef8fbac8266b33105392dd1f8601",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "fax",
+      "fax_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/pdf-rs/fax/40b226eb97b391355e971fd95a8dd532a4c127a0/README.md",
+    "sha256": "c79f0c2a08d8b13daaaf45be481e80b12d1818c3feb91ba89e8967fe9e3a2d84",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "flatbuffers"
+    ],
+    "source": "https://raw.githubusercontent.com/google/flatbuffers/7e163021e59cca4f8e1e35a7c828b5c6b7915953/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "fluent-langneg"
+    ],
+    "source": "https://raw.githubusercontent.com/projectfluent/fluent-langneg-rs/7fdc590466ea63ca2367ac10fb1b881fe561f1a8/LICENSE-APACHE",
+    "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "fluent-langneg"
+    ],
+    "source": "https://raw.githubusercontent.com/projectfluent/fluent-langneg-rs/7fdc590466ea63ca2367ac10fb1b881fe561f1a8/LICENSE-MIT",
+    "sha256": "016fcc02048817d628b04b140c54db290fd9d29a5e8a55b77871194e810716ac",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "fxhash"
+    ],
+    "source": "https://raw.githubusercontent.com/cbreeden/fxhash/a03cbf42dde010250adef75908f109be197d982b/README.md",
+    "sha256": "ca9697c2847798bb0969f9fad4e810c152d217afbb8a677baa0390cc7f164bb0",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "include_dir",
+      "include_dir_macros"
+    ],
+    "source": "https://raw.githubusercontent.com/Michael-F-Bryan/include_dir/d742c6fffce99ee89da91b934e7ce6fb2a82680c/LICENSE",
+    "sha256": "9369f62987b3a116111f2edfdc4cc72633e44ddc94d5d0c68659cf537b76a31f",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "intl_pluralrules"
+    ],
+    "source": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-APACHE",
+    "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "intl_pluralrules"
+    ],
+    "source": "https://raw.githubusercontent.com/zbraniecki/pluralrules/d0715d5b7cca72e228d6e6c4de154bd30dfdd06a/intl_pluralrules/LICENSE-MIT",
+    "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "io_tee"
+    ],
+    "source": "https://raw.githubusercontent.com/TheOnlyMrCat/io_tee/8a7adecebf3429cbc58a0368751d1851dfaf58ed/README.md",
+    "sha256": "0ba20a4b5d8188a85014c5f6d52b5407aec2077986c05f6ba686f9899b767b95",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "lock_free_hashtable",
+      "static_interner",
+      "strong_hash",
+      "strong_hash_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/facebook/buck2/b8ae22e6732343863e079049958e362b157f0cc8/LICENSE-APACHE",
+    "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "lock_free_hashtable",
+      "static_interner",
+      "strong_hash",
+      "strong_hash_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/facebook/buck2/b8ae22e6732343863e079049958e362b157f0cc8/LICENSE-MIT",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "lock_free_hashtable",
+      "static_interner",
+      "strong_hash",
+      "strong_hash_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/facebook/buck2/b8ae22e6732343863e079049958e362b157f0cc8/NOTICE",
+    "sha256": "b3355ad324483539ba40a8ad85bcaa5c03c19b6b54831e3f7f3b67f56ac4982e",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "opentelemetry",
+      "opentelemetry-http",
+      "opentelemetry-otlp",
+      "opentelemetry-proto",
+      "opentelemetry-semantic-conventions",
+      "opentelemetry_sdk"
+    ],
+    "source": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/285dc925f98403ff426acc70968f104dc820d4f2/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "opentelemetry-appender-tracing"
+    ],
+    "source": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-rust/00f97c948e95beb7b2c966fcdb5f946c2a89baeb/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "pagable",
+      "pagable_derive"
+    ],
+    "source": "https://raw.githubusercontent.com/facebook/starlark-rust/8978f3cd91b2908e1e61f6b58f84293097abf8f1/LICENSE",
+    "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "protoc-bin-vendored",
+      "protoc-bin-vendored-linux-aarch_64",
+      "protoc-bin-vendored-linux-ppcle_64",
+      "protoc-bin-vendored-linux-s390_64",
+      "protoc-bin-vendored-linux-x86_32",
+      "protoc-bin-vendored-linux-x86_64",
+      "protoc-bin-vendored-macos-aarch_64",
+      "protoc-bin-vendored-macos-x86_64",
+      "protoc-bin-vendored-win32"
+    ],
+    "source": "https://raw.githubusercontent.com/stepancheg/rust-protoc-bin-vendored/895c0433c3727a552970ce961e398e20e52d6353/LICENSE.txt",
+    "sha256": "97647e63047ef75a82ee2928b335df94f45c87e08777dc033393c73294f3a57a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "rama-core",
+      "rama-dns",
+      "rama-error",
+      "rama-http",
+      "rama-http-backend",
+      "rama-http-core",
+      "rama-http-headers",
+      "rama-http-types",
+      "rama-macros",
+      "rama-net",
+      "rama-socks5",
+      "rama-tcp",
+      "rama-tls-rustls",
+      "rama-udp",
+      "rama-utils"
+    ],
+    "source": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-APACHE",
+    "sha256": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "rama-core",
+      "rama-dns",
+      "rama-error",
+      "rama-http",
+      "rama-http-backend",
+      "rama-http-core",
+      "rama-http-headers",
+      "rama-http-types",
+      "rama-macros",
+      "rama-net",
+      "rama-socks5",
+      "rama-tcp",
+      "rama-tls-rustls",
+      "rama-udp",
+      "rama-utils"
+    ],
+    "source": "https://raw.githubusercontent.com/plabayo/rama/4733273a10a791762e2b7727850032b0c9b8536d/LICENSE-MIT",
+    "sha256": "1fa7e078de3f9165a1c6742359307711e91652f035dc37a32376ca0023483e63",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "ratatui-termina"
+    ],
+    "source": "https://raw.githubusercontent.com/ratatui/ratatui/e665c36cb14752a61cd777fbd06dbef8474f2add/LICENSE",
+    "sha256": "50eb43e8d742c9c61a9391e42b2184fce54dbd1893a1bb1c85b8c9ee217ab1f5",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "rmcp",
+      "rmcp-macros"
+    ],
+    "source": "https://raw.githubusercontent.com/modelcontextprotocol/rust-sdk/51ccb42993d6eb5075399672ce7a0c21a0e55eea/LICENSE",
+    "sha256": "0382b0057770ca05e9c350a50aa3b1c1fea84da0bc81d723bf00b9aa841be58a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "schemafy_core",
+      "schemafy_lib"
+    ],
+    "source": "https://raw.githubusercontent.com/Marwes/schemafy/5f835025d16d691f168315dda93efc52ae1e4e5e/LICENSE",
+    "sha256": "a11232911aa0d746688b560af367728021184084eeb6328a1922d60925c5eda0",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "sorted_vector_map"
+    ],
+    "source": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/LICENSE-APACHE",
+    "sha256": "bb28c48e3e078166e91cfc2b6db7ffebb8a0973b9e23b3df060561292d8d69ec",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "sorted_vector_map"
+    ],
+    "source": "https://raw.githubusercontent.com/facebookexperimental/rust-shed/756ae7daba100d194aa0260131937b7d96672549/LICENSE-MIT",
+    "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "starlark",
+      "starlark_derive",
+      "starlark_map",
+      "starlark_syntax"
+    ],
+    "source": "https://raw.githubusercontent.com/facebook/starlark-rust/0c8d107ab963362ba47ee3ab9e0173bc39bd101d/LICENSE",
+    "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "tonic-prost",
+      "tonic-prost-build"
+    ],
+    "source": "https://raw.githubusercontent.com/hyperium/tonic/ed4bafc35af7a284357cf4e77e26b9c3eb0266ca/LICENSE",
+    "sha256": "e24a56698aa6feaf3a02272b3624f9dc255d982970c5ed97ac4525a95056a5b3",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "tracelogging",
+      "tracelogging_macros"
+    ],
+    "source": "https://raw.githubusercontent.com/microsoft/tracelogging/4d3c8b02da568d34daf977db7052a819ab4b18ec/LICENSE",
+    "sha256": "7dc541691bf807a74bf7c1090662712af131571f9be8fb8a6f6c1e6dbfbe2fbb",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "tree-sitter"
+    ],
+    "source": "https://raw.githubusercontent.com/tree-sitter/tree-sitter/da6fe9beb4f7f67beb75914ca8e0d48ae48d6406/LICENSE",
+    "sha256": "5f9cf9fb6acb1972b35ae29119ce563bb60ec097656bc4b69b9bac2d04c7a147",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "ts-rs",
+      "ts-rs-macros"
+    ],
+    "source": "https://raw.githubusercontent.com/Aleph-Alpha/ts-rs/1dce5297090804082e9639d2b7d851ba815aa359/LICENSE",
+    "sha256": "db7f7f8e7236a2d0b41b855b2501b7b913caebbcda6ce498637a304ad1706ce1",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "v8"
+    ],
+    "source": "https://raw.githubusercontent.com/denoland/rusty_v8/5c15a6995c9bb4bacd3e341b59fff32c909c80bf/LICENSE",
+    "sha256": "1c6356fb751d45f0c53093ebf8a7f5e580e802f51999178e19d60f3ec39e147d",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "vtparse"
+    ],
+    "source": "https://raw.githubusercontent.com/wez/wezterm/edeae72b5fc55c7fa4aa1d08bbefd08c5493f757/LICENSE.md",
+    "sha256": "37db33bbbd7348969eda397b89a16f252d56c1ca7481b6ccaf56ccdcbab5dcca",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "wezterm-input-types"
+    ],
+    "source": "https://raw.githubusercontent.com/wez/wezterm/d5ca5509b95edc31291ba29bd1fcbf3f0b12c92d/LICENSE.md",
+    "sha256": "37db33bbbd7348969eda397b89a16f252d56c1ca7481b6ccaf56ccdcbab5dcca",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "winsplit"
+    ],
+    "source": "https://raw.githubusercontent.com/chipsenkbeil/winsplit-rs/691e800ac384bc7fc815ca55d1dd2b09b1f15d96/README.md",
+    "sha256": "39bb1a6d7befd101a9f8228db3b2deab823042b54dc82a410534cb68ba93edbc",
+    "evidenceKind": "upstream_readme_only"
+  },
+  {
+    "packages": [
+      "zune-core"
+    ],
+    "source": "https://raw.githubusercontent.com/etemesi254/zune-image/f8fbb123d5ed04441e8324a555bfcda0cb1bd28f/LICENSE-ZLIB",
+    "sha256": "7fa429541e55b1509909e058f2d21a37467e4958ec713b357f6e0cf9dc4ee352",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "zune-core"
+    ],
+    "source": "https://raw.githubusercontent.com/etemesi254/zune-image/f8fbb123d5ed04441e8324a555bfcda0cb1bd28f/LICENSE.md",
+    "sha256": "c6dff146a9f31848ac296faa5a08a4253caf2c384c86f906dc99e7fc0a39cc8c",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "zune-jpeg"
+    ],
+    "source": "https://raw.githubusercontent.com/etemesi254/zune-image/fa2c767a01d7d9373911d0bf63e0588553d67e0e/LICENSE-ZLIB",
+    "sha256": "7fa429541e55b1509909e058f2d21a37467e4958ec713b357f6e0cf9dc4ee352",
+    "evidenceKind": "license_or_notice"
+  },
+  {
+    "packages": [
+      "zune-jpeg"
+    ],
+    "source": "https://raw.githubusercontent.com/etemesi254/zune-image/fa2c767a01d7d9373911d0bf63e0588553d67e0e/LICENSE.md",
+    "sha256": "c6dff146a9f31848ac296faa5a08a4253caf2c384c86f906dc99e7fc0a39cc8c",
+    "evidenceKind": "license_or_notice"
+  }
+]

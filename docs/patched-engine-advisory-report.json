@@ -1,0 +1,67 @@
+{
+  "checkedAt": "2026-09-25T10:23:46.642Z",
+  "source": "OSV",
+  "scope": "Patched engine Windows dependency graph, normal/build; source graph, not binary SBOM",
+  "packageCount": 1012,
+  "findings": [
+    {
+      "name": "hickory-proto",
+      "version": "0.25.2",
+      "source": null,
+      "advisories": [
+        "GHSA-3v94-mw7p-v465",
+        "GHSA-q2qq-hmj6-3wpp",
+        "RUSTSEC-2026-0118",
+        "RUSTSEC-2026-0119"
+      ]
+    },
+    {
+      "name": "opentelemetry_sdk",
+      "version": "0.31.0",
+      "source": null,
+      "advisories": [
+        "GHSA-w9wp-h8wv-79jx"
+      ]
+    },
+    {
+      "name": "bincode",
+      "version": "1.3.3",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2025-0141"
+      ]
+    },
+    {
+      "name": "derivative",
+      "version": "2.2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2024-0388"
+      ]
+    },
+    {
+      "name": "fxhash",
+      "version": "0.2.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2025-0057"
+      ]
+    },
+    {
+      "name": "paste",
+      "version": "1.0.15",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2024-0436"
+      ]
+    },
+    {
+      "name": "proc-macro-error2",
+      "version": "2.0.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "advisories": [
+        "RUSTSEC-2026-0173"
+      ]
+    }
+  ]
+}

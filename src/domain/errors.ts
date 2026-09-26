@@ -41,7 +41,8 @@ const classifiedErrors = [
     message: '服务请求受限，请稍后重试。',
   },
   {
-    pattern: /(?:HTTP\s*)?5\d\d\b|server error|服务端错误/i,
+    pattern:
+      /(?:HTTP\s*)?5\d\d\b|server error|servers? (?:are |is )?(?:currently )?overloaded|服务端错误/i,
     message: '模型服务暂时不可用，请稍后重试。',
   },
   {

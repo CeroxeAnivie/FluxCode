@@ -1,0 +1,16 @@
+upstream_tag = "rust-v0.157.0"
+source_url = "https://api.github.com/repos/openai/codex/tarball/rust-v0.157.0"
+source_sha256 = "15a848aeb056eaa09cf2471001f28d13314450ec38e6230d9c993e21f0e44011"
+rust_version = "1.98.1"
+target = "x86_64-pc-windows-msvc"
+v8_version = "150.4.0"
+
+[[backports]]
+name = "hickory-proto"
+version = "0.25.2"
+sha256 = "f8a6fe56c0038198998a6f217ca4e7ef3a5e51f46163bd6dd60b5c71ca6c6502"
+
+[[backports]]
+name = "opentelemetry_sdk"
+version = "0.31.0"
+sha256 = "e14ae4f5991976fd48df6d843de219ca6d31b01daaab2dad5af2badeded372bd"

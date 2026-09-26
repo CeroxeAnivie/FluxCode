@@ -221,7 +221,7 @@ async fn connect_engine(
             .as_ref()
             .is_some_and(|engine| engine.is_alive())
     {
-        return Ok(json!({"version":"0.156.1"}));
+        return Ok(json!({"version":env!("FLUXCODE_ENGINE_VERSION")}));
     }
     if state
         .engine
@@ -306,7 +306,7 @@ async fn connect_engine(
     *state.session_credential.lock().await =
         effective_key.map(|key| (settings.base_url.clone(), settings.api_key_env.clone(), key));
     *state.active_settings.lock().await = Some(settings);
-    Ok(json!({"version":"0.156.1"}))
+    Ok(json!({"version":env!("FLUXCODE_ENGINE_VERSION")}))
 }
 
 #[tauri::command]
@@ -1021,7 +1021,7 @@ async fn diagnostics(
         .as_ref()
         .map(|engine| engine.resource_status());
     Ok(
-        json!({"schemaVersion":1,"appVersion":env!("CARGO_PKG_VERSION"),"engineVersion":"0.156.1","os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"engineBundled":state.binary.is_file(),"connected":engine_resources.is_some(),"engineResources":engine_resources,"windowResources":window_resources,"configSchema":config.schema_version,"providerProfileCount":models.len(),"protocol":config.provider.wire_api,"contextOverrides":{"window":config.context.window_tokens,"compaction":config.context.auto_compact_tokens},"runtimeHealth":runtime_health}),
+        json!({"schemaVersion":1,"appVersion":env!("CARGO_PKG_VERSION"),"engineVersion":env!("FLUXCODE_ENGINE_VERSION"),"os":std::env::consts::OS,"architecture":std::env::consts::ARCH,"engineBundled":state.binary.is_file(),"connected":engine_resources.is_some(),"engineResources":engine_resources,"windowResources":window_resources,"configSchema":config.schema_version,"providerProfileCount":models.len(),"protocol":config.provider.wire_api,"contextOverrides":{"window":config.context.window_tokens,"compaction":config.context.auto_compact_tokens},"runtimeHealth":runtime_health}),
     )
 }
 

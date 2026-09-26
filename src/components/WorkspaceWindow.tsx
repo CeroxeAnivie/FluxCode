@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { useAppearance } from '../application/AppearanceProvider';
 import { useWorkspaceContinuity } from '../application/useWorkspaceContinuity';
 import { useContextAttachments } from '../application/useContextAttachments';
@@ -17,7 +25,9 @@ import { emptyConversation } from '../domain/types';
 import { TitleBar } from './TitleBar';
 import { Conversation, Welcome } from './Conversation';
 import { Composer } from './Composer';
-import { Inspector } from './Inspector';
+const Inspector = lazy(() =>
+  import('./Inspector').then((module) => ({ default: module.Inspector })),
+);
 import { TerminalDock } from './TerminalDock';
 import { ErrorNotice } from './ErrorNotice';
 import { QueuedMessages } from './QueuedMessages';
@@ -365,17 +375,19 @@ export function WorkspaceWindow() {
         {session.panels.inspector && (
           <div style={{ display: browserRequest ? 'none' : 'contents' }}>
             <PanelResizeHandle panel="inspector" report={report} />
-            <Inspector
-              project={project}
-              revision={revision}
-              onClose={() => toggle('inspector')}
-              onReference={(path, kind) => attachments.add(`${project!.path}/${path}`, kind)}
-              onOpenWorkspace={(path) => {
-                void requestWorkspace<string>({ kind: 'openProject', path, parentId: projectId })
-                  .then((id) => navigate(id, null))
-                  .catch((e) => setError(String(e)));
-              }}
-            />
+            <Suspense fallback={null}>
+              <Inspector
+                project={project}
+                revision={revision}
+                onClose={() => toggle('inspector')}
+                onReference={(path, kind) => attachments.add(`${project!.path}/${path}`, kind)}
+                onOpenWorkspace={(path) => {
+                  void requestWorkspace<string>({ kind: 'openProject', path, parentId: projectId })
+                    .then((id) => navigate(id, null))
+                    .catch((e) => setError(String(e)));
+                }}
+              />
+            </Suspense>
           </div>
         )}
         <BrowserPanel />
