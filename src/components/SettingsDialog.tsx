@@ -305,7 +305,7 @@ export function SettingsDialog({
           )}
           <span>
             <ExternalLink size={12} />
-            FluxCode 0.1.1 · Apache-2.0
+            FluxCode 0.1.2 · Apache-2.0
           </span>
           <button
             type="submit"

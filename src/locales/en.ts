@@ -1011,4 +1011,6 @@ export const english: Record<string, string> = {
   本次未返回: 'Not returned this time',
   诊断报告已导出: 'Diagnostics report exported',
   创建终端会话: 'Create terminal session',
+  点击名称修改显示名: 'Click the name to edit its display label',
+  '搜索 Bing 或输入网址': 'Search Bing or enter a URL',
 };

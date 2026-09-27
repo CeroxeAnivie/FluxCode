@@ -16,7 +16,7 @@ export function MarkdownLink({
   const { t } = useAppearance();
   const [failed, setFailed] = useState(false);
   const url = webLink(href);
-  const relative = projectRoot && !url ? workspaceFileLink(href) : null;
+  const relative = projectRoot && !url ? workspaceFileLink(href, projectRoot) : null;
   if (relative && projectRoot)
     return (
       <>

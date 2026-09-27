@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, ExternalLink, Globe, RotateCw, X } from 'lucide-
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAppearance } from '../application/AppearanceProvider';
 import { webLink } from '../domain/links';
+import { browserAddress } from '../domain/browserAddress';
 import {
   browserAvailable,
   browserCommand,
@@ -199,10 +200,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
   }, [available, request.revision]);
 
   function navigate() {
-    const typed = address.trim();
-    const url =
-      webLink(typed) ??
-      (!/^[a-z][a-z\d+.-]*:/i.test(typed) && typed ? webLink(`https://${typed}`) : null);
+    const url = browserAddress(address);
     if (!url) {
       setError('网页链接无效');
       return;
@@ -327,7 +325,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
           <input
             ref={addressInput}
             aria-label={t('网页地址')}
-            placeholder={t('输入网址')}
+            placeholder={t('搜索 Bing 或输入网址')}
             value={address}
             spellCheck={false}
             onCompositionStart={() => {

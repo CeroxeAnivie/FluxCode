@@ -23,6 +23,17 @@ describe('external web links', () => {
 });
 
 describe('workspace file links', () => {
+  it('opens absolute generated artifacts only inside their project', () => {
+    const root = 'C:\\Users\\Administrator\\Desktop';
+    expect(workspaceFileLink('C:/Users/Administrator/Desktop/pelican-cycle.svg', root)).toBe(
+      'pelican-cycle.svg',
+    );
+    expect(
+      workspaceFileLink('file:///C:/Users/Administrator/Desktop/%E5%8A%A8%E7%94%BB.svg', root),
+    ).toBe('动画.svg');
+    expect(workspaceFileLink('C:/Users/Administrator/Desktop-other/secret.txt', root)).toBeNull();
+    expect(workspaceFileLink('C:/Users/Administrator/Desktop/../secret.txt', root)).toBeNull();
+  });
   it('decodes Unicode and spaces while retaining a relative project path', () => {
     expect(workspaceFileLink('./docs/%E8%AE%BE%E8%AE%A1%20%E6%96%87%E6%A1%A3.md#intro')).toBe(
       'docs/设计 文档.md',

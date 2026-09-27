@@ -132,6 +132,7 @@ pub async fn browser_command(
             let popup_label = label.clone();
             let navigation_origin = origin.clone();
             let builder = WebviewBuilder::new(&label, WebviewUrl::External(url))
+                .initialization_script(include_str!("browser_fit.js"))
                 .incognito(true)
                 .data_directory(
                     crate::runtime_paths::webview_home(&if owner == "main" {

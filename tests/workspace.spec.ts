@@ -2338,7 +2338,7 @@ test('channel catalogue is searchable and keeps the full list after filtering', 
   await expect(page.getByRole('region', { name: '模型列表与连接设置', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
   await page.getByLabel('搜索模型', { exact: true }).fill('other');
-  await expect(page.getByRole('list', { name: '服务模型' })).toContainText('other-model');
+  await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toBeVisible();
   await expect(page.getByRole('radio')).toHaveCount(0);
   await page.getByRole('button', { name: '仅保存', exact: true }).click();
   const profiles = await page.evaluate(() => JSON.parse(localStorage.getItem('fixture-profiles')!));
@@ -3083,8 +3083,8 @@ test('channels remain readable in both themes at large type', async ({ page }) =
       page.getByRole('region', { name: '模型列表与连接设置', exact: true }),
     ).toBeVisible();
     await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
-    await expect(page.getByRole('list', { name: '服务模型' })).toContainText('other-model');
-    await page.getByRole('button', { name: '导入并使用', exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toBeVisible();
+    await page.getByRole('list', { name: '服务模型' }).scrollIntoViewIfNeeded();
     const bounds = await page
       .locator('.channels-body')
       .evaluate((el) => ({ width: el.clientWidth, scroll: el.scrollWidth }));
@@ -3585,4 +3585,35 @@ test('command search finds a task beyond the recent hundred', async ({ page }) =
   await page.keyboard.press('Control+k');
   await page.getByRole('combobox', { name: '搜索命令或任务' }).fill('Unique old task');
   await expect(page.getByRole('option', { name: 'Unique old task', exact: true })).toBeVisible();
+});
+
+test('browser address bar searches ordinary text with Bing', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__FLUX_TEST_BROWSER__ = {
+      command: async (action) => {
+        if (action.kind === 'navigate') localStorage.setItem('fixture-browser-search', action.url);
+      },
+      subscribe: async () => () => {},
+    };
+  });
+  await page.reload();
+  await setup(page);
+  await page.getByRole('button', { name: '打开浏览器', exact: true }).click();
+  const input = page.getByRole('textbox', { name: '网页地址' });
+  await input.fill('1122 中文');
+  await input.press('Enter');
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('fixture-browser-search')))
+    .toBe('https://www.bing.com/search?q=1122%20%E4%B8%AD%E6%96%87');
+});
+
+test('generated Windows artifact links open the project file', async ({ page }) => {
+  await setup(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('[鹈鹕动画](D:/Fixtures/sample-project/pelican-cycle.svg)');
+  await input.press('Enter');
+  await page.locator('.user-message').getByRole('button', { name: '鹈鹕动画' }).click();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem('fixture-open-workspace-file')))
+    .toContain('pelican-cycle.svg');
 });

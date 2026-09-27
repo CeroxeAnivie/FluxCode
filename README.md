@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-3b82f6?style=flat-square" alt="Apache-2.0" /></a>
   <img src="https://img.shields.io/badge/desktop-Windows_x64-27272a?style=flat-square" alt="Windows x64" />
-  <img src="https://img.shields.io/badge/version-0.1.1-27272a?style=flat-square" alt="Version 0.1.1" />
+  <img src="https://img.shields.io/badge/version-0.1.2-27272a?style=flat-square" alt="Version 0.1.2" />
   <a href="docs/VERIFICATION.md"><img src="https://img.shields.io/badge/verification-evidence-27272a?style=flat-square" alt="Verification evidence" /></a>
 </p>
 
@@ -48,8 +48,8 @@
 
 ## 开始使用
 
-当前源码版本为 **0.1.1，Windows x86_64**。
-从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases/tag/v0.1.1) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
+当前源码版本为 **0.1.2，Windows x86_64**。
+从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases/tag/v0.1.2) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
 
 构建出的桌面安装包内置 Codex，使用者不必另外安装 Codex、Rust 或 Node.js。
 Windows 需要 WebView2，安装程序使用 Tauri 标准检查流程。

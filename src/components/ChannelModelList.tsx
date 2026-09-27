@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { Search, Trash2 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAppearance } from '../application/AppearanceProvider';
 
@@ -26,13 +27,18 @@ export function ChannelModelList({
   const search = useRef<HTMLInputElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const visibleModels = models.filter((model) => !hiddenModels.includes(model));
-  const filtered = visibleModels.filter((model) =>
-    `${model} ${labels[model] ?? ''}`.toLowerCase().includes(query.toLowerCase()),
+  const [editing, setEditing] = useState<string | null>(null);
+  const filtered = visibleModels.filter(
+    (model) =>
+      model === editing ||
+      `${model} ${labels[model] ?? ''}`.toLowerCase().includes(query.toLowerCase()),
   );
+  const virtualized = filtered.length > 12;
   const virtual = useVirtualizer({
+    enabled: virtualized,
     count: filtered.length,
     getScrollElement: () => viewport.current,
-    estimateSize: () => 80,
+    estimateSize: () => 64,
     getItemKey: (index) => filtered[index],
     overscan: 6,
   });
@@ -42,8 +48,9 @@ export function ChannelModelList({
   return (
     <>
       {!!(visibleModels.length || hiddenModels.length) && (
-        <label className="form-field">
-          {t('搜索模型')}
+        <label className="model-search-field">
+          <Search size={16} aria-hidden="true" />
+          <span className="sr-only">{t('搜索模型')}</span>
           <input
             ref={search}
             value={query}
@@ -91,25 +98,34 @@ export function ChannelModelList({
       )}
       <div
         ref={viewport}
-        className="channel-model-list"
+        className={`channel-model-list${virtualized ? ' virtualized' : ''}`}
         hidden={!visibleModels.length}
         role="list"
         aria-label={t('服务模型')}
       >
-        <div style={{ height: virtual.getTotalSize(), position: 'relative' }}>
-          {virtual.getVirtualItems().map((row) => (
+        <div
+          style={virtualized ? { height: virtual.getTotalSize(), position: 'relative' } : undefined}
+        >
+          {(virtualized
+            ? virtual.getVirtualItems()
+            : filtered.map((_, index) => ({ index, start: 0, size: 64 }))
+          ).map((row) => (
             <div
               role="listitem"
               className="channel-model-row"
               key={filtered[row.index]}
-              style={{
-                position: 'absolute',
-                top: 0,
-                transform: `translateY(${row.start}px)`,
-                height: row.size,
-                width: '100%',
-              }}
-              title={filtered[row.index]}
+              style={
+                virtualized
+                  ? {
+                      position: 'absolute',
+                      top: 0,
+                      transform: `translateY(${row.start}px)`,
+                      height: row.size,
+                      width: '100%',
+                    }
+                  : undefined
+              }
+              title={labels[filtered[row.index]] || filtered[row.index]}
             >
               <input
                 type="checkbox"
@@ -139,6 +155,9 @@ export function ChannelModelList({
                   maxLength={120}
                   disabled={busy}
                   placeholder={filtered[row.index]}
+                  title={t('点击名称修改显示名')}
+                  onFocus={() => setEditing(filtered[row.index])}
+                  onBlur={() => setEditing(null)}
                   onChange={(event) =>
                     setLabels((current) => ({
                       ...current,
@@ -146,10 +165,15 @@ export function ChannelModelList({
                     }))
                   }
                 />
-                <code title={filtered[row.index]}>{filtered[row.index]}</code>
+                {labels[filtered[row.index]]?.trim() &&
+                  labels[filtered[row.index]].trim() !== filtered[row.index] && (
+                    <code title={filtered[row.index]}>{filtered[row.index]}</code>
+                  )}
               </div>
               <button
                 type="button"
+                className="model-remove-button"
+                title={t('移除模型')}
                 aria-label={`${t('移除模型')} ${filtered[row.index]}`}
                 disabled={busy}
                 onClick={() => {
@@ -163,7 +187,7 @@ export function ChannelModelList({
                   });
                 }}
               >
-                {t('移除')}
+                <Trash2 size={16} aria-hidden="true" />
               </button>
             </div>
           ))}

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.2 — Models, browser and artifact links (2026-09-27)
+
+- Compact themed model rows, inline aliases, icon removal and a single scroll area for small catalogues. Large catalogues retain virtualization.
+- Address-bar text searches Bing; valid URLs and bare hostnames navigate directly. Unsafe explicit schemes remain blocked.
+- Remote pages retain responsive layout; fixed-width content scales to the panel down to 35%, preserving scrolling for exceptionally wide content. No remote IPC capability is added.
+- Markdown links to absolute Windows paths and file URLs inside the project open with the system default application. Traversal, external paths and executable file restrictions remain enforced.
+
+Validation: 121 unit tests, 10 targeted browser flows, TypeScript check; browser fit checked with fixed and responsive page fixtures. Website-specific layouts may still require a wider panel or the external browser.
+
 ## 0.1.1 — Interaction refinement (2026-09-27)
 
 - Model lists are visible in the channel editor and include all discovered models by default. Add display aliases, search by alias or ID, remove individually or in bulk, and restore removed models. Requests retain their original model IDs.
