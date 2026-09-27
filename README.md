@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-3b82f6?style=flat-square" alt="Apache-2.0" /></a>
   <img src="https://img.shields.io/badge/desktop-Windows_x64-27272a?style=flat-square" alt="Windows x64" />
-  <img src="https://img.shields.io/badge/version-0.1.0-27272a?style=flat-square" alt="Version 0.1.0" />
+  <img src="https://img.shields.io/badge/version-0.1.1-27272a?style=flat-square" alt="Version 0.1.1" />
   <a href="docs/VERIFICATION.md"><img src="https://img.shields.io/badge/verification-evidence-27272a?style=flat-square" alt="Verification evidence" /></a>
 </p>
 
@@ -48,8 +48,8 @@
 
 ## 开始使用
 
-当前源码版本为 **0.1.0，Windows x86_64**。
-从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases/tag/v0.1.0) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
+当前源码版本为 **0.1.1，Windows x86_64**。
+从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases/tag/v0.1.1) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
 
 构建出的桌面安装包内置 Codex，使用者不必另外安装 Codex、Rust 或 Node.js。
 Windows 需要 WebView2，安装程序使用 Tauri 标准检查流程。
@@ -57,6 +57,8 @@ Windows 需要 WebView2，安装程序使用 Tauri 标准检查流程。
 1. 启动应用，在 **渠道管理** 中粘贴 Responses 服务地址与 API Key，导入模型并启用渠道。
 2. 打开本地项目，在输入框描述任务。
 3. 按需选择模型与推理强度，发送后在工作区查看执行过程与变更。服务不提供模型目录时，可手动输入模型 ID。
+
+渠道模型获取后默认全部保留。可以按 ID 或显示别名搜索、批量移除和恢复；刷新目录保留已设置的别名与排除项。详见 [本轮交互整改记录](docs/UX-REVIEW-2026-09-27.md)。
 
 侧栏「工作区管理」可搜索、重命名、关闭和重新打开项目。关闭不会删除历史、草稿或文件，已有终端继续运行；有任务运行时会提示先停止。创建 Git 工作树后可直接打开为独立工作区，并查看来源项目。顶部「任务总览」集中显示运行、等待输入、排队和失败状态，可跳转或停止指定任务。
 

@@ -53,6 +53,8 @@ export function TaskActionsDialog({
         <label className="form-field">
           {t('任务名称')}
           <input
+            autoFocus
+            onFocus={(event) => event.target.select()}
             value={title}
             maxLength={200}
             required

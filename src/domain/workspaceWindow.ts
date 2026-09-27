@@ -12,6 +12,7 @@ export interface WorkspaceSnapshot {
   conversation: Conversation;
   settings: Settings;
   models: string[];
+  modelLabels: Record<string, string>;
   ready: boolean;
   runningTaskIds: string[];
   fontSize: number;

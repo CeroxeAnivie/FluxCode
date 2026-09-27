@@ -3,10 +3,24 @@ import {
   compareProviderModels,
   mergeProviderProfiles,
   providerModels,
+  providerModelLabel,
   sameConnection,
   sameProvider,
 } from './provider';
 import { defaultSettings, validateSettings } from './types';
+it('keeps model identity separate from labels and respects explicit exclusions', () => {
+  const profile = {
+    name: 'channel',
+    settings: { ...defaultSettings, model: 'removed' },
+    models: ['first', 'second'],
+    excluded_models: ['removed'],
+    model_labels: { first: '常用模型', second: '   ' },
+  };
+  expect(providerModels(profile)).toEqual(['first', 'second']);
+  expect(providerModelLabel(profile, 'first')).toBe('常用模型');
+  expect(providerModelLabel(profile, 'second')).toBe('second');
+  expect(profile.settings.model).toBe('removed');
+});
 it('uses host networking by default and validates an explicitly configured proxy', () => {
   const settings = { ...defaultSettings, model: 'fixture' };
   expect(settings.proxyUrl).toBe('');

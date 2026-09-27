@@ -1125,7 +1125,13 @@ export function useFluxCode() {
     const provider = providerProfiles.find((p) => sameProvider(p.settings, settings));
     if (provider && !providerModels(provider).includes(next.model)) {
       const rows = providerProfiles.map((p) =>
-        p === provider ? { ...p, models: [...providerModels(p), next.model] } : p,
+        p === provider
+          ? {
+              ...p,
+              models: [...providerModels(p), next.model],
+              excluded_models: (p.excluded_models ?? []).filter((id) => id !== next.model),
+            }
+          : p,
       );
       void bridge
         .saveProviderProfiles(rows, providerProfiles)

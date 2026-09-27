@@ -1,5 +1,5 @@
 import { Command } from 'cmdk';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { useAppearance } from '../application/AppearanceProvider';
 import type { Task } from '../domain/types';
@@ -18,6 +18,7 @@ export function CommandPalette({
 }) {
   const { t } = useAppearance();
   const input = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState('');
   const dialog = useModalDialog(true, input);
   function execute(run: () => void) {
     onClose();
@@ -30,6 +31,8 @@ export function CommandPalette({
           <Search size={18} />
           <Command.Input
             ref={input}
+            value={query}
+            onValueChange={setQuery}
             placeholder={t('搜索命令或任务')}
             aria-label={t('搜索命令或任务')}
           />
@@ -55,6 +58,9 @@ export function CommandPalette({
           <Command.Group heading={t('最近任务')}>
             {tasks
               .filter((task) => !task.archived)
+              .filter((task) =>
+                `${task.id} ${task.title}`.toLowerCase().includes(query.trim().toLowerCase()),
+              )
               .toSorted((a, b) => b.updatedAt - a.updatedAt)
               .slice(0, 100)
               .map((task) => (

@@ -17,7 +17,9 @@ export function useModalDialog(
 
     return () => {
       const closingDialog = dialog.current;
+      const ownedFocus = !!closingDialog?.contains(document.activeElement);
       closingDialog?.close();
+      const restoredByBrowser = document.activeElement;
       requestAnimationFrame(() => {
         if (!(origin instanceof HTMLElement) || !origin.isConnected) return;
         const nextDialog = document.querySelector('dialog[open]');
@@ -30,6 +32,7 @@ export function useModalDialog(
           active !== document.body &&
           active !== document.documentElement &&
           active !== origin &&
+          !(ownedFocus && active === restoredByBrowser) &&
           !closingDialog?.contains(active)
         )
           return;

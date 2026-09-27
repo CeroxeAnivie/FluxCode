@@ -1262,6 +1262,8 @@ async function installNativeBackupFixture(page: import('@playwright/test').Page)
         unregisterCallback: (id: number) => callbacks.delete(id),
         invoke: async (command: string, args?: Record<string, unknown>) => {
           switch (command) {
+            case 'plugin:window|theme':
+              return 'dark';
             case 'plugin:event|listen': {
               const id = ++callbackId;
               eventListeners.set(id, {
@@ -2308,9 +2310,9 @@ test('model refresh protects the currently running model and previews the comple
   });
   await page.getByRole('button', { name: '渠道管理', exact: true }).click();
   await page.getByRole('button', { name: '刷新模型', exact: true }).click();
-  await expect(
-    page.getByText('当前会话使用的模型已移除，请先切换到其他渠道，再应用此目录。'),
-  ).toBeVisible();
+  await expect(page.getByText('保留本次未返回的模型及其配置')).toBeVisible();
+  await expect(page.getByRole('button', { name: '应用模型变更', exact: true })).toBeEnabled();
+  await page.getByLabel('保留本次未返回的模型及其配置').uncheck();
   await expect(page.getByRole('button', { name: '应用模型变更', exact: true })).toBeDisabled();
   await page.evaluate(() => {
     window.__FLUX_TEST_BRIDGE__!.discoverProvider = async () => ({
@@ -2323,17 +2325,17 @@ test('model refresh protects the currently running model and previews the comple
   await expect(page.getByRole('button', { name: '应用模型变更', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '应用模型变更', exact: true }).click();
   const profiles = await page.evaluate(() => JSON.parse(localStorage.getItem('fixture-profiles')!));
-  expect(profiles[0].models).toEqual(['fixture-model', 'replacement-model']);
+  expect(profiles[0].models).toEqual(['fixture-model', 'other-model', 'replacement-model']);
 });
 
-test('channel catalogue is informational, searchable, and keeps the full list after filtering', async ({
+test('channel catalogue is searchable and keeps the full list after filtering', async ({
   page,
 }) => {
   await setup(page);
   await page.getByRole('button', { name: '渠道管理', exact: true }).click();
   await page.getByRole('button', { name: '添加渠道', exact: true }).click();
   await page.getByLabel('服务地址', { exact: true }).fill('https://models.example/v1');
-  await page.getByText('模型与连接选项（可选）', { exact: true }).click();
+  await expect(page.getByRole('region', { name: '模型列表与连接设置', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
   await page.getByLabel('搜索模型', { exact: true }).fill('other');
   await expect(page.getByRole('list', { name: '服务模型' })).toContainText('other-model');
@@ -2341,6 +2343,49 @@ test('channel catalogue is informational, searchable, and keeps the full list af
   await page.getByRole('button', { name: '仅保存', exact: true }).click();
   const profiles = await page.evaluate(() => JSON.parse(localStorage.getItem('fixture-profiles')!));
   expect(profiles[0].models).toEqual(['fixture-model', 'other-model']);
+});
+
+test('model management remembers labels and removals through refresh and reopening', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://labels.example/v1');
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await page.getByLabel('模型显示名 fixture-model', { exact: true }).fill('我的主力');
+  await page.getByLabel('模型显示名 fixture-model', { exact: true }).press('Enter');
+  await expect(page.getByRole('heading', { name: '添加渠道', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '移除模型 other-model', exact: true }).click();
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await expect(page.getByLabel('模型显示名 fixture-model', { exact: true })).toHaveValue(
+    '我的主力',
+  );
+  await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '导入并使用', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '当前会话模型' })).toContainText('我的主力');
+  await expect(page.getByRole('combobox', { name: '当前会话模型' })).toHaveAttribute(
+    'data-value',
+    'fixture-model',
+  );
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: '当前会话模型' })).toContainText('我的主力');
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '全部撤销移除', exact: true }).click();
+  await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '全选', exact: true }).click();
+  await page.getByRole('button', { name: '移除所选模型', exact: true }).click();
+  await page.getByRole('button', { name: '仅保存', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('请至少保留一个模型');
+  const profile = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('fixture-profiles')!)[0],
+  );
+  expect(profile.models).toEqual(['fixture-model']);
+  expect(profile.model_labels['fixture-model']).toBe('我的主力');
+  expect(profile.excluded_models).toEqual(['other-model']);
 });
 
 test('failed import retains the URL and credential and supports retry without extra steps', async ({
@@ -2417,6 +2462,7 @@ test('scheduled task submission is idempotent while pending and clears only afte
   await expect(page.getByText('定时任务已创建')).toBeVisible();
   await expect(name).toHaveValue('');
   expect(await page.evaluate(() => localStorage.getItem('fixture-schedule-calls'))).toBe('1');
+  await expect(page.getByLabel('间隔分钟', { exact: true })).toHaveValue('30');
   await expect(page.getByRole('dialog').locator('article')).toHaveCount(1);
 });
 
@@ -2427,7 +2473,7 @@ test('Enter imports a channel and includes manually entered models without anoth
   await page.getByRole('button', { name: '渠道管理', exact: true }).click();
   await page.getByRole('button', { name: '添加渠道', exact: true }).click();
   await page.getByLabel('服务地址', { exact: true }).fill('https://manual.example/v1');
-  await page.getByText('模型与连接选项（可选）', { exact: true }).click();
+  await expect(page.getByRole('region', { name: '模型列表与连接设置', exact: true })).toBeVisible();
   await page.getByText('手动添加模型', { exact: true }).click();
   const input = page.getByLabel('模型 ID', { exact: true });
   await input.fill('custom-a, custom-b custom-a');
@@ -3033,7 +3079,9 @@ test('channels remain readable in both themes at large type', async ({ page }) =
     await page.getByRole('button', { name: '渠道管理', exact: true }).click();
     await page.getByRole('button', { name: '添加渠道', exact: true }).click();
     await page.getByLabel('服务地址', { exact: true }).fill('https://display.example/v1');
-    await page.getByText('模型与连接选项（可选）', { exact: true }).click();
+    await expect(
+      page.getByRole('region', { name: '模型列表与连接设置', exact: true }),
+    ).toBeVisible();
     await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
     await expect(page.getByRole('list', { name: '服务模型' })).toContainText('other-model');
     await page.getByRole('button', { name: '导入并使用', exact: true }).scrollIntoViewIfNeeded();
@@ -3043,6 +3091,7 @@ test('channels remain readable in both themes at large type', async ({ page }) =
     expect(bounds.scroll).toBeLessThanOrEqual(bounds.width);
     await page.screenshot({ path: `test-results/channels-${theme}.png`, animations: 'disabled' });
     await page.getByRole('button', { name: '取消', exact: true }).click();
+    await page.getByRole('button', { name: '放弃修改', exact: true }).click();
     await page.keyboard.press('Escape');
   }
 });
@@ -3443,4 +3492,97 @@ test('conversation import previews conflicts, stays read-only and remains search
   await page.getByRole('button', { name: '导入对话' }).click();
   await page.getByRole('button', { name: '选择 JSON 文件' }).click();
   await expect(page.getByRole('dialog', { name: '导入对话' })).toContainText('已导入，将跳过');
+});
+
+test('schedule draft stays available after Escape and discards only explicitly', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '定时任务', exact: true }).click();
+  await page.getByLabel('任务名称', { exact: true }).fill('Unfinished draft');
+  await page.keyboard.press('Escape');
+  await expect(page.getByText('还有未保存的内容。继续编辑，或放弃本次修改？')).toBeVisible();
+  await page.getByRole('button', { name: '继续编辑', exact: true }).click();
+  await expect(page.getByLabel('任务名称', { exact: true })).toHaveValue('Unfinished draft');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '放弃修改', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('channel cancellation protects an edited draft', async ({ page }) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://draft.example/v1');
+  await page
+    .locator('.channel-editor-actions')
+    .getByRole('button', { name: '取消', exact: true })
+    .click();
+  await page.getByRole('button', { name: '继续编辑', exact: true }).click();
+  await expect(page.getByLabel('服务地址', { exact: true })).toHaveValue(
+    'https://draft.example/v1',
+  );
+});
+
+test('unchanged settings close without reconnecting and section navigation retains edits', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.connect = async () => {
+      throw new Error('Unexpected reconnect');
+    };
+  });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '外观', exact: true }).click();
+  await expect(page.locator('#settings-appearance')).toBeFocused();
+  await page.getByRole('button', { name: '保存设置', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('extension tabs preserve drafts and editing MCP opens the editor', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.listMcpDefinitions = async () => [
+      {
+        name: 'existing-service',
+        enabled: true,
+        command: 'node',
+        args: [],
+        url: null,
+        bearerTokenEnvVar: null,
+      },
+    ];
+  });
+  await page.getByRole('button', { name: '模型与扩展', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '模型与扩展' });
+  await dialog.getByRole('button', { name: 'MCP', exact: true }).click();
+  await dialog.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.getByLabel('服务名称', { exact: true })).toBeFocused();
+  await page.getByLabel('服务名称', { exact: true }).fill('my-unsaved-service');
+  await dialog.getByRole('button', { name: '插件', exact: true }).click();
+  await page.getByLabel('插件市场来源', { exact: true }).fill('my-marketplace');
+  await dialog.getByRole('button', { name: 'MCP', exact: true }).click();
+  await expect(page.getByLabel('服务名称', { exact: true })).toHaveValue('my-unsaved-service');
+  await dialog.getByRole('button', { name: '插件', exact: true }).click();
+  await expect(page.getByLabel('插件市场来源', { exact: true })).toHaveValue('my-marketplace');
+});
+
+test('command search finds a task beyond the recent hundred', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    const catalog = JSON.parse(localStorage.getItem('fluxcode.catalog.v1')!);
+    catalog.tasks = Array.from({ length: 150 }, (_, index) => ({
+      id: `older-${index}`,
+      title: index === 0 ? 'Unique old task' : `Recent task ${index}`,
+      projectId: catalog.projects[0].id,
+      updatedAt: index,
+      archived: false,
+    }));
+    localStorage.setItem('fluxcode.catalog.v1', JSON.stringify(catalog));
+  });
+  await page.reload();
+  await page.keyboard.press('Control+k');
+  await page.getByRole('combobox', { name: '搜索命令或任务' }).fill('Unique old task');
+  await expect(page.getByRole('option', { name: 'Unique old task', exact: true })).toBeVisible();
 });

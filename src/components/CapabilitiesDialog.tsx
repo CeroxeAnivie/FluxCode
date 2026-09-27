@@ -26,6 +26,7 @@ export function CapabilitiesDialog({
   const [errors, setErrors] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState('models');
+  const [visited, setVisited] = useState(() => new Set(['models']));
   const [generation, setGeneration] = useState(0);
   useEffect(() => {
     let disposed = false;
@@ -84,7 +85,14 @@ export function CapabilitiesDialog({
           ['mcp', 'MCP'],
           ['plugins', '插件'],
         ].map(([id, label]) => (
-          <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>
+          <button
+            key={id}
+            aria-pressed={tab === id}
+            onClick={() => {
+              setVisited((current) => new Set([...current, id]));
+              setTab(id);
+            }}
+          >
             {t(label)}
           </button>
         ))}
@@ -121,7 +129,11 @@ export function CapabilitiesDialog({
           ))}
         </>
       )}
-      {tab === 'plugins' && <PluginSettings cwd={cwd} />}
+      {visited.has('plugins') && (
+        <div hidden={tab !== 'plugins'}>
+          <PluginSettings cwd={cwd} />
+        </div>
+      )}
       {tab === 'skills' && (
         <>
           <button
@@ -155,8 +167,8 @@ export function CapabilitiesDialog({
           ))}
         </>
       )}
-      {tab === 'mcp' && (
-        <>
+      {visited.has('mcp') && (
+        <div hidden={tab !== 'mcp'}>
           <McpSettings />
           {!servers.length && !busy && <p>{t('尚未配置 MCP 服务。')}</p>}
           {servers.map((s) => (
@@ -179,7 +191,7 @@ export function CapabilitiesDialog({
               {s.error && <p role="alert">{s.error}</p>}
             </article>
           ))}
-        </>
+        </div>
       )}
     </dialog>
   );

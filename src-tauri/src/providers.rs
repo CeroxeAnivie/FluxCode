@@ -2,6 +2,7 @@
 use crate::config::Settings;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::BTreeMap,
     path::Path,
     time::{Duration, Instant},
 };
@@ -13,6 +14,10 @@ pub struct Profile {
     pub settings: Settings,
     #[serde(default)]
     pub models: Vec<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub model_labels: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub excluded_models: Vec<String>,
 }
 
 pub async fn save_checked(
@@ -129,6 +134,27 @@ pub fn validate(profiles: &[Profile]) -> Result<(), String> {
                     || model.len() > 256
                     || model.contains(['\n', '\r'])
                     || !models.insert(model)
+            })
+        {
+            return Err("渠道模型列表无效或重复".into());
+        }
+        if profile.model_labels.len() > 10000
+            || profile.model_labels.iter().any(|(id, label)| {
+                (!models.contains(id) && !profile.excluded_models.contains(id))
+                    || label.chars().count() > 120
+                    || label.contains(['\n', '\r'])
+            })
+        {
+            return Err("渠道模型显示名无效".into());
+        }
+        let mut excluded = std::collections::HashSet::new();
+        if profile.excluded_models.len() > 10000
+            || profile.excluded_models.iter().any(|id| {
+                id.trim().is_empty()
+                    || id.len() > 256
+                    || id.contains(['\n', '\r'])
+                    || models.contains(id)
+                    || !excluded.insert(id)
             })
         {
             return Err("渠道模型列表无效或重复".into());
@@ -501,6 +527,8 @@ mod tests {
                 model: "fixture".into(),
                 ..Settings::default()
             },
+            model_labels: BTreeMap::new(),
+            excluded_models: vec![],
         };
         save(dir.path(), vec![p.clone()]).await.unwrap();
         assert!(
@@ -543,6 +571,8 @@ mod tests {
                 ..Settings::default()
             },
             models: vec!["model-a".into()],
+            model_labels: BTreeMap::new(),
+            excluded_models: vec![],
         };
         let mut second = first.clone();
         second.name = "Secondary".into();
@@ -567,6 +597,8 @@ mod tests {
                 ..Settings::default()
             },
             models: vec!["model-a".into()],
+            model_labels: BTreeMap::new(),
+            excluded_models: vec![],
         };
         save(dir.path(), vec![existing.clone()]).await.unwrap();
         let mut changed = existing.clone();
@@ -593,9 +625,25 @@ mod tests {
                 ..Settings::default()
             },
             models: vec!["model".into(), "other".into()],
+            model_labels: BTreeMap::from([
+                ("model".into(), "主力模型".into()),
+                ("excluded".into(), "备用".into()),
+            ]),
+            excluded_models: vec!["excluded".into()],
         };
         let text = encode(vec![profile.clone()]).unwrap();
-        assert!(decode(&text).unwrap() == vec![profile]);
+        assert!(decode(&text).unwrap() == vec![profile.clone()]);
+        let mut invalid = profile.clone();
+        invalid
+            .model_labels
+            .insert("unknown".into(), "invalid".into());
+        assert!(validate(&[invalid]).is_err());
+        let mut invalid = profile.clone();
+        invalid.model_labels.insert("model".into(), "x".repeat(121));
+        assert!(validate(&[invalid]).is_err());
+        let mut invalid = profile;
+        invalid.excluded_models.push("model".into());
+        assert!(validate(&[invalid]).is_err());
         assert!(decode(&text.replace("schema_version = 1", "schema_version = 2")).is_err());
         assert!(decode("schema_version = 1\napi_key = 'secret'\nprofiles = []").is_err());
     }
@@ -609,13 +657,18 @@ mod tests {
                 ..Settings::default()
             },
             models: vec![],
+            model_labels: BTreeMap::new(),
+            excluded_models: vec![],
         };
         save(dir.path(), vec![profile.clone()]).await.unwrap();
         let file = dir.path().join("providers.toml");
         let legacy = tokio::fs::read_to_string(&file)
             .await
             .unwrap()
-            .replace("models = []\n", "");
+            .lines()
+            .filter(|line| *line != "models = []")
+            .collect::<Vec<_>>()
+            .join("\n");
         tokio::fs::write(&file, legacy).await.unwrap();
         assert!(list(dir.path()).await.unwrap()[0].models.is_empty());
         profile.models = (0..500).map(|i| format!("model-{i}")).collect();

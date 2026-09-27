@@ -23,12 +23,15 @@ export function WorkspaceSearch({
     if (error) errorNotice.current?.focus();
   }, [error]);
   const epoch = useRef(0);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    setQuery('');
+    setResults(null);
+    setError('');
+    setBusy(false);
+    return () => {
       epoch.current++;
-    },
-    [root],
-  );
+    };
+  }, [root]);
   async function search() {
     const revision = ++epoch.current;
     setBusy(true);
@@ -43,7 +46,12 @@ export function WorkspaceSearch({
     }
   }
   return (
-    <details className="workspace-search">
+    <details
+      className="workspace-search"
+      onToggle={(event) => {
+        if (event.currentTarget.open) queryInput.current?.focus();
+      }}
+    >
       <summary>{t('搜索工作区')}</summary>
       <form
         onSubmit={(e) => {

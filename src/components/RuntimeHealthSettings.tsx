@@ -39,18 +39,23 @@ export function RuntimeHealthSettings() {
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   async function inspect(exportResult: boolean) {
     if (busy) return;
     setBusy(true);
     setError('');
+    setNotice('');
     try {
       const data = await bridge.diagnostics();
       setHealth(parseRuntimeHealth(data));
       setUsage(parseResourceUsage(data));
       setChecked(true);
-      if (exportResult)
-        await bridge.exportDocument('FluxCode-diagnostics.json', JSON.stringify(data, null, 2));
+      if (
+        exportResult &&
+        (await bridge.exportDocument('FluxCode-diagnostics.json', JSON.stringify(data, null, 2)))
+      )
+        setNotice(t('诊断报告已导出'));
     } catch {
       setError(t('本机环境检查失败，请重试。'));
     } finally {
@@ -87,6 +92,7 @@ export function RuntimeHealthSettings() {
       </div>
       {busy && <p role="status">{t('正在检查本机环境…')}</p>}
       {error && <p role="alert">{error}</p>}
+      {notice && <p role="status">{notice}</p>}
       {checked && !health && !busy && <p role="status">{t('当前版本未提供环境诊断。')}</p>}
       {health && (
         <ul className="runtime-health-list" aria-label={t('本机运行环境')}>

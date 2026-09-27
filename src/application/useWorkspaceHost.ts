@@ -5,6 +5,7 @@ import type { useAgentInteraction } from './useAgentInteraction';
 import { emptyConversation } from '../domain/types';
 import { isModelSelection } from '../domain/modelSelection';
 import { validateAttachments } from '../domain/attachments';
+import { providerModelLabels, sameProvider } from '../domain/provider';
 import type { WorkspaceSnapshot, WorkspaceCommand } from '../domain/workspaceWindow';
 import {
   windowsAvailable,
@@ -37,6 +38,12 @@ export function useWorkspaceHost(
         : emptyConversation(),
       settings: app.settings,
       models: app.models,
+      modelLabels: Object.assign(
+        {},
+        ...app.providerProfiles
+          .filter((profile) => sameProvider(profile.settings, app.settings))
+          .map(providerModelLabels),
+      ),
       ready: app.connection === 'ready',
       runningTaskIds: Object.entries(app.conversations)
         .filter(([, value]) => value.busy)

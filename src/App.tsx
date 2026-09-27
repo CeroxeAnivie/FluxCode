@@ -50,7 +50,7 @@ const SettingsDialog = lazy(() =>
 const ChannelsDialog = lazy(() =>
   import('./components/ChannelsDialog').then((module) => ({ default: module.ChannelsDialog })),
 );
-import { sameProvider } from './domain/provider';
+import { sameProvider, providerModelLabels } from './domain/provider';
 const Inspector = lazy(() =>
   import('./components/Inspector').then((module) => ({ default: module.Inspector })),
 );
@@ -500,6 +500,12 @@ export default function App({
                 project={project?.imported ? t('导入的对话') : project?.name}
                 model={app.selection.model}
                 models={app.models}
+                modelLabels={Object.assign(
+                  {},
+                  ...app.providerProfiles
+                    .filter((profile) => sameProvider(profile.settings, app.settings))
+                    .map(providerModelLabels),
+                )}
                 selection={app.selection}
                 onSelection={app.setSelection}
                 busy={conversation.busy}
@@ -759,6 +765,7 @@ export default function App({
             onFontSize={app.changeFontSize}
             initial={app.configurationUpdates.snapshot?.settings ?? app.settings}
             connecting={app.connection === 'connecting'}
+            connected={app.connection === 'ready'}
             connectionError={app.error}
             onClose={() => setSettingsOpen(false)}
             onConnect={app.connect}

@@ -90,6 +90,7 @@ export function TaskActivityDialog({
       <label className="form-field">
         {t('搜索任务或项目')}
         <input
+          autoFocus
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);

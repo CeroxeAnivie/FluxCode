@@ -306,6 +306,7 @@ export function WorkspaceWindow() {
             project={project?.name}
             model={selection.model}
             models={snapshot?.models ?? []}
+            modelLabels={snapshot?.modelLabels ?? {}}
             selection={selection}
             onSelection={(value) =>
               continuity.setSession((current) => ({

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { ChannelModelList } from './ChannelModelList';
 import type { Settings } from '../domain/types';
 import { providerModels, sameProvider, type ProviderProfile } from '../domain/provider';
 import { bridge } from '../infrastructure/bridge';
@@ -40,13 +40,17 @@ export function ChannelEditor({
   );
   const [key, setKey] = useState('');
   const [models, setModels] = useState(() => (source ? providerModels(source) : []));
-  const [query, setQuery] = useState('');
+  const [labels, setLabels] = useState<Record<string, string>>(() => source?.model_labels ?? {});
+  const [hiddenModels, setHiddenModels] = useState<string[]>(() => source?.excluded_models ?? []);
   const [manual, setManual] = useState('');
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
   const errorNotice = useRef<HTMLParagraphElement>(null);
   const [notice, setNotice] = useState('');
   const [confirmDeleteKey, setConfirmDeleteKey] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const draft = JSON.stringify({ name, settings, models, labels, hiddenModels, key, manual });
+  const baseline = useRef(draft);
   const epoch = useRef(0);
   useEffect(() => {
     onActivity(fetching);
@@ -61,22 +65,14 @@ export function ChannelEditor({
     },
     [onActivity],
   );
-  const viewport = useRef<HTMLDivElement>(null);
-  const filtered = models.filter((model) => model.toLowerCase().includes(query.toLowerCase()));
-  const virtual = useVirtualizer({
-    count: filtered.length,
-    getScrollElement: () => viewport.current,
-    estimateSize: () => 36,
-    overscan: 6,
-  });
-  useEffect(() => {
-    virtual.scrollToOffset(0);
-  }, [query]);
+  const visibleModels = models.filter((model) => !hiddenModels.includes(model));
   function address(value: string) {
     epoch.current++;
     setFetching(false);
     setSettings((s) => ({ ...s, baseUrl: value, model: '' }));
     setModels([]);
+    setHiddenModels([]);
+    setLabels({});
     setError('');
     setNotice('');
   }
@@ -87,11 +83,17 @@ export function ChannelEditor({
     try {
       const result = await bridge.discoverProvider(settings, key);
       if (generation === epoch.current) {
-        setModels(result.models);
-        setQuery('');
-        if (result.duplicateModels) {
-          setNotice(`${result.duplicateModels} ${t('个重复模型 ID 已合并')}`);
-        }
+        const incoming = result.models.filter((model) => !hiddenModels.includes(model));
+        const added = incoming.filter((model) => !models.includes(model));
+        const missing = visibleModels.filter((model) => !result.models.includes(model));
+        setModels((current) => [...new Set([...current, ...incoming])]);
+        setNotice(
+          `${result.models.length} ${t('个模型')} · ${added.length} ${t('个新增模型')}${missing.length ? ` · ${missing.length} ${t('个模型本次未返回，已保留原配置')}` : ''}${
+            result.duplicateModels
+              ? ` · ${result.duplicateModels} ${t('个重复模型 ID 已合并')}`
+              : ''
+          }`,
+        );
       }
     } catch (e) {
       if (generation === epoch.current) setError(String(e));
@@ -112,13 +114,18 @@ export function ChannelEditor({
     const generation = ++epoch.current;
     setFetching(true);
     try {
-      const enteredModels = [...new Set([...models, ...manual.split(/[,，\s]+/).filter(Boolean)])];
+      const enteredModels = [
+        ...new Set([...visibleModels, ...manual.split(/[,，\s]+/).filter(Boolean)]),
+      ];
       const catalogue = enteredModels.length
         ? enteredModels
-        : (await bridge.discoverProvider(settings, key)).models;
+        : hiddenModels.length
+          ? []
+          : (await bridge.discoverProvider(settings, key)).models;
       if (generation !== epoch.current) return;
       setModels(catalogue);
-      if (!catalogue.length) throw new Error('服务未返回模型，请展开手动添加模型后重试。');
+      setHiddenModels((current) => current.filter((id) => !catalogue.includes(id)));
+      if (!catalogue.length) throw new Error('请至少保留一个模型，或手动添加模型。');
       const model = catalogue.includes(settings.model) ? settings.model : catalogue[0];
       let channelName = name.trim() || new URL(settings.baseUrl).host;
       if (!name.trim()) {
@@ -131,6 +138,15 @@ export function ChannelEditor({
           name: channelName,
           settings: { ...settings, baseUrl: settings.baseUrl.trim().replace(/\/+$/, ''), model },
           models: catalogue,
+          excluded_models: hiddenModels.filter((id) => !catalogue.includes(id)),
+          model_labels: Object.fromEntries(
+            Object.entries(labels)
+              .map(([id, label]) => [id, label.trim()])
+              .filter(
+                ([id, label]) =>
+                  (catalogue.includes(id) || hiddenModels.includes(id)) && !!label && id !== label,
+              ),
+          ),
         },
         key,
         enable,
@@ -179,7 +195,6 @@ export function ChannelEditor({
             epoch.current++;
             setFetching(false);
             setKey(e.target.value);
-            if (!copied) setModels([]);
           }}
           placeholder={t(source && !copied ? '留空保留已保存的凭据' : '输入渠道密钥')}
           disabled={busy || fetching}
@@ -232,11 +247,10 @@ export function ChannelEditor({
           disabled={busy || fetching}
         />
       </label>
-      <details className="channel-optional" open={models.length > 0}>
-        <summary>{t('模型与连接选项（可选）')}</summary>
+      <section className="channel-model-settings" aria-label={t('模型列表与连接设置')}>
         <div className="channel-model-heading">
           <strong>
-            {t('模型列表')} <span>{models.length}</span>
+            {t('模型列表')} <span>{visibleModels.length}</span>
           </strong>
           <button
             type="button"
@@ -246,47 +260,19 @@ export function ChannelEditor({
             {t(fetching ? '正在获取模型…' : '获取模型列表')}
           </button>
         </div>
-        <p className="field-help">{t('获取到的模型会全部保存，在会话中选择要使用的模型。')}</p>
-        {!!models.length && (
-          <label className="form-field">
-            {t('搜索模型')}
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('按模型名称筛选')}
-            />
-          </label>
-        )}
-        <div
-          ref={viewport}
-          className="channel-model-list"
-          hidden={!models.length}
-          role="list"
-          aria-label={t('服务模型')}
-        >
-          <div style={{ height: virtual.getTotalSize(), position: 'relative' }}>
-            {virtual.getVirtualItems().map((row) => (
-              <div
-                role="listitem"
-                className="channel-model-row"
-                key={filtered[row.index]}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  transform: `translateY(${row.start}px)`,
-                  height: row.size,
-                  width: '100%',
-                }}
-                title={filtered[row.index]}
-              >
-                {filtered[row.index]}
-              </div>
-            ))}
-          </div>
-          {!filtered.length && (
-            <p>{t(models.length ? '没有匹配模型' : '获取模型列表，或手动添加模型。')}</p>
-          )}
-        </div>
+        <p className="field-help">
+          {t('获取后默认保留全部模型；可改显示名、移除和撤销，保存后生效。实际请求仍使用原始 ID。')}
+        </p>
+        <ChannelModelList
+          key={settings.baseUrl}
+          models={models}
+          labels={labels}
+          hiddenModels={hiddenModels}
+          setModels={setModels}
+          setLabels={setLabels}
+          setHiddenModels={setHiddenModels}
+          busy={busy || fetching}
+        />
         <details>
           <summary>{t('手动添加模型')}</summary>
           <label className="form-field">
@@ -301,9 +287,9 @@ export function ChannelEditor({
             type="button"
             disabled={busy || !manual.trim()}
             onClick={() => {
-              setModels((current) => [
-                ...new Set([...current, ...manual.split(/[,，\s]+/).filter(Boolean)]),
-              ]);
+              const added = manual.split(/[,，\s]+/).filter(Boolean);
+              setModels((current) => [...new Set([...current, ...added])]);
+              setHiddenModels((current) => current.filter((id) => !added.includes(id)));
               setManual('');
             }}
           >
@@ -335,7 +321,7 @@ export function ChannelEditor({
             />
           </label>
         </details>
-      </details>
+      </section>
       {locked && <p role="status">{t('任务运行时可保存渠道，结束后再启用。')}</p>}
       {notice && <p role="status">{notice}</p>}
       {error && (
@@ -344,12 +330,23 @@ export function ChannelEditor({
         </p>
       )}
       <div className="channel-editor-actions">
+        {confirmCancel && (
+          <div role="alert" className="settings-unsaved">
+            <p>{t('还有未保存的内容。继续编辑，或放弃本次修改？')}</p>
+            <button type="button" onClick={() => setConfirmCancel(false)}>
+              {t('继续编辑')}
+            </button>
+            <button type="button" onClick={onCancel}>
+              {t('放弃修改')}
+            </button>
+          </div>
+        )}
         <button
           type="button"
           disabled={busy || fetching}
           onClick={() => {
-            epoch.current++;
-            onCancel();
+            if (draft !== baseline.current) setConfirmCancel(true);
+            else onCancel();
           }}
         >
           {t('取消')}

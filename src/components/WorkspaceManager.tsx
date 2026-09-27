@@ -52,6 +52,7 @@ export function WorkspaceManager({
       <label className="form-field">
         {t('搜索名称或路径')}
         <input
+          autoFocus
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -91,6 +92,7 @@ export function WorkspaceManager({
                   <input
                     aria-label={t('工作区名称')}
                     autoFocus
+                    onFocus={(event) => event.target.select()}
                     value={name}
                     maxLength={100}
                     required

@@ -321,7 +321,6 @@ export const english: Record<string, string> = {
   清除搜索: 'Clear search',
   '请先结束正在运行的任务或终端，再切换渠道。':
     'Finish running tasks or terminal sessions before switching channels.',
-  '模型与连接选项（可选）': 'Model and connection options (optional)',
   选择当前会话模型: 'Choose the model for this conversation',
   返回模型列表: 'Back to models',
   '请先选择或导入模型渠道。': 'Choose or import a model channel first.',
@@ -348,6 +347,20 @@ export const english: Record<string, string> = {
   '例如：主力服务、备用服务': 'For example: Primary, Backup',
   输入渠道密钥: 'Enter the channel API key',
   模型列表: 'Model list',
+  模型列表与连接设置: 'Model list and connection settings',
+  '获取会保存全部模型；可改显示名、移除和撤销，实际请求仍使用原始 ID。':
+    'Fetched models are saved. Rename, remove, or undo; requests still use the original IDs.',
+  模型显示名: 'Model display name',
+  选择搜索结果: 'Select results',
+  移除所选模型: 'Remove selected models',
+  管理已移除模型: 'Manage removed models',
+  恢复模型: 'Restore model',
+  '输入模型名称筛选，或一次恢复全部。': 'Filter by model name, or restore all at once.',
+  渠道模型显示名无效: 'The model display name is invalid',
+  '请至少保留一个模型，或手动添加模型。': 'Keep at least one model or add a model manually.',
+  已移除模型: 'Removed models',
+  全部撤销移除: 'Undo all removals',
+  个新增模型: 'new models',
   '获取到的模型会全部保存，在会话中选择要使用的模型。':
     'All discovered models are saved. Choose a model in the conversation.',
   没有匹配模型: 'No matching models',
@@ -504,6 +517,7 @@ export const english: Record<string, string> = {
   '最多保留 8 个终端会话，请先结束一个会话。':
     'Up to 8 terminal sessions can be kept. End a session first.',
   '打开项目后可使用终端。': 'Open a project to use the terminal.',
+  '没有打开的终端会话。点击加号新建终端。': 'No terminal session is open. Click + to create one.',
   授权地址: 'Authorization URL',
   请选择: 'Select an option',
   已完成授权: 'Authorization completed',
@@ -979,4 +993,22 @@ export const english: Record<string, string> = {
     'The completion event lacked a task ID. Check the history before retrying.',
   '待发送队列数据损坏，已停止写入以保护原始数据；请从备份恢复。':
     'The message queue is damaged. FluxCode stopped writing to protect the original data; restore it from a backup.',
+  '获取后默认保留全部模型；可改显示名、移除和撤销，保存后生效。实际请求仍使用原始 ID。':
+    'All fetched models are included by default. Rename, remove or restore them, then save. Requests still use the original IDs.',
+  '个模型本次未返回，已保留原配置':
+    'models were not returned this time; their configuration was preserved',
+  插件市场已添加: 'Marketplace added',
+  插件已安装: 'Plugin installed',
+  插件已卸载: 'Plugin uninstalled',
+  '还有未保存的内容。继续编辑，或放弃本次修改？':
+    'You have unsaved content. Keep editing or discard your changes?',
+  设置分类: 'Settings categories',
+  数据与备份: 'Data and backups',
+  运行诊断: 'Diagnostics',
+  保留本次未返回的模型及其配置: 'Keep models not returned this time and their configuration',
+  '当前模型仍在使用。请保留未返回模型，或先在会话中切换模型。':
+    'The current model is still in use. Keep missing models, or select a different conversation model first.',
+  本次未返回: 'Not returned this time',
+  诊断报告已导出: 'Diagnostics report exported',
+  创建终端会话: 'Create terminal session',
 };

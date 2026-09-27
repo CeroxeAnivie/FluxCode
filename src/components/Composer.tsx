@@ -13,6 +13,7 @@ interface Props {
   project?: string;
   model: string;
   models: string[];
+  modelLabels?: Record<string, string>;
   selection: ModelSelection;
   onSelection: (selection: ModelSelection) => void;
   busy: boolean;
@@ -36,6 +37,7 @@ export function Composer({
   project,
   model,
   models,
+  modelLabels = {},
   selection,
   onSelection,
   busy,
@@ -123,6 +125,7 @@ export function Composer({
               onConfigure={onConfigureModel}
               model={model}
               models={models}
+              labels={modelLabels}
               disabled={busy || sending || disabled}
               onChange={(model) => onSelection({ ...selection, model })}
             />

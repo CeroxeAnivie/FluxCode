@@ -83,9 +83,10 @@ for (const file of await readdir(resolve(root, 'dist/assets'))) {
     'Production JavaScript must not contain fixture model',
   );
 }
+const { version } = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
 const setupPath = resolve(
   root,
-  'src-tauri/target/release/bundle/nsis/FluxCode_0.1.0_x64-setup.exe',
+  `src-tauri/target/release/bundle/nsis/FluxCode_${version}_x64-setup.exe`,
 );
 const setupStat = await stat(setupPath);
 for (const sourcePath of [

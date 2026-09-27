@@ -1,6 +1,7 @@
 import { Select } from './Select';
 import { ErrorNotice } from './ErrorNotice';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { openWebLink } from '../infrastructure/externalLinks';
 import { bridge } from '../infrastructure/bridge';
 import { useAppearance } from '../application/AppearanceProvider';
 import type { McpDefinition } from '../domain/extensions';
@@ -21,6 +22,8 @@ export function McpSettings() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [authorizationUrl, setAuthorizationUrl] = useState('');
+  const editor = useRef<HTMLDetailsElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
     let active = true;
     void bridge
@@ -68,6 +71,11 @@ export function McpSettings() {
           {t('在浏览器中打开授权地址')}
           <input readOnly value={authorizationUrl} onFocus={(e) => e.target.select()} />
           <button
+            onClick={() => void openWebLink(authorizationUrl).catch((e) => setError(String(e)))}
+          >
+            {t('在浏览器中打开授权地址')}
+          </button>
+          <button
             onClick={() =>
               void navigator.clipboard.writeText(authorizationUrl).catch((e) => setError(String(e)))
             }
@@ -110,20 +118,27 @@ export function McpSettings() {
             {t('已启用')}
           </label>
           <button
+            disabled={busy}
             onClick={() => {
               setDraft(item);
               setArgumentsText(item.args.join('\n'));
+              if (editor.current) editor.current.open = true;
+              requestAnimationFrame(() => {
+                nameInput.current?.focus();
+                nameInput.current?.scrollIntoView({ block: 'nearest' });
+              });
             }}
           >
             {t('编辑')}
           </button>
         </div>
       ))}
-      <details>
+      <details ref={editor}>
         <summary>{t('添加或编辑 MCP 服务')}</summary>
         <label className="form-field">
           {t('服务名称')}
           <input
+            ref={nameInput}
             value={draft.name}
             onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
             maxLength={100}

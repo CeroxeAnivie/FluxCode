@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Project } from '../domain/types';
 import { TerminalPanel } from './TerminalPanel';
 import { useAppearance } from '../application/AppearanceProvider';
@@ -20,6 +20,17 @@ export function TerminalDock({
   const { t } = useAppearance();
   const [sessions, setSessions] = useState<(Project & { projectId: string })[]>([]);
   const [active, setActive] = useState<string | null>(null);
+  const sequence = useRef(1);
+  function createSession() {
+    if (!project || sessions.length >= 8) return;
+    const id = crypto.randomUUID();
+    const number = ++sequence.current;
+    setSessions((rows) => [
+      ...rows,
+      { ...project, id, projectId: project.id, name: `${project.name} · ${number}` },
+    ]);
+    setActive(id);
+  }
   useEffect(() => {
     if (!visible || !project) return;
     setSessions((rows) =>
@@ -32,7 +43,8 @@ export function TerminalDock({
     setActive((current) =>
       sessions.some((row) => row.id === current && row.projectId === project.id)
         ? current
-        : (sessions.find((row) => row.projectId === project.id)?.id ?? project.id),
+        : (sessions.find((row) => row.projectId === project.id)?.id ??
+          (sessions.length >= 8 ? (sessions[0]?.id ?? null) : project.id)),
     );
   }, [project?.id, visible]);
   return (
@@ -41,20 +53,8 @@ export function TerminalDock({
         <button
           aria-label={t('新建终端')}
           disabled={!project || sessions.length >= 8}
-          onClick={() => {
-            if (!project) return;
-            const id = crypto.randomUUID();
-            setSessions((rows) => [
-              ...rows,
-              {
-                ...project,
-                id,
-                projectId: project.id,
-                name: `${project.name} · ${rows.filter((row) => row.projectId === project.id).length + 1}`,
-              },
-            ]);
-            setActive(id);
-          }}
+          title={t(sessions.length >= 8 ? '最多保留 8 个终端会话，请先结束一个会话。' : '新建终端')}
+          onClick={createSession}
         >
           ＋
         </button>
@@ -67,8 +67,10 @@ export function TerminalDock({
               aria-label={`${t('结束终端会话')} ${session.name}`}
               onClick={() => {
                 setSessions((rows) => rows.filter((row) => row.id !== session.id));
-                if (active === session.id)
-                  setActive(sessions.find((row) => row.id !== session.id)?.id ?? null);
+                if (active === session.id) {
+                  const index = sessions.findIndex((row) => row.id === session.id);
+                  setActive(sessions[index + 1]?.id ?? sessions[index - 1]?.id ?? null);
+                }
               }}
             >
               ×
@@ -81,7 +83,12 @@ export function TerminalDock({
           {t(
             sessions.length >= 8
               ? '最多保留 8 个终端会话，请先结束一个会话。'
-              : '打开项目后可使用终端。',
+              : project
+                ? '没有打开的终端会话。点击加号新建终端。'
+                : '打开项目后可使用终端。',
+          )}
+          {project && sessions.length < 8 && (
+            <button onClick={createSession}>{t('创建终端会话')}</button>
           )}
         </p>
       )}

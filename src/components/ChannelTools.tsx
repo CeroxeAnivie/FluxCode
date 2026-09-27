@@ -29,6 +29,7 @@ export function ChannelTools({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [preview, setPreview] = useState<ModelPreview | null>(null);
+  const [keepMissing, setKeepMissing] = useState(true);
   const source = JSON.stringify(profile);
   const changes =
     preview?.source === source
@@ -38,6 +39,7 @@ export function ChannelTools({
   async function discover(refresh: boolean) {
     setBusy(true);
     setPreview(null);
+    setKeepMissing(true);
     setError('');
     setNotice('');
     try {
@@ -45,7 +47,11 @@ export function ChannelTools({
       setNotice(
         `${t('模型目录可用')} · ${result.latencyMs} ms · ${result.models.length} ${t('个模型')}${result.duplicateModels ? ` · ${result.duplicateModels} ${t('个重复模型 ID 已合并')}` : ''}`,
       );
-      if (refresh) setPreview({ models: result.models, source });
+      if (refresh)
+        setPreview({
+          models: result.models.filter((id) => !profile.excluded_models?.includes(id)),
+          source,
+        });
     } catch (cause) {
       setError(String(cause));
     } finally {
@@ -58,18 +64,25 @@ export function ChannelTools({
       !preview ||
       preview.source !== source ||
       !preview.models.length ||
-      (activeModel !== null && !preview.models.includes(activeModel))
+      (!keepMissing && activeModel !== null && !preview.models.includes(activeModel))
     )
       return;
     setBusy(true);
     setError('');
     try {
-      const models = preview.models;
+      const models = keepMissing
+        ? [...new Set([...providerModels(profile), ...preview.models])]
+        : preview.models;
       const rows = profiles.map((row) =>
         row.name === profile.name
           ? {
               ...row,
               models,
+              model_labels: Object.fromEntries(
+                Object.entries(row.model_labels ?? {}).filter(
+                  ([id]) => models.includes(id) || row.excluded_models?.includes(id),
+                ),
+              ),
               settings: {
                 ...row.settings,
                 model: models.includes(row.settings.model) ? row.settings.model : models[0],
@@ -111,16 +124,29 @@ export function ChannelTools({
         <div className="model-refresh-preview">
           <p>
             {t('新增模型')} {changes.added.length} · {t('保留模型')} {changes.retained.length} ·{' '}
-            {t('移除模型')} {changes.removed.length}
+            {t('本次未返回')} {changes.removed.length}
           </p>
-          {activeModel !== null && !preview.models.includes(activeModel) && (
-            <p role="alert">{t('当前会话使用的模型已移除，请先切换到其他渠道，再应用此目录。')}</p>
+          {!!changes.removed.length && (
+            <label>
+              <input
+                type="checkbox"
+                checked={keepMissing}
+                disabled={busy}
+                onChange={(event) => setKeepMissing(event.target.checked)}
+              />
+              {t('保留本次未返回的模型及其配置')}
+            </label>
           )}
-          {!preview.models.includes(profile.settings.model) && !!preview.models.length && (
-            <p role="status">
-              {t('当前默认模型已移除，应用后将改为')} {preview.models[0]}
-            </p>
+          {!keepMissing && activeModel !== null && !preview.models.includes(activeModel) && (
+            <p role="alert">{t('当前模型仍在使用。请保留未返回模型，或先在会话中切换模型。')}</p>
           )}
+          {!keepMissing &&
+            !preview.models.includes(profile.settings.model) &&
+            !!preview.models.length && (
+              <p role="status">
+                {t('当前默认模型已移除，应用后将改为')} {preview.models[0]}
+              </p>
+            )}
           {!!changes.added.length && (
             <details>
               <summary>{t('查看新增模型')}</summary>
@@ -147,7 +173,7 @@ export function ChannelTools({
               busy ||
               disabled ||
               !preview.models.length ||
-              (activeModel !== null && !preview.models.includes(activeModel))
+              (!keepMissing && activeModel !== null && !preview.models.includes(activeModel))
             }
             onClick={() => void apply()}
           >

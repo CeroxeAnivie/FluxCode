@@ -22,6 +22,12 @@ export function SchedulesDialog({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  function requestClose() {
+    if (busyRef.current) return;
+    if (name.trim() || prompt.trim()) setConfirmClose(true);
+    else onClose();
+  }
   const busyRef = useRef(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
@@ -78,14 +84,24 @@ export function SchedulesDialog({
       ref={dialog}
       className="capabilities-dialog"
       aria-label={t('定时任务')}
-      onCancel={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        requestClose();
+      }}
     >
       <header>
         <h2>{t('定时任务')}</h2>
-        <button onClick={onClose} aria-label={t('关闭')}>
+        <button disabled={busy} onClick={requestClose} aria-label={t('关闭')}>
           ×
         </button>
       </header>
+      {confirmClose && (
+        <div role="alert" className="settings-unsaved">
+          <p>{t('还有未保存的内容。继续编辑，或放弃本次修改？')}</p>
+          <button onClick={() => setConfirmClose(false)}>{t('继续编辑')}</button>
+          <button onClick={onClose}>{t('放弃修改')}</button>
+        </div>
+      )}
       <p>
         {t(
           '仅在应用打开且引擎连接时运行。错过的任务不会补跑；异常中断后需手动恢复。每次最多运行一个定时任务。',
@@ -110,7 +126,7 @@ export function SchedulesDialog({
               });
               setName('');
               setPrompt('');
-              setMinutes(60);
+              setConfirmClose(false);
             }, '定时任务已创建');
         }}
       >

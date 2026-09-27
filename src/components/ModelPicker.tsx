@@ -6,12 +6,14 @@ import { useEffect, useRef, useState } from 'react';
 export function ModelPicker({
   model,
   models,
+  labels = {},
   disabled,
   onChange,
   onConfigure,
 }: {
   model: string;
   models: string[];
+  labels?: Record<string, string>;
   disabled: boolean;
   onChange: (model: string) => void;
   onConfigure?: () => void;
@@ -47,7 +49,7 @@ export function ModelPicker({
         title={t('选择当前会话模型')}
         onClick={() => (onConfigure ? onConfigure() : setMode('list'))}
       >
-        <span>{model || t('选择模型')}</span>
+        <span>{model ? labels[model] || model : t('选择模型')}</span>
         <ChevronDown size={14} />
       </button>
       {mode && (
@@ -76,11 +78,13 @@ export function ModelPicker({
                     <Command.Item
                       key={id}
                       value={id}
+                      keywords={labels[id] ? [labels[id]] : []}
                       className="select-item"
                       data-value={id}
                       onSelect={() => select(id)}
                     >
-                      <span>{id}</span>
+                      <span title={id}>{labels[id] || id}</span>
+                      {labels[id] && labels[id] !== id && <code>{id}</code>}
                       {id === model && <Check size={14} />}
                     </Command.Item>
                   ))}

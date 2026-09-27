@@ -3,6 +3,8 @@ export interface ProviderProfile {
   name: string;
   settings: Settings;
   models?: string[];
+  model_labels?: Record<string, string>;
+  excluded_models?: string[];
 }
 export function sameProvider(a: Settings, b: Settings): boolean {
   return (
@@ -14,7 +16,21 @@ export function sameConnection(a: Settings, b: Settings): boolean {
   return sameProvider(a, b) && a.proxyUrl.trim() === b.proxyUrl.trim();
 }
 export function providerModels(profile: ProviderProfile): string[] {
-  return [...new Set([...(profile.models ?? []), profile.settings.model].filter(Boolean))];
+  const excluded = new Set(profile.excluded_models ?? []);
+  return [...new Set([...(profile.models ?? []), profile.settings.model].filter(Boolean))].filter(
+    (id) => !excluded.has(id),
+  );
+}
+export function providerModelLabel(profile: ProviderProfile, id: string): string {
+  return profile.model_labels?.[id]?.trim() || id;
+}
+export function providerModelEntries(profile: ProviderProfile): { id: string; label: string }[] {
+  return providerModels(profile).map((id) => ({ id, label: providerModelLabel(profile, id) }));
+}
+export function providerModelLabels(profile: ProviderProfile): Record<string, string> {
+  return Object.fromEntries(
+    providerModels(profile).map((id) => [id, providerModelLabel(profile, id)]),
+  );
 }
 export interface ProviderDiscovery {
   models: string[];

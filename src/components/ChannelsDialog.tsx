@@ -173,7 +173,13 @@ export function ChannelsDialog({
                 <button
                   disabled={busy}
                   onClick={() =>
-                    setEditing({ name: t('当前服务'), settings, models: [settings.model] })
+                    setEditing({
+                      name: t('当前服务'),
+                      settings,
+                      models: [settings.model],
+                      model_labels: {},
+                      excluded_models: [],
+                    })
                   }
                 >
                   {t('保存当前连接')}

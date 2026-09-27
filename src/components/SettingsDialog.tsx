@@ -19,6 +19,7 @@ export function SettingsDialog({
   initial,
   onChannels,
   connecting,
+  connected,
   onClose,
   onConnect,
   fontSize,
@@ -31,6 +32,7 @@ export function SettingsDialog({
   initial: Settings;
   onChannels: () => void;
   connecting: boolean;
+  connected: boolean;
   onClose: () => void;
   onConnect: (
     settings: Settings,
@@ -91,6 +93,10 @@ export function SettingsDialog({
           e.preventDefault();
           if (connecting || backupBusy || savingSettingsRef.current) return;
           setSubmitFailed(false);
+          if (connected && JSON.stringify(settings) === JSON.stringify(baseline.current)) {
+            onClose();
+            return;
+          }
           if (configurationChanged) {
             setError(t('配置已在其他位置更新，请先载入最新设置。当前输入仍保留。'));
             return;
@@ -135,6 +141,28 @@ export function SettingsDialog({
             <X size={19} />
           </button>
         </header>
+        <nav className="settings-navigation" aria-label={t('设置分类')}>
+          {[
+            ['settings-models', '模型'],
+            ['settings-appearance', '外观'],
+            ['settings-storage', '数据与备份'],
+            ['settings-diagnostics', '运行诊断'],
+          ].map(([id, label]) => (
+            <button
+              type="button"
+              key={id}
+              onClick={() => {
+                const section = dialog.current?.querySelector<HTMLElement>(`#${id}`);
+                const details = section?.querySelector('details');
+                if (id === 'settings-diagnostics' && details) details.open = true;
+                section?.scrollIntoView({ block: 'start' });
+                section?.focus({ preventScroll: true });
+              }}
+            >
+              {t(label)}
+            </button>
+          ))}
+        </nav>
         <div className="settings-body">
           {configurationChanged && (
             <div className="configuration-notice" role="status">
@@ -169,6 +197,8 @@ export function SettingsDialog({
             <p role="status">{t('先添加渠道，即可设置模型价格和上下文；外观现在就可以调整。')}</p>
           )}
           <fieldset
+            id="settings-models"
+            tabIndex={-1}
             disabled={connecting || savingSettings || !settings.model}
             className="settings-model-options"
           >
@@ -180,28 +210,30 @@ export function SettingsDialog({
             />
             <p className="field-help">{t('模型价格和上下文在点击“保存设置”后生效。')}</p>
           </fieldset>
-          <AppearanceSettings />
-          <label className="form-field font-preference">
-            {t('界面字号')}
-            <Select
-              aria-label={t('界面字号')}
-              value={fontSize}
-              disabled={savingFont}
-              onValueChange={(value) => {
-                setSavingFont(true);
-                void onFontSize(Number(value))
-                  .catch((e) => setError(errorText(e)))
-                  .finally(() => setSavingFont(false));
-              }}
-            >
-              {[11, 12, 13, 14, 15, 16, 17, 18].map((size) => (
-                <option key={size} value={size}>
-                  {size} px{size === 14 ? t(' · 默认') : ''}
-                </option>
-              ))}
-            </Select>
-            <small>{t('立即生效并记忆，正文和控件字号一起调整。')}</small>
-          </label>
+          <section id="settings-appearance" tabIndex={-1}>
+            <AppearanceSettings />
+            <label className="form-field font-preference">
+              {t('界面字号')}
+              <Select
+                aria-label={t('界面字号')}
+                value={fontSize}
+                disabled={savingFont}
+                onValueChange={(value) => {
+                  setSavingFont(true);
+                  void onFontSize(Number(value))
+                    .catch((e) => setError(errorText(e)))
+                    .finally(() => setSavingFont(false));
+                }}
+              >
+                {[11, 12, 13, 14, 15, 16, 17, 18].map((size) => (
+                  <option key={size} value={size}>
+                    {size} px{size === 14 ? t(' · 默认') : ''}
+                  </option>
+                ))}
+              </Select>
+              <small>{t('立即生效并记忆，正文和控件字号一起调整。')}</small>
+            </label>
+          </section>
           <div className="access-setting">
             <ShieldCheck size={19} />
             <div>
@@ -239,13 +271,17 @@ export function SettingsDialog({
             </p>
           )}
           <UpdateSettings />
-          <BackupSettings
-            busyWork={busyWork}
-            unsavedSettings={JSON.stringify(settings) !== JSON.stringify(baseline.current)}
-            hasUnsentDraft={hasUnsentDraft}
-            onActivity={setBackupBusy}
-          />
-          <RuntimeHealthSettings />
+          <section id="settings-storage" tabIndex={-1}>
+            <BackupSettings
+              busyWork={busyWork}
+              unsavedSettings={JSON.stringify(settings) !== JSON.stringify(baseline.current)}
+              hasUnsentDraft={hasUnsentDraft}
+              onActivity={setBackupBusy}
+            />
+          </section>
+          <section id="settings-diagnostics" tabIndex={-1}>
+            <RuntimeHealthSettings />
+          </section>
         </div>
         <footer className="dialog-footer">
           {pendingNavigation && (
@@ -269,7 +305,7 @@ export function SettingsDialog({
           )}
           <span>
             <ExternalLink size={12} />
-            FluxCode 0.1.0 · Apache-2.0
+            FluxCode 0.1.1 · Apache-2.0
           </span>
           <button
             type="submit"

@@ -83,9 +83,9 @@ test('failed check stays on the channel and succeeds after an explicit retry', a
 test('refresh previews model changes before applying them', async ({ page }) => {
   const dialog = await openChannel(page, [{ models: ['model-a', 'model-c'], latencyMs: 18 }]);
   await dialog.getByRole('button', { name: '刷新模型' }).click();
-  await expect(dialog.getByText('新增模型 1 · 保留模型 1 · 移除模型 1')).toBeVisible();
+  await expect(dialog.getByText('新增模型 1 · 保留模型 1 · 本次未返回 1')).toBeVisible();
   await expect(dialog.getByText('模型目录可用 · 18 ms · 2 个模型')).toBeVisible();
   await dialog.getByRole('button', { name: '应用模型变更' }).click();
   await expect(dialog.getByText('模型目录已更新')).toBeVisible();
-  await expect(dialog.getByText('新增模型 1 · 保留模型 1 · 移除模型 1')).toHaveCount(0);
+  await expect(dialog.getByText('新增模型 1 · 保留模型 1 · 本次未返回 1')).toHaveCount(0);
 });
