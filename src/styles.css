@@ -2750,7 +2750,7 @@ select {
   min-height: 92px;
   padding: 17px 18px 10px;
   line-height: 1.65;
-  font-size: 14px;
+  font-size: calc(var(--font-size, 14px) + 1px);
 }
 .composer-toolbar {
   padding: 7px 11px 11px 13px;

@@ -1939,6 +1939,13 @@ dialog {
 .settings-navigation button:hover {
   background: var(--surface-hover);
 }
+.settings-navigation button.active,
+.settings-navigation button[aria-current='page'] {
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--border));
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  color: var(--primary);
+  font-weight: 600;
+}
 .settings-body > section:focus {
   outline-offset: -2px;
 }
@@ -1956,4 +1963,144 @@ dialog {
 }
 .channel-editor-actions > button:first-of-type {
   margin-right: auto;
+}
+
+/* High-frequency desktop surfaces share one clear hierarchy: title, context,
+   primary action. These rules are intentionally scoped to avoid changing the
+   conversation layout. */
+.dialog-description {
+  margin: -6px 0 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.task-actions-dialog {
+  width: min(520px, 92vw);
+  padding: 0;
+  overflow: hidden;
+}
+.task-actions-dialog > form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 22px;
+}
+.task-actions-dialog .dialog-header {
+  margin: -22px -22px 18px;
+  padding: 18px 22px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.task-action-list {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+.task-action-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--ui-radius-sm, 8px);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+.task-action-button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+.task-action-button:disabled { opacity: .55; }
+.task-actions-dialog .model-dialog-actions {
+  margin: 18px -22px -22px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-hover));
+}
+.terminal-dock {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.terminal-dock > p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 78px;
+  margin: 0;
+  padding: 16px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.terminal-dock > p button { color: var(--primary); }
+.terminal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 38px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised, var(--surface));
+}
+.terminal-tabs > button,
+.terminal-tabs > span > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 29px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.terminal-tabs > button:first-child { color: var(--primary); }
+.terminal-tabs > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  border-radius: 7px;
+}
+.terminal-tabs > span:has([aria-pressed='true']) { background: var(--surface-hover); }
+.terminal-tabs > span > button:last-child {
+  width: 25px;
+  justify-content: center;
+  padding-inline: 4px;
+  color: var(--muted);
+}
+.terminal-tabs > span > button:last-child:hover { color: var(--danger, #dc5b62); }
+.channel-model-toolbar {
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 0;
+  border-block: 1px solid var(--border);
+}
+.channel-model-toolbar span { margin-right: auto; color: var(--muted); font-size: .85rem; }
+.channel-model-row {
+  min-height: 58px;
+  padding: 8px 10px;
+  border-bottom-color: var(--border);
+}
+.channel-model-row:hover { background: var(--surface-hover); }
+.model-row-identity input { font-weight: 500; }
+.model-row-identity code { color: var(--muted); }
+.channel-hidden-models {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: .85rem;
+}
+@media (max-width: 680px) {
+  .task-actions-dialog > form { padding: 18px; }
+  .task-actions-dialog .dialog-header { margin: -18px -18px 16px; padding-inline: 18px; }
+  .task-actions-dialog .model-dialog-actions { margin: 16px -18px -18px; padding-inline: 18px; }
+  .terminal-tabs { padding-inline: 5px; }
 }

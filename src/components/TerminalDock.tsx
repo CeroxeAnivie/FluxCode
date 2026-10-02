@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Project } from '../domain/types';
 import { TerminalPanel } from './TerminalPanel';
 import { useAppearance } from '../application/AppearanceProvider';
+import { Plus, X } from 'lucide-react';
 export function TerminalDock({
   project,
   visible,
@@ -56,7 +57,7 @@ export function TerminalDock({
           title={t(sessions.length >= 8 ? '最多保留 8 个终端会话，请先结束一个会话。' : '新建终端')}
           onClick={createSession}
         >
-          ＋
+          <Plus size={16} />
         </button>
         {sessions.map((session) => (
           <span key={session.id}>
@@ -65,6 +66,7 @@ export function TerminalDock({
             </button>
             <button
               aria-label={`${t('结束终端会话')} ${session.name}`}
+              title={t('关闭终端会话')}
               onClick={() => {
                 setSessions((rows) => rows.filter((row) => row.id !== session.id));
                 if (active === session.id) {
@@ -73,7 +75,7 @@ export function TerminalDock({
                 }
               }}
             >
-              ×
+              <X size={14} />
             </button>
           </span>
         ))}

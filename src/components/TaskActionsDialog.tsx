@@ -4,6 +4,7 @@ import type { FluxController } from '../application/useFluxCode';
 import type { Task } from '../domain/types';
 import { useAppearance } from '../application/AppearanceProvider';
 import { useModalDialog } from './useModalDialog';
+import { GitFork, Download, FileJson, Pin, X } from 'lucide-react';
 export function TaskActionsDialog({
   task,
   app,
@@ -36,7 +37,7 @@ export function TaskActionsDialog({
   return (
     <dialog
       ref={dialog}
-      className="model-dialog"
+      className="model-dialog task-actions-dialog"
       aria-label={t('整理任务')}
       onCancel={(event) => {
         event.preventDefault();
@@ -49,7 +50,16 @@ export function TaskActionsDialog({
           void run(() => app.renameTask(task.id, title));
         }}
       >
-        <h2>{t('整理任务')}</h2>
+        <header className="dialog-header">
+          <div>
+            <span className="eyebrow">{t('任务')}</span>
+            <h2>{t('整理任务')}</h2>
+          </div>
+          <button type="button" className="icon-button" aria-label={t('关闭')} onClick={onClose} disabled={busy}>
+            <X size={18} />
+          </button>
+        </header>
+        <p className="dialog-description">{t('修改名称、创建分支或导出当前任务。')}</p>
         <label className="form-field">
           {t('任务名称')}
           <input
@@ -61,8 +71,10 @@ export function TaskActionsDialog({
             onChange={(e) => setTitle(e.target.value)}
           />
         </label>
-        <button
-          type="button"
+        <div className="task-action-list">
+          <button
+            type="button"
+            className="task-action-button"
           disabled={
             busy ||
             !!task.imported ||
@@ -70,23 +82,29 @@ export function TaskActionsDialog({
             app.connection !== 'ready'
           }
           onClick={() => void run(() => app.forkTask(task.id))}
-        >
-          {t('从此任务创建分支')}
-        </button>
-        <button
-          type="button"
+          >
+            <GitFork size={16} />
+            <span>{t('从此任务创建分支')}</span>
+          </button>
+          <button
+            type="button"
+            className="task-action-button"
           disabled={busy}
           onClick={() => void run(() => app.exportTask(task.id, 'markdown'))}
-        >
-          {t('导出文档')}
-        </button>
-        <button
-          type="button"
+          >
+            <Download size={16} />
+            <span>{t('导出文档')}</span>
+          </button>
+          <button
+            type="button"
+            className="task-action-button"
           disabled={busy}
           onClick={() => void run(() => app.exportTask(task.id, 'json'))}
-        >
-          {t('导出结构化记录')}
-        </button>
+          >
+            <FileJson size={16} />
+            <span>{t('导出结构化记录')}</span>
+          </button>
+        </div>
         {error && (
           <p ref={errorNotice} tabIndex={-1} role="alert">
             <ErrorNotice message={error} />
@@ -101,6 +119,7 @@ export function TaskActionsDialog({
               onClose();
             }}
           >
+            <Pin size={15} />
             {t(task.pinned ? '取消置顶' : '置顶')}
           </button>
           <button type="button" disabled={busy} onClick={onClose}>

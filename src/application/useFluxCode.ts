@@ -56,6 +56,7 @@ export function useFluxCode() {
   const [draftSelections, setDraftSelections] = useState(initialSession.selections);
   const [revision, setRevision] = useState(0);
   const [fontSize, setFontSize] = useState(14);
+  const fontPreferenceRevision = useRef(0);
   const loaded = useRef(new Set<string>());
   const engineGeneration = useRef(0);
   const hydration = useRef(new Map<string, RpcEvent[]>());
@@ -208,10 +209,13 @@ export function useFluxCode() {
           setError(errorText(e));
         }
       }
+      const preferenceRevision = fontPreferenceRevision.current;
       const ui = await bridge.loadPreferences();
       if (!disposed) {
-        setFontSize(ui.font_size);
-        document.documentElement.style.setProperty('--font-size', `${ui.font_size}px`);
+        if (preferenceRevision === fontPreferenceRevision.current) {
+          setFontSize(ui.font_size);
+          document.documentElement.style.setProperty('--font-size', `${ui.font_size}px`);
+        }
         document.documentElement.style.setProperty('--sidebar-width', `${ui.sidebar_width}px`);
         document.documentElement.style.setProperty('--inspector-width', `${ui.inspector_width}px`);
         setStartup({ ready: !localError, error: localError });
@@ -1157,6 +1161,7 @@ export function useFluxCode() {
   ];
   const setDraft = (text: string) => setDrafts((d) => ({ ...d, [draftKey]: text }));
   async function changeFontSize(size: number) {
+    fontPreferenceRevision.current++;
     await bridge.saveFontSize(size);
     setFontSize(size);
     document.documentElement.style.setProperty('--font-size', `${size}px`);

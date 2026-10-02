@@ -56,6 +56,7 @@ export function SettingsDialog({
   const savingSettingsRef = useRef(false);
   const [submitFailed, setSubmitFailed] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<'close' | 'channels' | null>(null);
+  const [activeSection, setActiveSection] = useState('settings-models');
   const errorNotice = useRef<HTMLParagraphElement>(null);
   function navigate(destination: 'close' | 'channels') {
     if (backupBusy || savingSettingsRef.current) return;
@@ -151,7 +152,10 @@ export function SettingsDialog({
             <button
               type="button"
               key={id}
+              className={activeSection === id ? 'active' : ''}
+              aria-current={activeSection === id ? 'page' : undefined}
               onClick={() => {
+                setActiveSection(id);
                 const section = dialog.current?.querySelector<HTMLElement>(`#${id}`);
                 const details = section?.querySelector('details');
                 if (id === 'settings-diagnostics' && details) details.open = true;

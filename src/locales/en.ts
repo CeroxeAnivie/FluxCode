@@ -514,6 +514,7 @@ export const english: Record<string, string> = {
   '结果达到上限，请缩小搜索范围。': 'Result limit reached. Narrow your search.',
   没有匹配结果: 'No results',
   结束终端会话: 'End terminal session',
+  关闭终端会话: 'Close terminal session',
   '最多保留 8 个终端会话，请先结束一个会话。':
     'Up to 8 terminal sessions can be kept. End a session first.',
   '打开项目后可使用终端。': 'Open a project to use the terminal.',
@@ -703,6 +704,7 @@ export const english: Record<string, string> = {
     'The compaction threshold must be smaller than the context window',
 
   整理任务: 'Organize task',
+  '修改名称、创建分支或导出当前任务。': 'Rename, branch, or export this task.',
   任务名称: 'Task name',
   取消置顶: 'Unpin',
   置顶: 'Pin',
