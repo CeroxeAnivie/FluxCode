@@ -1055,6 +1055,265 @@ dialog::backdrop {
 .channel-model-settings[open] > summary {
   margin-bottom: 12px;
 }
+
+/* Shared desktop dialog language. Dialogs are task surfaces, so their primary
+   action stays visible while secondary and destructive actions remain quiet. */
+dialog {
+  box-shadow: 0 24px 80px rgb(0 0 0 / 28%);
+}
+.dialog-header,
+.channels-dialog > .dialog-header {
+  min-height: 70px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.dialog-header h2 {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+.eyebrow {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+.channels-dialog {
+  width: min(980px, calc(100vw - 36px));
+  border-radius: 14px;
+}
+.channels-body {
+  max-height: calc(100vh - 148px);
+  padding: 20px 24px 24px;
+}
+.channels-toolbar {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.channels-toolbar .primary-button {
+  min-height: 36px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.channel-search input {
+  min-height: 36px;
+  padding: 7px 11px;
+  border-radius: 8px;
+}
+.field-help {
+  margin: 8px 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.channel-cards {
+  gap: 8px;
+  margin: 16px 0;
+}
+.channel-card {
+  position: relative;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--input);
+}
+.channel-card.active {
+  border-color: var(--primary);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.channel-card-icon {
+  padding: 9px;
+  border-radius: 8px;
+}
+.channel-card-content h3 {
+  font-size: 14px;
+}
+.channel-card-content p {
+  margin: 3px 0 5px;
+  font-size: 12px;
+}
+.channel-card-content > span {
+  font-size: 11px;
+}
+.channel-active {
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  font-size: 10px;
+}
+.channel-card-actions {
+  margin-left: auto;
+  gap: 5px;
+}
+.channel-card-actions button {
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.channel-card-actions button:first-child {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.channel-card-actions button:last-child {
+  color: var(--muted);
+}
+.channel-card-actions button:last-child:hover:not(:disabled) {
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 45%, var(--border));
+}
+.channel-tools {
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.channel-tools button {
+  border: 0;
+  padding: 4px 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.channel-tools button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+.channel-editor {
+  max-width: 860px;
+}
+.channel-editor h3 {
+  margin-bottom: 14px;
+  font-size: 16px;
+}
+.channel-model-list {
+  border-radius: 10px;
+}
+.channel-model-row {
+  min-height: 50px;
+  padding: 7px 10px;
+}
+.channel-model-toolbar {
+  margin: 8px 0;
+}
+.channel-model-toolbar button {
+  border-radius: 6px;
+}
+.channel-model-toolbar button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.channel-editor-actions {
+  bottom: -24px;
+  padding: 14px 0;
+}
+.channel-editor-actions .primary-button {
+  min-height: 36px;
+  border-radius: 8px;
+}
+.channel-empty {
+  padding: 56px 12px;
+}
+.channel-empty h3 {
+  margin: 14px 0 5px;
+  font-size: 15px;
+  color: var(--text);
+}
+.channel-empty p {
+  margin: 0;
+  font-size: 12px;
+}
+.channel-reload {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.channel-delete {
+  background: color-mix(in srgb, var(--error) 7%, transparent);
+  border-color: color-mix(in srgb, var(--error) 24%, var(--border));
+  border-radius: 8px;
+  padding: 9px;
+}
+.channel-delete button:last-child {
+  color: var(--error);
+}
+.model-picker-dialog {
+  width: min(520px, calc(100vw - 32px));
+  border-radius: 14px;
+  padding: 20px;
+}
+.model-picker-dialog [cmdk-input] {
+  min-height: 38px;
+  border-radius: 8px;
+  border-color: var(--border);
+  background: var(--input);
+}
+.model-picker-dialog [cmdk-list] {
+  max-height: min(52vh, 480px);
+  padding: 6px 0;
+}
+.model-picker-dialog [cmdk-item] {
+  min-height: 38px;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+.model-picker-dialog [cmdk-item][data-current='true'] {
+  font-weight: 600;
+}
+.settings-dialog {
+  width: min(700px, calc(100vw - 32px));
+  border-radius: 14px;
+  padding: 0;
+}
+.settings-dialog > form {
+  padding: 0 24px 20px;
+  max-height: calc(100vh - 90px);
+}
+.settings-dialog .dialog-header {
+  margin: 0 -24px;
+  padding-inline: 24px;
+}
+.settings-body {
+  padding-right: 4px;
+}
+.settings-navigation {
+  border-bottom: 1px solid var(--border);
+  gap: 4px;
+  padding: 8px 0;
+}
+.settings-navigation button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.settings-navigation button[aria-selected='true'],
+.settings-navigation button.active {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.settings-dialog .dialog-footer {
+  margin: 0 -24px;
+  padding: 14px 24px 0;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 680px) {
+  .channels-dialog {
+    width: calc(100vw - 18px);
+  }
+  .channels-body {
+    padding: 16px;
+  }
+  .channel-card-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  .channel-card-actions button {
+    flex: 1;
+  }
+  .dialog-header,
+  .channels-dialog > .dialog-header {
+    padding-inline: 16px;
+  }
+}
 .model-picker-dialog > header {
   display: flex;
   justify-content: space-between;
