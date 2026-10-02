@@ -1,6 +1,7 @@
 import { useAppearance } from '../application/AppearanceProvider';
 import {
   Archive,
+  Cable,
   ChevronDown,
   Circle,
   Folder,
@@ -137,7 +138,8 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-actions">
-        <button className="nav-action" onClick={onChannels}>
+        <button className="nav-action channel-nav" onClick={onChannels}>
+          <Cable size={15} />
           {t('渠道管理')}
         </button>
         <button className="nav-action new-task" onClick={app.newTask}>
@@ -217,10 +219,10 @@ export function Sidebar({
         )}
       </div>
       <div className="section-heading">
+        <span>{t('项目')}</span>
         <button aria-pressed={archived} onClick={() => setArchived((v) => !v)}>
           {t(archived ? '返回任务' : '已归档')}
         </button>
-        <span>{t('项目')}</span>
         <button
           className="icon-button"
           aria-label={t('工作区管理')}

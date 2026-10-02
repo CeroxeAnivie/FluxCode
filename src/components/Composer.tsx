@@ -1,6 +1,6 @@
 import { Select } from './Select';
 import { useAppearance } from '../application/AppearanceProvider';
-import { ArrowUp, FolderOpen, ShieldCheck, Square } from 'lucide-react';
+import { ArrowUp, FolderOpen, Paperclip, ShieldCheck, Square } from 'lucide-react';
 import { useRef } from 'react';
 import { ModelPicker } from './ModelPicker';
 import { reasoningEfforts } from '../domain/modelSelection';
@@ -108,7 +108,7 @@ export function Composer({
               aria-label={t('添加文件或图片')}
               onClick={onAttach}
             >
-              ＋
+              <Paperclip size={16} />
             </button>
             <button
               type="button"

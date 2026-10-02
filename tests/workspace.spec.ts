@@ -1691,6 +1691,22 @@ test('settings and model selection return focus to their launch controls', async
   await expect(model).toBeFocused();
 });
 
+test('model picker enabled options are opaque and keep the current model marked', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('combobox', { name: '当前会话模型' }).click();
+  const options = page.locator('.model-picker-dialog [cmdk-item]');
+  await expect(options.first()).toBeVisible();
+  for (const option of await options.all()) {
+    await expect(option).toHaveCSS('opacity', '1');
+    await expect(option).toHaveCSS('cursor', 'pointer');
+  }
+  await expect(page.locator('.model-picker-dialog [data-current="true"]')).toHaveCount(1);
+  await options.filter({ hasText: '添加模型' }).click();
+  await expect(page.getByRole('textbox', { name: '模型 ID', exact: true })).toBeVisible();
+});
+
 test('primary views expose names for every visible button', async ({ page }) => {
   async function expectNamedControls() {
     for (const role of ['button', 'textbox', 'combobox', 'checkbox', 'slider'] as const)

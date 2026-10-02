@@ -273,7 +273,8 @@
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
-.select-item[data-disabled] {
+.select-item[data-disabled=''],
+.select-item[data-disabled='true'] {
   color: var(--muted);
   opacity: 0.5;
   cursor: not-allowed;
@@ -1084,6 +1085,13 @@ dialog::backdrop {
   padding: 10px 12px;
   border-radius: 7px;
   cursor: pointer;
+}
+.model-picker-dialog [cmdk-item]:not([data-disabled='true']) {
+  color: var(--text);
+}
+.model-picker-dialog [cmdk-item][data-current='true'] {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 .model-picker-dialog [cmdk-item][data-selected='true'] {
   background: var(--surface-hover);

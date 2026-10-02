@@ -81,6 +81,7 @@ export function ModelPicker({
                       keywords={labels[id] ? [labels[id]] : []}
                       className="select-item"
                       data-value={id}
+                      data-current={id === model}
                       onSelect={() => select(id)}
                     >
                       <span title={id}>{labels[id] || id}</span>
