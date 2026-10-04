@@ -547,18 +547,8 @@ dialog::backdrop {
   background: var(--input);
   color: var(--text);
 }
-.channel-editor-actions {
-  bottom: -20px;
-  margin-bottom: -20px;
-  padding: 14px 0 18px;
-}
+
 .model-unavailable {
   margin: 8px 16px;
   color: var(--warning);
-}
-@media (max-width: 680px) {
-  .channel-editor-actions {
-    bottom: -16px;
-    margin-bottom: -16px;
-  }
 }

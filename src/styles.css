@@ -2267,7 +2267,7 @@ select:disabled {
   gap: 10px;
   flex-wrap: wrap;
 }
-.error-notice button {
+.error-notice .diagnostic-copy {
   font: inherit;
   white-space: nowrap;
   text-decoration: underline;

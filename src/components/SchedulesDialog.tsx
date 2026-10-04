@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import { useEffect, useRef, useState } from 'react';
 import type { Schedule } from '../domain/schedules';
 import { bridge } from '../infrastructure/bridge';
@@ -7,10 +8,12 @@ import { useModalDialog } from './useModalDialog';
 export function SchedulesDialog({
   project,
   onClose,
+  onChooseProject,
   onOpen,
 }: {
   project?: string;
   onClose: () => void;
+  onChooseProject: () => void;
   onOpen: (job: Schedule) => Promise<void>;
 }) {
   const { t, language } = useAppearance();
@@ -82,7 +85,7 @@ export function SchedulesDialog({
   return (
     <dialog
       ref={dialog}
-      className="capabilities-dialog"
+      className="capabilities-dialog scroll-dialog"
       aria-label={t('定时任务')}
       onCancel={(event) => {
         event.preventDefault();
@@ -95,143 +98,162 @@ export function SchedulesDialog({
           ×
         </button>
       </header>
-      {confirmClose && (
-        <div role="alert" className="settings-unsaved">
-          <p>{t('还有未保存的内容。继续编辑，或放弃本次修改？')}</p>
-          <button onClick={() => setConfirmClose(false)}>{t('继续编辑')}</button>
-          <button onClick={onClose}>{t('放弃修改')}</button>
-        </div>
-      )}
-      <p>
-        {t(
-          '仅在应用打开且引擎连接时运行。错过的任务不会补跑；异常中断后需手动恢复。每次最多运行一个定时任务。',
+      <div className="dialog-scroll-body">
+        {confirmClose && (
+          <div role="alert" className="settings-unsaved">
+            <p>{t('还有未保存的内容。继续编辑，或放弃本次修改？')}</p>
+            <button onClick={() => setConfirmClose(false)}>{t('继续编辑')}</button>
+            <button onClick={onClose}>{t('放弃修改')}</button>
+          </div>
         )}
-      </p>
-      <form
-        aria-busy={busy}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (project && !busyRef.current)
-            void run(async () => {
-              await bridge.saveSchedule({
-                id: crypto.randomUUID(),
-                name,
-                project,
-                prompt,
-                intervalMinutes: minutes,
-                enabled: true,
-                nextRun: 0,
-                status: 'waiting',
-                lastThreadId: null,
-              });
-              setName('');
-              setPrompt('');
-              setConfirmClose(false);
-            }, '定时任务已创建');
-        }}
-      >
-        <label className="form-field">
-          {t('任务名称')}
-          <input
-            value={name}
-            maxLength={200}
-            required
-            disabled={busy}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </label>
-        <label className="form-field">
-          {t('任务指令')}
-          <textarea
-            value={prompt}
-            maxLength={100000}
-            required
-            disabled={busy}
-            onChange={(e) => setPrompt(e.target.value)}
-          />
-        </label>
-        <label className="form-field">
-          {t('间隔分钟')}
-          <input
-            type="number"
-            min={1}
-            max={525600}
-            required
-            disabled={busy}
-            value={minutes}
-            onChange={(e) => setMinutes(e.target.valueAsNumber)}
-          />
-        </label>
-        <p>{project ?? t('先打开一个项目')}</p>
-        <button disabled={busy || !project}>{t('创建定时任务')}</button>
-      </form>
-      {error && (
-        <p role="alert">
-          <ErrorNotice message={error} />
+        <p>
+          {t(
+            '仅在应用打开且引擎连接时运行。错过的任务不会补跑；异常中断后需手动恢复。每次最多运行一个定时任务。',
+          )}
         </p>
-      )}
-      {notice && <p role="status">{notice}</p>}
-      {items.map((job) => (
-        <article key={job.id}>
-          <strong>{job.name}</strong>
-          <small>{job.project}</small>
-          <p>
-            {t(
-              (
-                {
-                  running: '进行中',
-                  completed: '已完成',
-                  failed: '失败',
-                  paused: '已暂停',
-                  waiting: '等待执行',
-                } as Record<string, string>
-              )[job.status] ?? '状态未知',
-            )}
-            {job.enabled ? ' · ' + new Date(job.nextRun * 1000).toLocaleString(language) : ''}
-          </p>
-          <button
-            disabled={busy || job.status === 'running'}
-            onClick={() => void run(() => bridge.saveSchedule({ ...job, enabled: !job.enabled }))}
-          >
-            {t(job.enabled ? '暂停' : '恢复')}
-          </button>
-          <button disabled={busy || job.status === 'running'} onClick={() => setRemoving(job.id)}>
-            {t('移除')}
-          </button>
-          {removing === job.id && (
-            <div role="alert" className="schedule-remove-confirm">
-              <span>{t('确认移除此定时任务？')}</span>
-              <button disabled={busy} onClick={() => setRemoving(null)}>
-                {t('取消')}
+        {!project && (
+          <ActionNotice
+            action={
+              <button
+                type="button"
+                className="primary-button"
+                disabled={busy}
+                onClick={onChooseProject}
+              >
+                {t('打开项目')}
               </button>
+            }
+          >
+            <strong>{t('先打开项目，再创建定时任务')}</strong>
+            <span>{t('已填写的任务内容会保留。')}</span>
+          </ActionNotice>
+        )}
+        <form
+          aria-busy={busy}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (project && !busyRef.current)
+              void run(async () => {
+                await bridge.saveSchedule({
+                  id: crypto.randomUUID(),
+                  name,
+                  project,
+                  prompt,
+                  intervalMinutes: minutes,
+                  enabled: true,
+                  nextRun: 0,
+                  status: 'waiting',
+                  lastThreadId: null,
+                });
+                setName('');
+                setPrompt('');
+                setConfirmClose(false);
+              }, '定时任务已创建');
+          }}
+        >
+          <label className="form-field">
+            {t('任务名称')}
+            <input
+              value={name}
+              maxLength={200}
+              required
+              disabled={busy}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
+          <label className="form-field">
+            {t('任务指令')}
+            <textarea
+              value={prompt}
+              maxLength={100000}
+              required
+              disabled={busy}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+          </label>
+          <label className="form-field">
+            {t('间隔分钟')}
+            <input
+              type="number"
+              min={1}
+              max={525600}
+              required
+              disabled={busy}
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.valueAsNumber)}
+            />
+          </label>
+          {project && <p>{project}</p>}
+          <button disabled={busy || !project}>{t('创建定时任务')}</button>
+        </form>
+        {error && (
+          <p role="alert">
+            <ErrorNotice message={error} />
+          </p>
+        )}
+        {notice && <p role="status">{notice}</p>}
+        {items.map((job) => (
+          <article key={job.id}>
+            <strong>{job.name}</strong>
+            <small>{job.project}</small>
+            <p>
+              {t(
+                (
+                  {
+                    running: '进行中',
+                    completed: '已完成',
+                    failed: '失败',
+                    paused: '已暂停',
+                    waiting: '等待执行',
+                  } as Record<string, string>
+                )[job.status] ?? '状态未知',
+              )}
+              {job.enabled ? ' · ' + new Date(job.nextRun * 1000).toLocaleString(language) : ''}
+            </p>
+            <button
+              disabled={busy || job.status === 'running'}
+              onClick={() => void run(() => bridge.saveSchedule({ ...job, enabled: !job.enabled }))}
+            >
+              {t(job.enabled ? '暂停' : '恢复')}
+            </button>
+            <button disabled={busy || job.status === 'running'} onClick={() => setRemoving(job.id)}>
+              {t('移除')}
+            </button>
+            {removing === job.id && (
+              <div role="alert" className="schedule-remove-confirm">
+                <span>{t('确认移除此定时任务？')}</span>
+                <button disabled={busy} onClick={() => setRemoving(null)}>
+                  {t('取消')}
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    void run(async () => {
+                      await bridge.removeSchedule(job.id);
+                      setRemoving(null);
+                    }, '定时任务已移除')
+                  }
+                >
+                  {t('确认删除')}
+                </button>
+              </div>
+            )}
+            {job.lastThreadId && (
               <button
                 disabled={busy}
                 onClick={() =>
                   void run(async () => {
-                    await bridge.removeSchedule(job.id);
-                    setRemoving(null);
-                  }, '定时任务已移除')
+                    await onOpen(job);
+                    onClose();
+                  })
                 }
               >
-                {t('确认删除')}
+                {t('打开执行记录')}
               </button>
-            </div>
-          )}
-          {job.lastThreadId && (
-            <button
-              disabled={busy}
-              onClick={() =>
-                void run(async () => {
-                  await onOpen(job);
-                  onClose();
-                })
-              }
-            >
-              {t('打开执行记录')}
-            </button>
-          )}
-        </article>
-      ))}
+            )}
+          </article>
+        ))}
+      </div>
     </dialog>
   );
 }

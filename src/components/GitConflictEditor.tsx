@@ -95,81 +95,85 @@ export function GitConflictEditor({
           ×
         </button>
       </header>
-      {loading && <p role="status">{t('正在加载…')}</p>}
-      {versions && (
-        <>
-          <div className="git-conflict-sources">
-            {(
-              [
-                ['共同祖先', versions.base],
-                ['当前版本', versions.current],
-                ['传入版本', versions.incoming],
-              ] as const
-            ).map(([label, content]) => (
-              <section key={label}>
-                <h3>{t(label)}</h3>
-                <pre>{content ?? t('此版本不存在')}</pre>
-              </section>
-            ))}
-          </div>
-          <div className="git-conflict-result">
-            <div className="git-conflict-result-header">
-              <label htmlFor="git-conflict-result">{t('合并结果')}</label>
-              <div>
-                <button
-                  type="button"
-                  disabled={saving || versions.current === null}
-                  onClick={() => setResult(versions.current ?? '')}
-                >
-                  {t('使用当前')}
-                </button>
-                <button
-                  type="button"
-                  disabled={saving || versions.incoming === null}
-                  onClick={() => setResult(versions.incoming ?? '')}
-                >
-                  {t('使用传入')}
-                </button>
-                <button
-                  type="button"
-                  disabled={saving || versions.current === null || versions.incoming === null}
-                  onClick={() =>
-                    setResult(combine(versions.current ?? '', versions.incoming ?? ''))
-                  }
-                >
-                  {t('保留两者')}
-                </button>
-              </div>
+      <div className="dialog-scroll-body">
+        {loading && <p role="status">{t('正在加载…')}</p>}
+        {versions && (
+          <>
+            <div className="git-conflict-sources">
+              {(
+                [
+                  ['共同祖先', versions.base],
+                  ['当前版本', versions.current],
+                  ['传入版本', versions.incoming],
+                ] as const
+              ).map(([label, content]) => (
+                <section key={label}>
+                  <h3>{t(label)}</h3>
+                  <pre>{content ?? t('此版本不存在')}</pre>
+                </section>
+              ))}
             </div>
-            <textarea
-              id="git-conflict-result"
-              aria-label={t('合并结果')}
-              value={result}
-              disabled={saving}
-              onChange={(event) => setResult(event.target.value)}
-              spellCheck={false}
-            />
-          </div>
-          <footer className="git-conflict-footer">
-            {discard && <span role="alert">{t('未保存的合并结果将丢失。')}</span>}
-            <button type="button" disabled={saving} onClick={discard ? onClose : requestClose}>
-              {t(discard ? '确认放弃' : '取消')}
-            </button>
-            <button
-              type="button"
-              className="primary-button"
-              disabled={saving}
-              onClick={() => void save()}
-            >
-              {t('保存并标记已解决')}
-            </button>
-          </footer>
-        </>
-      )}
-      {error && (
-        <p role="alert">
-          <ErrorNotice message={error} />
-        </p>
+            <div className="git-conflict-result">
+              <div className="git-conflict-result-header">
+                <label htmlFor="git-conflict-result">{t('合并结果')}</label>
+                <div>
+                  <button
+                    type="button"
+                    disabled={saving || versions.current === null}
+                    onClick={() => setResult(versions.current ?? '')}
+                  >
+                    {t('使用当前')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving || versions.incoming === null}
+                    onClick={() => setResult(versions.incoming ?? '')}
+                  >
+                    {t('使用传入')}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving || versions.current === null || versions.incoming === null}
+                    onClick={() =>
+                      setResult(combine(versions.current ?? '', versions.incoming ?? ''))
+                    }
+                  >
+                    {t('保留两者')}
+                  </button>
+                </div>
+              </div>
+              <textarea
+                id="git-conflict-result"
+                aria-label={t('合并结果')}
+                value={result}
+                disabled={saving}
+                onChange={(event) => setResult(event.target.value)}
+                spellCheck={false}
+              />
+            </div>
+          </>
+        )}
+        {error && (
+          <p role="alert">
+            <ErrorNotice message={error} />
+          </p>
+        )}
+      </div>
+      {versions && (
+        <footer className="git-conflict-footer">
+          {discard && <span role="alert">{t('未保存的合并结果将丢失。')}</span>}
+          <button type="button" disabled={saving} onClick={discard ? onClose : requestClose}>
+            {t(discard ? '确认放弃' : '取消')}
+          </button>
+          <button
+            type="button"
+            className="primary-button"
+            disabled={saving}
+            onClick={() => void save()}
+          >
+            {t('保存并标记已解决')}
+          </button>
+        </footer>
       )}
     </dialog>
   );

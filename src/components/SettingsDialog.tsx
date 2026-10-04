@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import { version as appVersion } from '../../package.json';
 import { Select } from './Select';
 import { ErrorNotice } from './ErrorNotice';
@@ -130,7 +131,6 @@ export function SettingsDialog({
       >
         <header className="dialog-header">
           <div>
-            <span className="eyebrow">{t('工作空间设置')}</span>
             <h2>{t('工作空间设置')}</h2>
           </div>
           <button
@@ -210,7 +210,20 @@ export function SettingsDialog({
             </button>
           </section>
           {!settings.model && (
-            <p role="status">{t('先添加渠道，即可设置模型价格和上下文；外观现在就可以调整。')}</p>
+            <ActionNotice
+              action={
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={backupBusy || savingSettings}
+                  onClick={() => navigate('channels')}
+                >
+                  {t('添加渠道')}
+                </button>
+              }
+            >
+              {t('先添加渠道，即可设置模型价格和上下文；外观现在就可以调整。')}
+            </ActionNotice>
           )}
           <fieldset
             id="settings-models"

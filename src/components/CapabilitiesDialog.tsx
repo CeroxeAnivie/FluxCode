@@ -73,7 +73,7 @@ export function CapabilitiesDialog({
   return (
     <dialog
       ref={dialog}
-      className="capabilities-dialog"
+      className="capabilities-dialog scroll-dialog"
       aria-label={t('模型与扩展')}
       onCancel={onClose}
     >
@@ -105,113 +105,115 @@ export function CapabilitiesDialog({
           {t('刷新')}
         </button>
       </nav>
-      {busy && <p role="status">{t('正在加载…')}</p>}
-      {errors.map((e, i) => (
-        <p role="alert" key={i}>
-          <ErrorNotice message={e} />
-        </p>
-      ))}
-      {tab === 'models' && (
-        <>
-          <p>{t('仅显示当前渠道的模型；具体能力以服务实际支持为准。')}</p>
-          {availableModels
-            .map(
-              (id) =>
-                models.find((model) => model.id === id) ?? {
-                  id,
-                  name: id,
-                  description: '',
-                  efforts: [],
-                  modalities: [],
-                },
-            )
-            .map((m) => (
-              <article key={m.id}>
-                <strong>{m.name}</strong>
-                <code>{m.id}</code>
-                {m.description && <p>{m.description}</p>}
-                {!!(m.efforts.length || m.modalities.length) && (
-                  <small>
-                    {[m.efforts.join(' · '), m.modalities.join(', ')].filter(Boolean).join(' / ')}
-                  </small>
-                )}
-                <button
-                  disabled={busy}
-                  onClick={() => {
-                    onModel(m.id);
-                    onClose();
-                  }}
-                >
-                  {t('使用模型')}
-                </button>
+      <div className="dialog-scroll-body">
+        {busy && <p role="status">{t('正在加载…')}</p>}
+        {errors.map((e, i) => (
+          <p role="alert" key={i}>
+            <ErrorNotice message={e} />
+          </p>
+        ))}
+        {tab === 'models' && (
+          <>
+            <p>{t('仅显示当前渠道的模型；具体能力以服务实际支持为准。')}</p>
+            {availableModels
+              .map(
+                (id) =>
+                  models.find((model) => model.id === id) ?? {
+                    id,
+                    name: id,
+                    description: '',
+                    efforts: [],
+                    modalities: [],
+                  },
+              )
+              .map((m) => (
+                <article key={m.id}>
+                  <strong>{m.name}</strong>
+                  <code>{m.id}</code>
+                  {m.description && <p>{m.description}</p>}
+                  {!!(m.efforts.length || m.modalities.length) && (
+                    <small>
+                      {[m.efforts.join(' · '), m.modalities.join(', ')].filter(Boolean).join(' / ')}
+                    </small>
+                  )}
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      onModel(m.id);
+                      onClose();
+                    }}
+                  >
+                    {t('使用模型')}
+                  </button>
+                </article>
+              ))}
+          </>
+        )}
+        {visited.has('plugins') && (
+          <div hidden={tab !== 'plugins'}>
+            <PluginSettings cwd={cwd} />
+          </div>
+        )}
+        {tab === 'skills' && (
+          <>
+            <button
+              disabled={busy}
+              onClick={() => {
+                void bridge
+                  .chooseDirectory()
+                  .then((path) => (path ? bridge.installSkill(path) : null))
+                  .then(() => setGeneration((v) => v + 1))
+                  .catch((e) => setErrors([String(e)]));
+              }}
+            >
+              {t('从文件夹安装技能')}
+            </button>
+            {!skills.length && !busy && <p>{t('当前项目没有可用 Skills。')}</p>}
+            {skills.map((s) => (
+              <article key={s.path}>
+                <strong>{s.name}</strong>
+                <p>{s.description}</p>
+                <small>{s.path}</small>
+                <label>
+                  <input
+                    type="checkbox"
+                    disabled={busy}
+                    checked={s.enabled}
+                    onChange={() => void toggle(s)}
+                  />
+                  {t('已启用')}
+                </label>
               </article>
             ))}
-        </>
-      )}
-      {visited.has('plugins') && (
-        <div hidden={tab !== 'plugins'}>
-          <PluginSettings cwd={cwd} />
-        </div>
-      )}
-      {tab === 'skills' && (
-        <>
-          <button
-            disabled={busy}
-            onClick={() => {
-              void bridge
-                .chooseDirectory()
-                .then((path) => (path ? bridge.installSkill(path) : null))
-                .then(() => setGeneration((v) => v + 1))
-                .catch((e) => setErrors([String(e)]));
-            }}
-          >
-            {t('从文件夹安装技能')}
-          </button>
-          {!skills.length && !busy && <p>{t('当前项目没有可用 Skills。')}</p>}
-          {skills.map((s) => (
-            <article key={s.path}>
-              <strong>{s.name}</strong>
-              <p>{s.description}</p>
-              <small>{s.path}</small>
-              <label>
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={s.enabled}
-                  onChange={() => void toggle(s)}
-                />
-                {t('已启用')}
-              </label>
-            </article>
-          ))}
-        </>
-      )}
-      {visited.has('mcp') && (
-        <div hidden={tab !== 'mcp'}>
-          <McpSettings />
-          {!servers.length && !busy && <p>{t('尚未配置 MCP 服务。')}</p>}
-          {servers.map((s) => (
-            <article key={s.name}>
-              <strong>{s.name}</strong>
-              <span>
-                {t(
-                  (
-                    {
-                      connected: '已连接',
-                      connecting: '连接中',
-                      failed: '失败',
-                      disabled: '已禁用',
-                      needsAuth: '等待授权',
-                    } as Record<string, string>
-                  )[s.status] ?? '状态未知',
-                )}{' '}
-                · {s.tools} {t('个工具')}
-              </span>
-              {s.error && <p role="alert">{s.error}</p>}
-            </article>
-          ))}
-        </div>
-      )}
+          </>
+        )}
+        {visited.has('mcp') && (
+          <div hidden={tab !== 'mcp'}>
+            <McpSettings />
+            {!servers.length && !busy && <p>{t('尚未配置 MCP 服务。')}</p>}
+            {servers.map((s) => (
+              <article key={s.name}>
+                <strong>{s.name}</strong>
+                <span>
+                  {t(
+                    (
+                      {
+                        connected: '已连接',
+                        connecting: '连接中',
+                        failed: '失败',
+                        disabled: '已禁用',
+                        needsAuth: '等待授权',
+                      } as Record<string, string>
+                    )[s.status] ?? '状态未知',
+                  )}{' '}
+                  · {s.tools} {t('个工具')}
+                </span>
+                {s.error && <p role="alert">{s.error}</p>}
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </dialog>
   );
 }

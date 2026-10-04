@@ -74,70 +74,72 @@ export function TaskActivityDialog({
   return (
     <dialog
       ref={dialog}
-      className="model-dialog"
+      className="model-dialog action-dialog"
       aria-label={t('任务总览')}
       onCancel={(event) => {
         event.preventDefault();
         onClose();
       }}
     >
-      <h2>{t('任务总览')}</h2>
-      <p role="status" aria-live="polite">
-        {t('运行中')} {rows.filter((row) => row.status === 'running').length} · {t('等待输入')}{' '}
-        {rows.filter((row) => row.status === 'input').length} · {t('失败')}{' '}
-        {rows.filter((row) => row.status === 'failed').length}
-      </p>
-      <label className="form-field">
-        {t('搜索任务或项目')}
-        <input
-          autoFocus
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setLimit(50);
-          }}
-        />
-      </label>
-      {error && (
-        <p role="alert">
-          <ErrorNotice message={error} />
+      <div className="dialog-scroll-body">
+        <h2>{t('任务总览')}</h2>
+        <p role="status" aria-live="polite">
+          {t('运行中')} {rows.filter((row) => row.status === 'running').length} · {t('等待输入')}{' '}
+          {rows.filter((row) => row.status === 'input').length} · {t('失败')}{' '}
+          {rows.filter((row) => row.status === 'failed').length}
         </p>
-      )}
-      <ul className="task-activity-list">
-        {visible.slice(0, limit).map((row) => (
-          <li key={row.task.id}>
-            <button
-              className="task-activity-open"
-              disabled={opening !== null}
-              aria-busy={opening === row.task.id}
-              onClick={() => void open(row.task.id)}
-            >
-              <strong>{row.task.title}</strong>
-              <span>
-                {row.project} · {t(labels[row.status])}
-                {row.queuedCount > 0 ? ` · ${t('待发送')} ${row.queuedCount}` : ''}
-              </span>
-            </button>
-            {row.canStop && (
+        <label className="form-field">
+          {t('搜索任务或项目')}
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setLimit(50);
+            }}
+          />
+        </label>
+        {error && (
+          <p role="alert">
+            <ErrorNotice message={error} />
+          </p>
+        )}
+        <ul className="task-activity-list">
+          {visible.slice(0, limit).map((row) => (
+            <li key={row.task.id}>
               <button
-                disabled={pending.includes(row.task.id)}
-                onClick={() => void stop(row.task.id)}
+                className="task-activity-open"
+                disabled={opening !== null}
+                aria-busy={opening === row.task.id}
+                onClick={() => void open(row.task.id)}
               >
-                {t('停止任务')}
+                <strong>{row.task.title}</strong>
+                <span>
+                  {row.project} · {t(labels[row.status])}
+                  {row.queuedCount > 0 ? ` · ${t('待发送')} ${row.queuedCount}` : ''}
+                </span>
               </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {!visible.length && (
-        <p>
-          {t('没有匹配的任务')}
-          {query && <button onClick={() => setQuery('')}>{t('清除搜索')}</button>}
-        </p>
-      )}
-      {visible.length > limit && (
-        <button onClick={() => setLimit((count) => count + 50)}>{t('显示更多任务')}</button>
-      )}
+              {row.canStop && (
+                <button
+                  disabled={pending.includes(row.task.id)}
+                  onClick={() => void stop(row.task.id)}
+                >
+                  {t('停止任务')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {!visible.length && (
+          <p>
+            {t('没有匹配的任务')}
+            {query && <button onClick={() => setQuery('')}>{t('清除搜索')}</button>}
+          </p>
+        )}
+        {visible.length > limit && (
+          <button onClick={() => setLimit((count) => count + 50)}>{t('显示更多任务')}</button>
+        )}
+      </div>
       <div className="model-dialog-actions">
         <button onClick={onClose}>{t('关闭')}</button>
       </div>

@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import { useEffect, useRef, useState } from 'react';
 import type { Project } from '../domain/types';
 import { TerminalPanel } from './TerminalPanel';
@@ -9,6 +10,10 @@ export function TerminalDock({
   ready,
   fontSize,
   onClose,
+  onChooseProject,
+  projectActionLabel,
+  onConnect,
+  connectActionLabel,
   onExecuted,
 }: {
   project?: Project;
@@ -16,6 +21,10 @@ export function TerminalDock({
   ready: boolean;
   fontSize: number;
   onClose: () => void;
+  onChooseProject: () => void;
+  projectActionLabel?: string;
+  connectActionLabel?: string;
+  onConnect: () => void;
   onExecuted: () => void;
 }) {
   const { t } = useAppearance();
@@ -80,7 +89,18 @@ export function TerminalDock({
           </span>
         ))}
       </nav>
-      {!sessions.some((row) => row.id === active) && (
+      {!project && !sessions.some((row) => row.id === active) && (
+        <ActionNotice
+          action={
+            <button className="primary-button" onClick={onChooseProject}>
+              {projectActionLabel ?? t('打开项目')}
+            </button>
+          }
+        >
+          {t('打开项目后可使用终端。')}
+        </ActionNotice>
+      )}
+      {project && !sessions.some((row) => row.id === active) && (
         <p>
           {t(
             sessions.length >= 8
@@ -93,6 +113,17 @@ export function TerminalDock({
             <button onClick={createSession}>{t('创建终端会话')}</button>
           )}
         </p>
+      )}
+      {sessions.some((row) => row.id === active) && !ready && (
+        <ActionNotice
+          action={
+            <button className="primary-button" onClick={onConnect}>
+              {connectActionLabel ?? t('连接执行引擎')}
+            </button>
+          }
+        >
+          {t('执行引擎未连接，连接后即可使用终端。')}
+        </ActionNotice>
       )}
       {sessions.map((session) => (
         <div hidden={session.id !== active} key={session.id}>

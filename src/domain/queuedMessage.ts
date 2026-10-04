@@ -1,6 +1,6 @@
 import { isModelSelection, type ModelSelection } from './modelSelection';
 import { validateAttachments, type Attachment } from './attachments';
-import { errorMessage } from './errors';
+import { redactDiagnostic } from './errors';
 export interface QueuedMessage {
   id: string;
   threadId: string;
@@ -25,9 +25,7 @@ export function settleQueuedMessage(
           ...item,
           status: 'failed' as const,
           turnId: result.turnId ?? item.turnId,
-          error: result.error
-            ? errorMessage(result.error, 'zh-CN')
-            : '任务未完成，请检查历史后重试。',
+          error: result.error ? redactDiagnostic(result.error) : '任务未完成，请检查历史后重试。',
         }
       : item,
   );
@@ -60,7 +58,7 @@ export function parseQueue(raw: string | null): QueuedMessage[] {
     )
       throw new Error('Invalid queued message');
     validateAttachments(row.attachments);
-    const safeError = row.error ? errorMessage(row.error, 'zh-CN') : undefined;
+    const safeError = row.error ? redactDiagnostic(row.error) : undefined;
     if (row.status === 'paused') return { ...row, status: 'paused', error: safeError };
     if (row.status === 'failed') return { ...row, status: 'failed', error: safeError };
     return { ...row, status: 'failed', error: '应用已重启，请确认上一轮状态后继续发送。' };

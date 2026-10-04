@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AppearanceProvider, useAppearance } from './application/AppearanceProvider';
 import { defaultAppearance, parseAppearance, resolveLanguage } from './domain/appearance';
-import { errorMessage } from './domain/errors';
+import { describeError } from './domain/errors';
 import { backups, applyUiState } from './infrastructure/backup';
 import { isTauri } from '@tauri-apps/api/core';
 import { ErrorNotice } from './components/ErrorNotice';
@@ -11,6 +11,7 @@ import { initializeUiStateMirror, recoverPreviousUiState } from './infrastructur
 import './styles.css';
 import './controls.css';
 import './desktop.css';
+import './interaction.css';
 import { isWorkspaceWindow } from './infrastructure/workspaceWindows';
 import { WorkspaceWindow } from './components/WorkspaceWindow';
 
@@ -36,6 +37,7 @@ function FatalFallback({
   const english = startupLanguage() === 'en';
   const [error, setError] = useState(initialError);
   const [recovering, setRecovering] = useState(false);
+  const diagnostic = describeError(error, english ? 'en' : 'zh-CN');
   return (
     <div className="restore-startup" role="alert">
       <div className="restore-startup-content">
@@ -49,7 +51,12 @@ function FatalFallback({
               ? 'Your task history remains on this device.'
               : '任务历史仍保存在本机。'}
         </p>
-        {error && <p role="alert">{errorMessage(error, english ? 'en' : 'zh-CN')}</p>}
+        {error && (
+          <div role="alert" className="error-notice-content">
+            <p>{diagnostic.summary}</p>
+            {diagnostic.detail && <span className="error-notice-detail">{diagnostic.detail}</span>}
+          </div>
+        )}
         <div className="restore-startup-actions">
           {canRecoverMirror && (
             <button

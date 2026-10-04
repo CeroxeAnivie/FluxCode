@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.4 — Clear next steps and persistent actions (2026-10-04)
+
+- Simplify the welcome view into a single heading and lightweight starters. Remove duplicate status and dialog headings, move context controls into the composer, and keep empty file panels out of the initial workspace.
+
+- Keep channel editor actions against the panel bottom; scroll the form independently. Task/workspace lists, conversation import, task editing and conflict resolution also keep their actions visible. Extension and schedule headers remain accessible while content scrolls.
+- Show actionable, redacted error reasons directly. Known application messages remain localized; technical service details are selectable inline. Preserve queue failure context across restarts instead of replacing it with a generic message.
+- Group error actions at the right edge. Offer “Reconnect engine” only for connection failures; dismissing a notice does not change engine state or resend work.
+- Highlight required setup with an icon, contrasted surface and direct project/channel/engine actions. Keep drafts while completing setup; retain model selection access independently of send availability.
+- Use the installed blue F icon for the welcome screen, title bar, assistant avatars, favicon and repository hero. All application marks reference assets/icon.svg; the existing Windows icons already match it.
+- No dependencies, provider/configuration schema or database migration. Bundled Codex 0.157.0 is reused.
+
 ## 0.1.3 — Desktop navigation and channel state (2026-10-04)
 
 - Separate global navigation from the project/task pane; keep terminal, files and browser actions beside the workspace. Settings and channels use persistent category/list columns.

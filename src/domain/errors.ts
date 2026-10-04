@@ -68,12 +68,11 @@ export function errorMessage(message: string, language: string): string {
   if (translatedSource) return language === 'en' ? clean : translatedSource;
   const key =
     classifiedErrors.find(({ pattern }) => pattern.test(clean))?.message ??
-    '操作未完成，请重试；若仍失败，可复制诊断信息排查。';
+    '操作未完成，请查看下方错误原因。';
   return language === 'en' ? english[key] : key;
 }
 export function redactDiagnostic(message: string): string {
   return message
-    .slice(0, 16000)
     .replace(/(https?:\/\/)[^\s/@]+:[^\s/@]+@/gi, '$1[REDACTED]@')
     .replace(/(^\s*(?:Cookie|Set-Cookie)\s*:\s*).+$/gim, '$1[REDACTED]')
     .replace(/((?:Bearer|Basic)\s+)(?:"[^"]*"|'[^']*'|[^\s"']+)/gi, '$1[REDACTED]')
@@ -89,5 +88,28 @@ export function redactDiagnostic(message: string): string {
     .replace(
       /((?:["'])?(?:api[_-]?key|access[_-]?token|session[_-]?token|client[_-]?secret|authorization|password|token|secret)(?:["'])?\s*[=:]\s*)[^\s,;}&\#"']+/gi,
       '$1[REDACTED]',
-    );
+    )
+    .slice(0, 16000);
+}
+
+/** Keep useful source context visible while localizing our own known messages. */
+export function describeError(
+  message: string,
+  language: string,
+): { summary: string; detail?: string } {
+  const diagnostic = redactDiagnostic(message)
+    .replace(/^Error:\s*/, '')
+    .trim();
+  const summary = errorMessage(diagnostic, language);
+  if (
+    Object.hasOwn(english, diagnostic) ||
+    sourceByEnglish.has(diagnostic) ||
+    summary === diagnostic
+  ) {
+    return { summary };
+  }
+  const hasChinese = /[\u3400-\u9fff]/.test(diagnostic);
+  const readable = diagnostic.length > 0 && diagnostic.length <= 600 && !/[\r\n]/.test(diagnostic);
+  if (readable && (language === 'en' ? !hasChinese : hasChinese)) return { summary: diagnostic };
+  return { summary, ...(diagnostic ? { detail: diagnostic } : {}) };
 }

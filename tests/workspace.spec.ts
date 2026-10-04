@@ -593,7 +593,7 @@ test('catalog write failure protects unsaved tasks, exports recovery data and re
 });
 
 async function setup(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: '打开项目', exact: true }).click();
+  await page.locator('.sidebar').getByRole('button', { name: '打开项目', exact: true }).click();
   await page.getByRole('button', { name: '设置' }).click();
   await page.getByRole('button', { name: '保存设置' }).click();
   await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -653,7 +653,7 @@ test('settings load on demand without hiding the workspace or losing its draft',
 }) => {
   const requests: string[] = [];
   page.on('request', (request) => requests.push(request.url()));
-  await page.getByRole('button', { name: '打开项目', exact: true }).click();
+  await page.locator('.sidebar').getByRole('button', { name: '打开项目', exact: true }).click();
   const input = page.getByRole('textbox', { name: '任务描述' });
   await input.fill('设置加载期间保留的草稿');
   expect(requests.some((url) => /\/SettingsDialog-[^/]+\.js/.test(url))).toBe(false);
@@ -829,10 +829,10 @@ test('idle foreground resume probes the engine and offers reconnect', async ({ p
     localStorage.setItem('fixture-resume-fail', 'true');
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await expect(page.getByRole('alert')).toContainText('无法连接，请检查服务地址、代理和网络。');
-  await expect(page.getByRole('button', { name: '重新连接', exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('系统从睡眠或后台恢复后连接不可用');
+  await expect(page.getByRole('button', { name: '重试连接引擎', exact: true })).toBeVisible();
   await page.evaluate(() => localStorage.removeItem('fixture-resume-fail'));
-  await page.getByRole('button', { name: '重新连接', exact: true }).click();
+  await page.getByRole('button', { name: '重试连接引擎', exact: true }).click();
   await expect(page.getByText('执行引擎已就绪', { exact: true })).toBeVisible();
 });
 
@@ -856,7 +856,7 @@ test('failed foreground probe releases uncertain task UI and requires review of 
     '连接已断开，请确认执行状态后重试。',
   );
   await page.evaluate(() => localStorage.removeItem('fixture-resume-fail'));
-  await page.getByRole('button', { name: '重新连接', exact: true }).click();
+  await page.getByRole('button', { name: '重试连接引擎', exact: true }).click();
   await expect(page.getByText('执行引擎已就绪', { exact: true })).toBeVisible();
   await expect(page.locator('.queued-messages')).toContainText('resume-must-not-replay');
   expect(await page.evaluate(() => localStorage.getItem('fixture-turn-count'))).toBe('1');
@@ -933,7 +933,7 @@ test('a stale foreground probe cannot disconnect a newly connected engine', asyn
       params: {},
     }),
   );
-  await page.getByRole('button', { name: '重新连接', exact: true }).click();
+  await page.getByRole('button', { name: '重试连接引擎', exact: true }).click();
   await expect(page.getByText('执行引擎已就绪', { exact: true })).toBeVisible();
   await page.evaluate(async () => {
     await window.__FLUX_TEST_BRIDGE__!.rpc('fixture/reject-probe', {});
@@ -942,7 +942,7 @@ test('a stale foreground probe cannot disconnect a newly connected engine', asyn
     );
   });
   await expect(page.getByText('执行引擎已就绪', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '重新连接', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '重试连接引擎', exact: true })).toHaveCount(0);
 });
 
 for (const language of ['zh-CN', 'en'] as const) {
@@ -1072,7 +1072,7 @@ test('failed connection health clears obsolete interaction IDs before reconnect'
   });
   await expect(page.getByRole('textbox', { name: '发布名称' })).toHaveCount(0);
   await page.evaluate(() => localStorage.removeItem('fixture-resume-fail'));
-  await page.getByRole('button', { name: '重新连接', exact: true }).click();
+  await page.getByRole('button', { name: '重试连接引擎', exact: true }).click();
   await expect(page.getByText('执行引擎已就绪', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '提交回答', exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('fixture-elicitation-answer'))).toBeNull();
@@ -1111,7 +1111,7 @@ test('late answer acknowledgement cannot dismiss a new connection request with t
       params: {},
     }),
   );
-  await page.getByRole('button', { name: '重新连接', exact: true }).click();
+  await page.getByRole('button', { name: '重试连接引擎', exact: true }).click();
   await expect(page.getByText('执行引擎已就绪', { exact: true })).toBeVisible();
   await page.evaluate(() =>
     window.__FLUX_TEST_BRIDGE__!.rpc('fixture/event', {
@@ -1550,7 +1550,7 @@ test('workspace layout, files, diff, settings and terminal form a working flow',
   page,
 }) => {
   await setup(page);
-  await expect(page.getByRole('heading', { name: '让想法，在代码中发生。' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '开始一个新任务' })).toBeVisible();
   await page.getByRole('button', { name: 'README.md', exact: true }).click();
   await expect(page.getByText('UTF-8 中文预览')).toBeVisible();
   await page.getByRole('button', { name: '变更1', exact: true }).click();
@@ -1990,11 +1990,11 @@ test('manual compaction retains history, locks controls, reports context and rec
   page,
 }) => {
   await setup(page);
-  await page.locator('.usage-indicator summary').click();
-  await expect(page.getByRole('button', { name: '压缩上下文', exact: true })).toBeDisabled();
+  await expect(page.locator('.usage-indicator')).toHaveCount(0);
   await page.getByRole('textbox', { name: '任务描述' }).fill('Keep this task');
   await page.getByRole('button', { name: '发送任务', exact: true }).click();
   await expect(page.locator('.assistant-message')).toContainText('任务完成');
+  await page.locator('.usage-indicator summary').click();
   await page.getByRole('textbox', { name: '任务描述' }).fill('Unsent draft');
   await page.getByRole('button', { name: '压缩上下文', exact: true }).click();
   await expect(page.getByText('正在压缩上下文…', { exact: true })).toBeVisible();
@@ -3730,7 +3730,7 @@ test('composer fills the central workspace at every window and panel width', asy
   }
   await page.setViewportSize({ width: 1920, height: 1080 });
   await expect(page.locator('.navigation-rail')).toBeVisible();
-  await expect(page.locator('.welcome-symbol svg')).toBeVisible();
+  await expect(page.locator('.welcome-symbol .brand-symbol')).toBeVisible();
   if (!(await page.locator('.inspector').isVisible()))
     await page.getByRole('button', { name: '切换文件面板', exact: true }).click();
   await page.screenshot({ path: 'test-results/desktop-rewrite-dark.png', animations: 'disabled' });
@@ -3832,4 +3832,182 @@ test('a delayed custom model save cannot overwrite a newer model choice', async 
     )
     .toContain('late-custom-model');
   await expect(picker).toHaveAttribute('data-value', 'other-model');
+});
+
+test('prerequisite guidance opens a project without losing the draft and shares the desktop logo', async ({
+  page,
+}) => {
+  const notice = page.locator('.workspace-prerequisite');
+  await expect(notice).toContainText('先打开项目，再开始任务');
+  await expect(notice.getByRole('button', { name: '打开项目' })).toBeVisible();
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('准备好以后继续这个任务');
+  await expect(page.getByRole('button', { name: '发送任务', exact: true })).toBeDisabled();
+  const logos = await page
+    .locator('img.brand-symbol')
+    .evaluateAll((images) => images.map((image) => (image as HTMLImageElement).src));
+  expect(logos.length).toBe(2);
+  expect(new Set(logos).size).toBe(1);
+  await page.screenshot({
+    path: 'test-results/interaction-prerequisite.png',
+    animations: 'disabled',
+  });
+  await notice.getByRole('button', { name: '打开项目' }).click();
+  await expect(input).toHaveValue('准备好以后继续这个任务');
+  await expect(notice).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '发送任务', exact: true })).toBeEnabled();
+});
+
+test('error actions stay together and unrelated storage failures never offer engine reconnect', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.evaluate(() => {
+    localStorage.setItem('fixture-resume-fail', 'true');
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  const banner = page.locator('.error-banner');
+  const reconnect = banner.getByRole('button', { name: '重试连接引擎' });
+  await expect(reconnect).toBeVisible();
+  await expect(reconnect).toHaveAttribute('title', /不会自动重发消息/);
+  const group = await banner.locator('.error-notice-actions').boundingBox();
+  const boundary = await banner.boundingBox();
+  expect(boundary!.x + boundary!.width - group!.x - group!.width).toBeLessThan(25);
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new CustomEvent('fluxcode:ui-storage-error', {
+        detail: '无法保存草稿：磁盘空间不足，请释放空间后重试。',
+      }),
+    ),
+  );
+  await expect(banner).toContainText('无法保存草稿：磁盘空间不足');
+  await expect(reconnect).toHaveCount(0);
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new CustomEvent('fluxcode:ui-storage-error', {
+        detail: 'HTTP 401: revoked credential sk-test-secret; cannot save workspace',
+      }),
+    ),
+  );
+  await expect(banner.getByLabel('错误详情')).toContainText('revoked credential');
+  await expect(banner).not.toContainText('sk-test-secret');
+  await page.screenshot({ path: 'test-results/interaction-errors.png', animations: 'disabled' });
+  await banner.getByRole('button', { name: '关闭提示' }).click();
+  await expect(banner).toHaveCount(0);
+  await expect(page.locator('.workspace-prerequisite')).toContainText('执行引擎未连接');
+});
+
+test('channel footer is anchored at the bottom before and after scrolling at every window size', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '渠道管理' });
+  for (const size of [
+    { width: 1440, height: 940 },
+    { width: 960, height: 640 },
+    { width: 2560, height: 1440 },
+  ]) {
+    await page.setViewportSize(size);
+    await page.evaluate(() => document.documentElement.style.setProperty('--font-size', '19px'));
+    const footer = dialog.locator('.channel-editor-actions');
+    const body = dialog.locator('.channel-editor-body');
+    const bounds = await dialog.boundingBox();
+    const initial = await footer.boundingBox();
+    expect(Math.abs(bounds!.y + bounds!.height - initial!.y - initial!.height)).toBeLessThan(3);
+    await body.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+    const scrolled = await footer.boundingBox();
+    expect(scrolled!.y).toBe(initial!.y);
+    await expect(footer.getByRole('button', { name: '导入并使用' })).toBeInViewport();
+    expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+      true,
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 940 });
+  await page.screenshot({
+    path: 'test-results/interaction-channel-footer.png',
+    animations: 'disabled',
+  });
+});
+
+test('long task and workspace lists keep their footer visible in a short window', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.evaluate(() => {
+    const catalog = JSON.parse(localStorage.getItem('fluxcode.catalog.v1')!);
+    catalog.tasks = Array.from({ length: 60 }, (_, i) => ({
+      id: 'task-' + i,
+      title: '待办任务 ' + i,
+      projectId: catalog.projects[0].id,
+      updatedAt: i,
+      archived: false,
+    }));
+    catalog.projects.push(
+      ...Array.from({ length: 60 }, (_, i) => ({
+        id: 'project-' + i,
+        name: '工作区 ' + i,
+        path: 'D:/project-' + i,
+      })),
+    );
+    localStorage.setItem('fluxcode.catalog.v1', JSON.stringify(catalog));
+  });
+  await page.reload();
+  await page.setViewportSize({ width: 960, height: 640 });
+  await page.evaluate(() => document.documentElement.style.setProperty('--font-size', '19px'));
+  for (const name of ['任务总览', '工作区管理']) {
+    await page.getByRole('button', { name, exact: true }).click();
+    const dialog = page.getByRole('dialog', { name, exact: true });
+    const footer = dialog.locator('.model-dialog-actions');
+    await expect(footer.getByRole('button', { name: '关闭', exact: true })).toBeInViewport();
+    const bounds = await dialog.boundingBox();
+    const fixed = await footer.boundingBox();
+    expect(Math.abs(bounds!.y + bounds!.height - fixed!.y - fixed!.height)).toBeLessThan(3);
+    await dialog
+      .locator('.dialog-scroll-body')
+      .evaluate((element) => element.scrollTo(0, element.scrollHeight));
+    expect((await footer.boundingBox())!.y).toBe(fixed!.y);
+    await footer.getByRole('button', { name: '关闭', exact: true }).click();
+  }
+});
+
+test('schedules lead with an actionable project prerequisite and preserve entered details', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: '定时任务', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '定时任务' });
+  const notice = dialog.locator('.action-notice');
+  await expect(notice).toContainText('先打开项目，再创建定时任务');
+  await dialog.getByLabel('任务名称', { exact: true }).fill('保留的定时任务');
+  await notice.getByRole('button', { name: '打开项目' }).click();
+  await expect(notice).toHaveCount(0);
+  await expect(dialog.getByLabel('任务名称', { exact: true })).toHaveValue('保留的定时任务');
+  await expect(dialog.getByRole('button', { name: '创建定时任务' })).toBeEnabled();
+});
+
+test('quiet defaults keep one status area and compact starter actions while context stays reachable', async ({
+  page,
+}) => {
+  await expect(page.locator('.statusbar')).toHaveCount(0);
+  await expect(page.locator('.inspector')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '切换文件面板', exact: true })).toBeDisabled();
+  await expect(page.locator('.welcome-eyebrow, .welcome-hint')).toHaveCount(0);
+  for (const card of await page.locator('.suggestion-card').all()) {
+    expect((await card.boundingBox())!.height).toBeLessThanOrEqual(44);
+  }
+  await expect(
+    page.locator('.sidebar-actions').getByRole('button', { name: '批量整理', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('.section-heading').getByRole('button', { name: '批量整理', exact: true }),
+  ).toBeVisible();
+  await page.locator('.workspace-prerequisite').getByRole('button', { name: '打开项目' }).click();
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('检查清爽布局中的上下文入口');
+  await input.press('Enter');
+  const context = page.locator('.composer-footnote .usage-indicator');
+  await expect(context).toBeVisible();
+  await context.locator('summary').click();
+  await expect(context.getByRole('button', { name: '压缩上下文' })).toBeVisible();
 });

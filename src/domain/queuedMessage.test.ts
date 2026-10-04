@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { settleQueuedMessage, type QueuedMessage } from './queuedMessage';
+import { settleQueuedMessage, parseQueue, type QueuedMessage } from './queuedMessage';
 
 const sending: QueuedMessage = {
   id: 'queued-1',
@@ -31,7 +31,7 @@ describe('queued turn reconciliation', () => {
       status: 'failed',
       turnId: 'turn-1',
     });
-    expect(failed[0].error).toContain('操作未完成');
+    expect(failed[0].error).toBe('Streaming response interrupted');
     const unknown = settleQueuedMessage([sending], sending.id, { status: 'unknown' });
     expect(unknown[0]).toMatchObject({
       status: 'failed',
@@ -44,4 +44,15 @@ describe('queued turn reconciliation', () => {
     const paused: QueuedMessage = { ...sending, status: 'paused' };
     expect(settleQueuedMessage([paused], paused.id, { status: 'completed' })).toEqual([paused]);
   });
+});
+
+it('keeps the actionable queue failure after reload while stripping credentials', () => {
+  const failed = settleQueuedMessage([sending], sending.id, {
+    status: 'failed',
+    error: 'HTTP 401: key expired; Authorization: Bearer sk-queue-secret',
+  });
+  expect(failed[0].error).toContain('key expired');
+  expect(failed[0].error).not.toContain('sk-queue-secret');
+  const restored = parseQueue(JSON.stringify(failed));
+  expect(restored[0].error).toBe(failed[0].error);
 });

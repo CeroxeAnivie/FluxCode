@@ -1,7 +1,7 @@
 import { Select } from './Select';
 import { useAppearance } from '../application/AppearanceProvider';
 import { ArrowUp, FolderOpen, Paperclip, ShieldCheck, Square } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { ModelPicker } from './ModelPicker';
 import { reasoningEfforts } from '../domain/modelSelection';
 import type { ModelSelection } from '../domain/modelSelection';
@@ -19,6 +19,8 @@ interface Props {
   busy: boolean;
   sending: boolean;
   disabled: boolean;
+  sendBlocked?: boolean;
+  contextControl?: ReactNode;
   text: string;
   onChange: (text: string) => void;
   onSend: (text: string) => Promise<boolean>;
@@ -43,6 +45,8 @@ export function Composer({
   busy,
   sending,
   disabled,
+  sendBlocked = false,
+  contextControl,
   text,
   onChange,
   onSend,
@@ -61,7 +65,7 @@ export function Composer({
   const compositionEndedAt = useRef(0);
   const submit = async () => {
     const submitted = text;
-    if (!submitted.trim() || sending || disabled) return;
+    if (!submitted.trim() || sending || disabled || sendBlocked) return;
     if (busy) {
       if (await onQueue(submitted)) onChange('');
       return;
@@ -196,7 +200,10 @@ export function Composer({
               className="send-button"
               aria-label={t('发送任务')}
               onClick={() => void submit()}
-              disabled={!text.trim() || disabled || sending}
+              disabled={!text.trim() || disabled || sendBlocked || sending}
+              title={
+                sendBlocked ? t('请先完成输入框上方的准备步骤') : t('Enter 发送 · Shift Enter 换行')
+              }
             >
               <ArrowUp size={18} />
             </button>
@@ -204,12 +211,10 @@ export function Composer({
         </div>
       </div>
       <div className="composer-footnote">
+        {contextControl}
         <span>
           <ShieldCheck size={12} />
           {t('完全访问')}
-        </span>
-        <span>
-          {t(busy ? 'Enter 排队发送 · Shift Enter 换行' : 'Enter 发送 · Shift Enter 换行')}
         </span>
       </div>
     </div>

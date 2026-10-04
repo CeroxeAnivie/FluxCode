@@ -52,64 +52,71 @@ export function TaskActionsDialog({
       >
         <header className="dialog-header">
           <div>
-            <span className="eyebrow">{t('任务')}</span>
             <h2>{t('整理任务')}</h2>
           </div>
-          <button type="button" className="icon-button" aria-label={t('关闭')} onClick={onClose} disabled={busy}>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label={t('关闭')}
+            onClick={onClose}
+            disabled={busy}
+          >
             <X size={18} />
           </button>
         </header>
-        <p className="dialog-description">{t('修改名称、创建分支或导出当前任务。')}</p>
-        <label className="form-field">
-          {t('任务名称')}
-          <input
-            autoFocus
-            onFocus={(event) => event.target.select()}
-            value={title}
-            maxLength={200}
-            required
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </label>
-        <div className="task-action-list">
-          <button
-            type="button"
-            className="task-action-button"
-          disabled={
-            busy ||
-            !!task.imported ||
-            !!app.conversations[task.id]?.busy ||
-            app.connection !== 'ready'
-          }
-          onClick={() => void run(() => app.forkTask(task.id))}
-          >
-            <GitFork size={16} />
-            <span>{t('从此任务创建分支')}</span>
-          </button>
-          <button
-            type="button"
-            className="task-action-button"
-          disabled={busy}
-          onClick={() => void run(() => app.exportTask(task.id, 'markdown'))}
-          >
-            <Download size={16} />
-            <span>{t('导出文档')}</span>
-          </button>
-          <button
-            type="button"
-            className="task-action-button"
-          disabled={busy}
-          onClick={() => void run(() => app.exportTask(task.id, 'json'))}
-          >
-            <FileJson size={16} />
-            <span>{t('导出结构化记录')}</span>
-          </button>
+        <div className="dialog-scroll-body">
+          <p className="dialog-description">{t('修改名称、创建分支或导出当前任务。')}</p>
+          <label className="form-field">
+            {t('任务名称')}
+            <input
+              autoFocus
+              onFocus={(event) => event.target.select()}
+              value={title}
+              maxLength={200}
+              required
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </label>
+          <div className="task-action-list">
+            <button
+              type="button"
+              className="task-action-button"
+              disabled={
+                busy ||
+                !!task.imported ||
+                !!app.conversations[task.id]?.busy ||
+                app.connection !== 'ready'
+              }
+              onClick={() => void run(() => app.forkTask(task.id))}
+            >
+              <GitFork size={16} />
+              <span>{t('从此任务创建分支')}</span>
+            </button>
+            <button
+              type="button"
+              className="task-action-button"
+              disabled={busy}
+              onClick={() => void run(() => app.exportTask(task.id, 'markdown'))}
+            >
+              <Download size={16} />
+              <span>{t('导出文档')}</span>
+            </button>
+            <button
+              type="button"
+              className="task-action-button"
+              disabled={busy}
+              onClick={() => void run(() => app.exportTask(task.id, 'json'))}
+            >
+              <FileJson size={16} />
+              <span>{t('导出结构化记录')}</span>
+            </button>
+          </div>
+          {error && (
+            <p ref={errorNotice} tabIndex={-1} role="alert">
+              <ErrorNotice message={error} />
+            </p>
+          )}
         </div>
-        {error && (
-          <p ref={errorNotice} tabIndex={-1} role="alert">
-            <ErrorNotice message={error} />
-          </p>
-        )}
         <div className="model-dialog-actions">
           <button
             type="button"

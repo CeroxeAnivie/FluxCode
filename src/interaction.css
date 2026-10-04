@@ -1,0 +1,405 @@
+/* Shared interaction layout: scroll content independently of persistent actions. */
+.error-banner {
+  flex: none;
+  padding: 12px 20px;
+}
+.error-banner > .error-notice {
+  width: 100%;
+}
+.error-notice {
+  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+  gap: 12px;
+}
+.error-notice-content {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.error-notice-detail {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  max-height: 144px;
+  overflow-y: auto;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+.error-notice-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+.error-notice-actions button {
+  font: inherit;
+  white-space: nowrap;
+}
+.error-notice-actions .diagnostic-copy {
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.85;
+  padding: 5px 6px;
+  border-radius: 6px;
+}
+.error-notice-actions .diagnostic-copy:hover {
+  opacity: 1;
+  background: var(--surface-hover);
+}
+.error-notice-actions .reconnect-button {
+  min-height: 30px;
+}
+.error-notice-actions .icon-button {
+  flex: none;
+}
+
+.action-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-block: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border));
+  border-left: 3px solid var(--primary);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 11%, var(--surface));
+  color: var(--text);
+  flex: none;
+}
+.action-notice > svg {
+  color: var(--primary);
+  flex: none;
+}
+.action-notice-content {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.action-notice-content strong {
+  font-size: 1em;
+  font-weight: 600;
+}
+.action-notice-content > span {
+  color: var(--muted);
+  font-size: 0.92em;
+}
+.action-notice-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+.action-notice-actions button {
+  padding: 8px 14px;
+  min-height: 36px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.workspace-prerequisite {
+  margin: 8px var(--workspace-gutter) 12px;
+}
+.terminal-dock > .action-notice {
+  margin: 10px 12px;
+}
+
+.channels-layout > .channels-body-editing {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  min-height: 0;
+}
+.channels-body-editing > .settings-unsaved,
+.channels-body-editing > .channel-notice,
+.channels-body-editing > p[role='alert'] {
+  margin: 12px 24px;
+  flex: none;
+}
+.channels-body-editing .channel-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.channel-editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  scroll-padding-block: 20px;
+}
+.channel-editor-actions {
+  position: static;
+  flex: none;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: none;
+}
+
+.action-dialog[open],
+.scroll-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  max-height: min(820px, calc(100dvh - 48px));
+  padding: 0;
+  overflow: hidden;
+}
+.action-dialog > .dialog-header,
+.scroll-dialog > header {
+  flex: none;
+  padding: 18px 24px;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+.scroll-dialog > nav {
+  flex: none;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+}
+.dialog-scroll-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  flex: 1 1 auto;
+  scroll-padding-block: 16px;
+}
+.action-dialog > .dialog-scroll-body {
+  max-height: none;
+}
+.action-dialog > .conversation-search-form {
+  flex: none;
+}
+.action-dialog .task-activity-list {
+  max-height: none;
+  overflow: visible;
+}
+.action-dialog > .model-dialog-actions {
+  flex: none;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+}
+.model-dialog-actions {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.task-actions-dialog > form {
+  padding: 0;
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+}
+.task-actions-dialog .dialog-header {
+  flex: none;
+  margin: 0;
+  padding: 18px 24px;
+}
+.task-actions-dialog .model-dialog-actions {
+  flex: none;
+  margin: 0;
+  padding: 14px 24px;
+}
+.git-conflict-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+}
+.git-conflict-dialog > .dialog-header,
+.git-conflict-footer {
+  flex: none;
+}
+.git-conflict-dialog > .dialog-scroll-body {
+  padding: 0;
+}
+.git-conflict-dialog > .dialog-scroll-body > p {
+  margin: 12px;
+}
+
+/* Use the same silhouette as the installed application icon at every size. */
+.welcome-symbol {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.welcome-symbol .brand-symbol {
+  width: 100%;
+  height: 100%;
+}
+@media (max-width: 680px) {
+  .channel-editor-body,
+  .dialog-scroll-body {
+    padding: 16px;
+  }
+  .channel-editor-actions,
+  .action-dialog > .model-dialog-actions,
+  .task-actions-dialog .model-dialog-actions {
+    padding: 12px 16px;
+  }
+  .action-notice {
+    flex-wrap: wrap;
+  }
+  .action-notice-actions {
+    margin-left: auto;
+  }
+}
+
+.inspector .panel-empty .primary-button {
+  padding: 8px 14px;
+  min-height: 36px;
+  border-radius: 8px;
+}
+.channel-editor-body h3 {
+  font-size: 1.1em;
+}
+.channel-editor-body .field-help {
+  font-size: calc(var(--font-size, 14px) - 2px);
+}
+.welcome-symbol {
+  box-shadow:
+    0 0 0 1px var(--chrome-edge),
+    0 6px 20px #0002;
+}
+.mini-avatar.flux {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.mini-avatar.flux .brand-symbol {
+  width: 100%;
+  height: 100%;
+}
+.configuration-notice {
+  background: color-mix(in srgb, var(--warning) 9%, var(--surface));
+  border-block: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border));
+}
+.configuration-notice > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Quiet default surfaces: details and tools appear where the user needs them. */
+.welcome-compact {
+  justify-content: center;
+  padding: 28px 24px;
+}
+.welcome-compact .welcome-symbol {
+  width: 64px;
+  height: 64px;
+  border-radius: 19px;
+  margin-bottom: 18px;
+  flex: none;
+}
+.welcome-compact h1 {
+  font-size: clamp(23px, 2vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+.welcome-compact .welcome-subtitle {
+  margin: 10px 0 24px;
+  font-size: var(--font-size, 14px);
+  line-height: 1.5;
+}
+.welcome-compact .suggestion-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 620px;
+}
+:root .welcome-compact .suggestion-card {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  transform: none;
+}
+:root .welcome-compact .suggestion-card:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.welcome-compact .suggestion-card > span {
+  display: inline;
+  color: inherit;
+  font-size: calc(var(--font-size, 14px) - 1px);
+  font-weight: 500;
+}
+.welcome-compact .suggestion-card > svg {
+  flex: none;
+}
+.composer-footnote {
+  justify-content: flex-end;
+  min-height: 24px;
+  gap: 16px;
+  padding-block: 6px;
+}
+.composer-footnote > .usage-indicator {
+  margin-right: auto;
+}
+.composer-footnote > span {
+  margin-left: auto;
+}
+dialog .dialog-header h2 {
+  font-size: 20px;
+  line-height: 1.4;
+  margin: 0;
+}
+.channel-editor-body > h3 {
+  font-size: 16px;
+  margin: 0 0 20px;
+}
+.channels-dialog .channel-card {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 16px 0;
+}
+.sidebar .section-heading {
+  gap: 4px;
+}
+.sidebar .section-heading > span {
+  margin-right: auto;
+}
+@media (max-height: 720px) {
+  .welcome-compact {
+    padding-block: 18px;
+    justify-content: flex-start;
+  }
+  .welcome-compact .welcome-symbol {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+  }
+  .welcome-compact .welcome-subtitle {
+    margin-bottom: 14px;
+  }
+}

@@ -178,176 +178,177 @@ export function ChannelEditor({
         void save(!locked);
       }}
     >
-      <h3>{t(copied ? '复制渠道配置' : source ? '编辑渠道' : '添加渠道')}</h3>
-      <p className="field-help">
-        {t(
-          copied
-            ? '复制配置后填写新密钥，副本会独立保存。'
-            : '粘贴地址和密钥，即可导入全部模型并开始使用。',
-        )}
-      </p>
-      <label className="form-field">
-        {t('服务地址')}
-        <input
-          autoFocus
-          required
-          value={settings.baseUrl}
-          onChange={(e) => {
-            invalidateCatalogue();
-            setSettings((s) => ({ ...s, baseUrl: e.target.value }));
-          }}
-          placeholder="https://api.openai.com/v1"
-          spellCheck={false}
-          disabled={busy || fetching}
-        />
-      </label>
-      <label className="form-field">
-        {t('访问密钥')}
-        <input
-          type="password"
-          autoComplete="off"
-          value={key}
-          onChange={(e) => {
-            invalidateCatalogue();
-            setKey(e.target.value);
-          }}
-          placeholder={t(source && !copied ? '留空保留已保存的凭据' : '输入渠道密钥')}
-          disabled={busy || fetching}
-        />
-      </label>
-      {source && !copied && (
-        <div>
-          <button
-            type="button"
-            disabled={busy || fetching}
-            onClick={() => setConfirmDeleteKey(true)}
-          >
-            {t('删除已保存密钥')}
-          </button>
-          {confirmDeleteKey && (
-            <div role="alert" className="channel-delete">
-              <span>{t('删除密钥后，下次连接此渠道需重新输入。')}</span>
-              <button type="button" disabled={fetching} onClick={() => setConfirmDeleteKey(false)}>
-                {t('取消')}
-              </button>
-              <button
-                type="button"
-                disabled={fetching}
-                onClick={() => {
-                  setFetching(true);
-                  setError('');
-                  void bridge
-                    .forgetApiKey(source.settings)
-                    .then(() => {
-                      invalidateCatalogue();
-                      setKey('');
-                      setConfirmDeleteKey(false);
-                      setNotice(t('已删除保存的密钥；当前运行中的连接不受影响。'));
-                    })
-                    .catch((cause) => setError(String(cause)))
-                    .finally(() => setFetching(false));
-                }}
-              >
-                {t('确认删除')}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-      <label className="form-field">
-        {t('渠道名称')} <span className="field-optional">{t('可选，默认使用服务地址')}</span>
-        <input
-          maxLength={120}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t('例如：主力服务、备用服务')}
-          disabled={busy || fetching}
-        />
-      </label>
-      <section className="channel-model-settings" aria-label={t('模型列表与连接设置')}>
-        <div className="channel-model-heading">
-          <strong>
-            {t('模型列表')} <span>{visibleModels.length}</span>
-          </strong>
-          <button
-            type="button"
-            disabled={busy || fetching || !settings.baseUrl.trim()}
-            onClick={() => void discover()}
-          >
-            {t(fetching ? '正在获取模型…' : '获取模型列表')}
-          </button>
-        </div>
-        <p className="field-help">
-          {t('获取后默认保留全部模型；可改显示名、移除和撤销，保存后生效。实际请求仍使用原始 ID。')}
-        </p>
-        <ChannelModelList
-          key={catalogueRevision}
-          models={models}
-          labels={labels}
-          hiddenModels={hiddenModels}
-          setModels={setModels}
-          setLabels={setLabels}
-          setHiddenModels={setHiddenModels}
-          busy={busy || fetching}
-        />
-        <details>
-          <summary>{t('手动添加模型')}</summary>
-          <label className="form-field">
-            {t('模型 ID')}
-            <input
-              value={manual}
-              disabled={busy || fetching}
-              onChange={(e) => setManual(e.target.value)}
-              placeholder={t('多个模型用逗号分隔')}
-            />
-          </label>
-          <button
-            type="button"
-            disabled={busy || fetching || !manual.trim()}
-            onClick={() => {
-              const added = manual.split(/[,，\s]+/).filter(Boolean);
-              setModels((current) => [...new Set([...current, ...added])]);
-              setHiddenModels((current) => current.filter((id) => !added.includes(id)));
-              setManual('');
+      <div className="channel-editor-body">
+        <h3>{t(copied ? '复制渠道配置' : source ? '编辑渠道' : '添加渠道')}</h3>
+        {copied && <p className="field-help">{t('复制配置后填写新密钥，副本会独立保存。')}</p>}
+        <label className="form-field">
+          {t('服务地址')}
+          <input
+            autoFocus
+            required
+            value={settings.baseUrl}
+            onChange={(e) => {
+              invalidateCatalogue();
+              setSettings((s) => ({ ...s, baseUrl: e.target.value }));
             }}
-          >
-            {t('添加到模型列表')}
-          </button>
-        </details>
-        <details>
-          <summary>{t('高级连接设置')}</summary>
-          <label className="form-field">
-            {t('网络代理')}
-            <input
-              value={settings.proxyUrl}
+            placeholder="https://api.openai.com/v1"
+            spellCheck={false}
+            disabled={busy || fetching}
+          />
+        </label>
+        <label className="form-field">
+          {t('访问密钥')}
+          <input
+            type="password"
+            autoComplete="off"
+            value={key}
+            onChange={(e) => {
+              invalidateCatalogue();
+              setKey(e.target.value);
+            }}
+            placeholder={t(source && !copied ? '留空保留已保存的凭据' : '输入渠道密钥')}
+            disabled={busy || fetching}
+          />
+        </label>
+        {source && !copied && (
+          <div>
+            <button
+              type="button"
               disabled={busy || fetching}
-              onChange={(e) => {
-                invalidateCatalogue();
-                setSettings((s) => ({ ...s, proxyUrl: e.target.value }));
+              onClick={() => setConfirmDeleteKey(true)}
+            >
+              {t('删除已保存密钥')}
+            </button>
+            {confirmDeleteKey && (
+              <div role="alert" className="channel-delete">
+                <span>{t('删除密钥后，下次连接此渠道需重新输入。')}</span>
+                <button
+                  type="button"
+                  disabled={fetching}
+                  onClick={() => setConfirmDeleteKey(false)}
+                >
+                  {t('取消')}
+                </button>
+                <button
+                  type="button"
+                  disabled={fetching}
+                  onClick={() => {
+                    setFetching(true);
+                    setError('');
+                    void bridge
+                      .forgetApiKey(source.settings)
+                      .then(() => {
+                        invalidateCatalogue();
+                        setKey('');
+                        setConfirmDeleteKey(false);
+                        setNotice(t('已删除保存的密钥；当前运行中的连接不受影响。'));
+                      })
+                      .catch((cause) => setError(String(cause)))
+                      .finally(() => setFetching(false));
+                  }}
+                >
+                  {t('确认删除')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        <label className="form-field">
+          {t('渠道名称')}{' '}
+          <span className="field-optional" title={t('可选，默认使用服务地址')}>
+            {t('可选')}
+          </span>
+          <input
+            maxLength={120}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t('例如：主力服务、备用服务')}
+            disabled={busy || fetching}
+          />
+        </label>
+        <section className="channel-model-settings" aria-label={t('模型列表与连接设置')}>
+          <div className="channel-model-heading">
+            <strong>
+              {t('模型列表')} <span>{visibleModels.length}</span>
+            </strong>
+            <button
+              type="button"
+              disabled={busy || fetching || !settings.baseUrl.trim()}
+              onClick={() => void discover()}
+            >
+              {t(fetching ? '正在获取模型…' : '获取模型列表')}
+            </button>
+          </div>
+
+          <ChannelModelList
+            key={catalogueRevision}
+            models={models}
+            labels={labels}
+            hiddenModels={hiddenModels}
+            setModels={setModels}
+            setLabels={setLabels}
+            setHiddenModels={setHiddenModels}
+            busy={busy || fetching}
+          />
+          <details>
+            <summary>{t('手动添加模型')}</summary>
+            <label className="form-field">
+              {t('模型 ID')}
+              <input
+                value={manual}
+                disabled={busy || fetching}
+                onChange={(e) => setManual(e.target.value)}
+                placeholder={t('多个模型用逗号分隔')}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={busy || fetching || !manual.trim()}
+              onClick={() => {
+                const added = manual.split(/[,，\s]+/).filter(Boolean);
+                setModels((current) => [...new Set([...current, ...added])]);
+                setHiddenModels((current) => current.filter((id) => !added.includes(id)));
+                setManual('');
               }}
-            />
-          </label>
-          <label className="form-field">
-            {t('API Key 环境变量')}
-            <input
-              value={settings.apiKeyEnv}
-              disabled={busy || fetching}
-              onChange={(e) => {
-                invalidateCatalogue();
-                setSettings((s) => ({ ...s, apiKeyEnv: e.target.value }));
-              }}
-            />
-          </label>
-        </details>
-      </section>
-      {locked && <p role="status">{t('任务运行时可保存渠道，结束后再启用。')}</p>}
-      {notice && <p role="status">{notice}</p>}
-      {error && (
-        <p ref={errorNotice} tabIndex={-1} role="alert">
-          <ErrorNotice message={error} />
-        </p>
-      )}
-      <div className="channel-editor-actions">
+            >
+              {t('添加到模型列表')}
+            </button>
+          </details>
+          <details>
+            <summary>{t('高级连接设置')}</summary>
+            <label className="form-field">
+              {t('网络代理')}
+              <input
+                value={settings.proxyUrl}
+                disabled={busy || fetching}
+                onChange={(e) => {
+                  invalidateCatalogue();
+                  setSettings((s) => ({ ...s, proxyUrl: e.target.value }));
+                }}
+              />
+            </label>
+            <label className="form-field">
+              {t('API Key 环境变量')}
+              <input
+                value={settings.apiKeyEnv}
+                disabled={busy || fetching}
+                onChange={(e) => {
+                  invalidateCatalogue();
+                  setSettings((s) => ({ ...s, apiKeyEnv: e.target.value }));
+                }}
+              />
+            </label>
+          </details>
+        </section>
+        {locked && <p role="status">{t('任务运行时可保存渠道，结束后再启用。')}</p>}
+        {notice && <p role="status">{notice}</p>}
+        {error && (
+          <p ref={errorNotice} tabIndex={-1} role="alert">
+            <ErrorNotice message={error} />
+          </p>
+        )}
+      </div>
+      <footer className="channel-editor-actions">
         {confirmCancel && (
           <div role="alert" className="settings-unsaved">
             <p>{t('还有未保存的内容。继续编辑，或放弃本次修改？')}</p>
@@ -393,7 +394,7 @@ export function ChannelEditor({
                   : '导入并使用',
           )}
         </button>
-      </div>
+      </footer>
     </form>
   );
 }

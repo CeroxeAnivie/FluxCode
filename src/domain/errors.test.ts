@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { english } from '../locales/en';
-import { errorMessage, redactDiagnostic } from './errors';
+import { describeError, errorMessage, redactDiagnostic } from './errors';
 
 describe('actionable errors', () => {
   it('explains long storage paths without hiding the recovery step', () => {
@@ -91,5 +91,29 @@ describe('copied diagnostics', () => {
 
   it('bounds copied output even for very long failures', () => {
     expect(redactDiagnostic('x'.repeat(20_000)).length).toBe(16_000);
+  });
+});
+
+describe('visible error context', () => {
+  it('shows actionable native messages directly without a generic replacement', () => {
+    expect(describeError('无法保存草稿：磁盘空间不足，请释放空间后重试。', 'zh-CN')).toEqual({
+      summary: '无法保存草稿：磁盘空间不足，请释放空间后重试。',
+    });
+    expect(describeError('HTTP 401: This API key has expired', 'en')).toEqual({
+      summary: 'HTTP 401: This API key has expired',
+    });
+  });
+  it('preserves technical reasons inline and redacts secrets before either display or copying', () => {
+    const result = describeError('HTTP 401: revoked API key sk-secret-123', 'zh-CN');
+    expect(result.summary).toContain('访问被拒绝');
+    expect(result.detail).toContain('revoked');
+    expect(JSON.stringify(result)).not.toContain('sk-secret-123');
+    const longSecret = 's'.repeat(17000);
+    expect(redactDiagnostic('api_key="' + longSecret + '"')).not.toContain('ssss');
+  });
+  it('does not repeat a known translated message in the source language', () => {
+    expect(describeError('文件不存在或已移动，请刷新后重试。', 'en')).toEqual({
+      summary: english['文件不存在或已移动，请刷新后重试。'],
+    });
   });
 });

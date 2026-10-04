@@ -1,3 +1,4 @@
+import { ActionNotice } from './components/ActionNotice';
 import { NavigationRail } from './components/NavigationRail';
 const SchedulesDialog = lazy(() =>
   import('./components/SchedulesDialog').then((module) => ({ default: module.SchedulesDialog })),
@@ -16,16 +17,7 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 const CommandPalette = lazy(() =>
   import('./components/CommandPalette').then((m) => ({ default: m.CommandPalette })),
 );
-import {
-  ChevronRight,
-  Circle,
-  FolderOpen,
-  Globe,
-  PanelRight,
-  Settings2,
-  Terminal,
-  X,
-} from 'lucide-react';
+import { ChevronRight, FolderOpen, Globe, PanelRight, Terminal, X } from 'lucide-react';
 import { BrowserPanel } from './components/BrowserPanel';
 import {
   getBrowserRequest,
@@ -337,8 +329,9 @@ export default function App({
                 <Terminal size={17} />
               </button>
               <button
-                className={`icon-button ${inspector && !browserRequest ? 'selected' : ''}`}
-                title={t('文件与变更')}
+                className={`icon-button ${inspector && project && !browserRequest ? 'selected' : ''}`}
+                title={t(project ? '文件与变更' : '先打开一个项目')}
+                disabled={!project}
                 aria-label={t('切换文件面板')}
                 onClick={() => void toggleInspector()}
               >
@@ -363,24 +356,30 @@ export default function App({
           )}
           {app.error && (
             <div className="error-banner" role="alert">
-              <ErrorNotice message={app.error} />
-              {app.connection === 'offline' && (
-                <button
-                  className="reconnect-button"
-                  onClick={() => {
-                    void app.connect(app.settings);
-                  }}
-                >
-                  {t('重新连接')}
-                </button>
-              )}
-              <button
-                className="icon-button"
-                aria-label={t('关闭提示')}
-                onClick={() => app.setError(null)}
-              >
-                <X size={14} />
-              </button>
+              <ErrorNotice
+                message={app.error}
+                actions={
+                  <>
+                    {app.connection === 'offline' && app.error === app.connectionError && (
+                      <button
+                        className="reconnect-button"
+                        title={t('使用当前配置恢复本地执行引擎连接，不会自动重发消息。')}
+                        onClick={() => void app.connect(app.settings)}
+                      >
+                        {t('重试连接引擎')}
+                      </button>
+                    )}
+                    <button
+                      className="icon-button"
+                      aria-label={t('关闭提示')}
+                      title={t('收起此提示，不会改变连接状态')}
+                      onClick={() => app.setError(null)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </>
+                }
+              />
             </div>
           )}
           <div className="chat-area">
@@ -426,30 +425,51 @@ export default function App({
                 onPosition={(top) => app.setPosition(task.id, top)}
               />
             ) : (
-              <Welcome
-                project={project?.imported ? t('导入的对话') : project?.name}
-                onSuggestion={app.setDraft}
-              />
+              <Welcome onSuggestion={app.setDraft} />
             )}
-            {!task?.imported && (!project || app.connection !== 'ready') && (
-              <div className="setup-next-step" role="status">
-                <span>
-                  {t(
-                    !project
-                      ? '选择项目后开始任务，输入的内容会保留。'
-                      : '连接模型渠道后即可发送，输入的内容会保留。',
-                  )}
-                </span>
-                <button
-                  onClick={() => {
-                    if (!project) void app.addProject();
-                    else openChannels();
-                  }}
+            {!task?.imported &&
+              !project?.imported &&
+              !(project && app.error && app.error === app.connectionError) &&
+              (!project || app.connection !== 'ready' || !app.selection.model) && (
+                <ActionNotice
+                  className="workspace-prerequisite"
+                  action={
+                    <button
+                      className="primary-button"
+                      disabled={!!project && app.connection === 'connecting'}
+                      onClick={() => {
+                        if (!project) void app.addProject();
+                        else if (!app.settings.model) openChannels();
+                        else if (app.connection !== 'ready') void app.connect(app.settings);
+                        else openChannels();
+                      }}
+                    >
+                      {t(
+                        !project
+                          ? '打开项目'
+                          : app.connection === 'connecting'
+                            ? '正在连接'
+                            : !app.settings.model || app.connection === 'ready'
+                              ? '选择渠道'
+                              : '重试连接引擎',
+                      )}
+                    </button>
+                  }
                 >
-                  {t(!project ? '选择项目' : '选择渠道')}
-                </button>
-              </div>
-            )}
+                  <strong>
+                    {t(
+                      !project
+                        ? '先打开项目，再开始任务'
+                        : app.connection === 'connecting'
+                          ? '正在连接执行引擎'
+                          : !app.settings.model || app.connection === 'ready'
+                            ? '先选择模型渠道'
+                            : '执行引擎未连接',
+                    )}
+                  </strong>
+                  <span>{t('输入内容会保留，完成这一步后即可发送。')}</span>
+                </ActionNotice>
+              )}
             {!task?.imported && !project?.imported && (
               <SharedWorkspaceNotice
                 tasks={sharedWorkspaceTasks(
@@ -467,6 +487,21 @@ export default function App({
             )}
             {!task?.imported && !project?.imported && (
               <Composer
+                contextControl={
+                  task ? (
+                    <UsageIndicator
+                      pricing={app.settings.pricing}
+                      usage={conversation.usage}
+                      canCompact={
+                        !conversation.busy &&
+                        !app.sending &&
+                        !app.loadingTask &&
+                        app.connection === 'ready'
+                      }
+                      onCompact={() => void app.compact()}
+                    />
+                  ) : undefined
+                }
                 onConfigureModel={!app.settings.model ? openChannels : undefined}
                 onChooseProject={() => void app.addProject()}
                 attachments={context.items}
@@ -505,6 +540,7 @@ export default function App({
                 busy={conversation.busy}
                 sending={app.sending}
                 disabled={app.loadingTask}
+                sendBlocked={!project || app.connection !== 'ready' || !app.selection.model}
                 text={app.draft}
                 onChange={app.setDraft}
                 onSend={async (text) => {
@@ -558,47 +594,21 @@ export default function App({
             visible={terminal}
             ready={app.connection === 'ready'}
             fontSize={app.fontSize}
+            onChooseProject={() => void app.addProject()}
+            onConnect={() => {
+              if (app.settings.model) void app.connect(app.settings);
+              else openChannels();
+            }}
             onClose={() => app.togglePanel('terminal')}
             onExecuted={() => setRevision((v) => v + 1)}
           />
-          <footer className="statusbar">
-            <UsageIndicator
-              pricing={app.settings.pricing}
-              usage={conversation.usage}
-              canCompact={
-                !!task &&
-                !conversation.busy &&
-                !app.sending &&
-                !app.loadingTask &&
-                app.connection === 'ready'
-              }
-              onCompact={() => void app.compact()}
-            />
-            <span>
-              <Circle
-                size={7}
-                fill="currentColor"
-                className={app.connection === 'ready' ? 'green' : ''}
-              />
-              {app.connection === 'ready'
-                ? t('就绪')
-                : app.connection === 'connecting'
-                  ? t('正在连接')
-                  : t('未连接')}
-              <span className="status-separator">/</span>
-              {t('本地工作空间')}
-            </span>
-            <button onClick={openChannels}>
-              <Settings2 size={12} />
-              {app.selection.model || t('配置模型服务')}
-            </button>
-          </footer>
         </main>
-        {inspector && !project?.imported && (
+        {inspector && project && !project.imported && (
           <div style={{ display: browserRequest ? 'none' : 'contents' }}>
             <PanelResizeHandle panel="inspector" report={app.setError} />
             <Suspense fallback={null}>
               <Inspector
+                onChooseProject={() => void app.addProject()}
                 onOpenWorkspace={(path) => void app.addProject(path, project?.id)}
                 onReference={(path, kind) => context.add(`${project!.path}/${path}`, kind)}
                 project={project}
@@ -670,7 +680,8 @@ export default function App({
       >
         {schedulesOpen && (
           <SchedulesDialog
-            project={project?.path}
+            project={project?.imported ? undefined : project?.path}
+            onChooseProject={() => void app.addProject()}
             onClose={() => setSchedulesOpen(false)}
             onOpen={app.openScheduledTask}
           />

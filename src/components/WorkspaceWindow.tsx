@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import {
   lazy,
   Suspense,
@@ -280,9 +281,23 @@ export function WorkspaceWindow() {
                 }
               />
             ) : (
-              <Welcome project={project?.name} onSuggestion={setText} />
+              <Welcome onSuggestion={setText} />
             )}
           </div>
+          {snapshot && !snapshot.ready && (
+            <ActionNotice
+              action={
+                <button
+                  className="primary-button"
+                  onClick={() => void focusMainWindow().catch((cause) => setError(String(cause)))}
+                >
+                  {t('前往主窗口')}
+                </button>
+              }
+            >
+              {t('请在主窗口连接执行引擎，当前输入会保留。')}
+            </ActionNotice>
+          )}
           {snapshot && (
             <SharedWorkspaceNotice
               tasks={sharedWorkspaceTasks(
@@ -369,6 +384,10 @@ export function WorkspaceWindow() {
             visible={session.panels.terminal}
             ready={!!snapshot?.ready}
             fontSize={snapshot?.fontSize ?? 14}
+            onChooseProject={() => void focusMainWindow().catch((cause) => setError(String(cause)))}
+            projectActionLabel={t('在主窗口打开项目')}
+            onConnect={() => void focusMainWindow().catch((cause) => setError(String(cause)))}
+            connectActionLabel={t('在主窗口连接')}
             onClose={() => toggle('terminal')}
             onExecuted={() => setRevision((value) => value + 1)}
           />
@@ -378,6 +397,10 @@ export function WorkspaceWindow() {
             <PanelResizeHandle panel="inspector" report={report} />
             <Suspense fallback={null}>
               <Inspector
+                onChooseProject={() =>
+                  void focusMainWindow().catch((cause) => setError(String(cause)))
+                }
+                projectActionLabel={t('在主窗口打开项目')}
                 project={project}
                 revision={revision}
                 onClose={() => toggle('inspector')}

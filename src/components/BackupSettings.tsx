@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import { useEffect, useRef, useState } from 'react';
 import { ArchiveRestore, FolderOpen, ShieldCheck } from 'lucide-react';
 import { isTauri } from '@tauri-apps/api/core';
@@ -193,11 +194,13 @@ export function BackupSettings({
         </div>
       )}
       {busy && !progress && <p role="status">{t('正在处理备份…')}</p>}
-      {busyWork && <p role="status">{t('任务或终端运行时无法备份或恢复。')}</p>}
+      {busyWork && <ActionNotice>{t('任务或终端运行时无法备份或恢复。')}</ActionNotice>}
       {unsavedSettings && (
-        <p role="status">{t('仍有未保存的设置，请先保存或放弃修改后再恢复。')}</p>
+        <ActionNotice>{t('仍有未保存的设置，请先保存或放弃修改后再恢复。')}</ActionNotice>
       )}
-      {hasUnsentDraft && <p role="status">{t('仍有未发送的输入，请先发送或清空后再恢复。')}</p>}
+      {hasUnsentDraft && (
+        <ActionNotice>{t('仍有未发送的输入，请先发送或清空后再恢复。')}</ActionNotice>
+      )}
       {listLoading && !items.length && <p role="status">{t('正在读取备份列表…')}</p>}
       {listError && (
         <div role="alert" className="backup-list-error">

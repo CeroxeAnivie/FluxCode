@@ -62,7 +62,7 @@ export function ConversationImportDialog({
   return (
     <dialog
       ref={dialog}
-      className="conversation-search-dialog"
+      className="conversation-search-dialog action-dialog"
       aria-label={t('导入对话')}
       onCancel={(event) => {
         event.preventDefault();
@@ -71,14 +71,13 @@ export function ConversationImportDialog({
     >
       <header className="dialog-header">
         <div>
-          <span className="eyebrow">{t('任务历史')}</span>
           <h2>{t('导入对话')}</h2>
         </div>
         <button className="icon-button" aria-label={t('关闭')} disabled={busy} onClick={onClose}>
           <X size={18} />
         </button>
       </header>
-      <div className="conversation-search-results">
+      <div className="conversation-search-results dialog-scroll-body">
         <p>{t('支持 FluxCode 导出的 JSON 对话文件。导入后可阅读和搜索，不能继续原引擎会话。')}</p>
         <button type="button" disabled={busy} onClick={() => void choose()}>
           <FileUp size={16} /> {t('选择 JSON 文件')}

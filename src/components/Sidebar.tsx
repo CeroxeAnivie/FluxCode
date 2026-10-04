@@ -6,6 +6,7 @@ import {
   Folder,
   FolderPlus,
   GitBranch,
+  ListChecks,
   Plus,
   Search,
   Settings2,
@@ -143,17 +144,7 @@ export function Sidebar({
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
-        <button
-          className="nav-action"
-          aria-pressed={selecting}
-          onClick={() => {
-            setSelecting(!selecting);
-            setSelected(new Set());
-            setBatchMessage('');
-          }}
-        >
-          {t(selecting ? '完成整理' : '批量整理')}
-        </button>
+
         {selecting && (
           <div className="sidebar-batch" role="group" aria-label={t('批量整理')}>
             <span>
@@ -200,6 +191,19 @@ export function Sidebar({
       </div>
       <div className="section-heading">
         <span>{t('项目')}</span>
+        <button
+          className="icon-button"
+          aria-pressed={selecting}
+          aria-label={t(selecting ? '完成整理' : '批量整理')}
+          title={t(selecting ? '完成整理' : '批量整理')}
+          onClick={() => {
+            setSelecting(!selecting);
+            setSelected(new Set());
+            setBatchMessage('');
+          }}
+        >
+          <ListChecks size={16} />
+        </button>
         <button aria-pressed={archived} onClick={() => setArchived((v) => !v)}>
           {t(archived ? '返回任务' : '已归档')}
         </button>

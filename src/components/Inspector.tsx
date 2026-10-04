@@ -21,12 +21,16 @@ export function Inspector({
   onClose,
   onReference,
   onOpenWorkspace,
+  onChooseProject,
+  projectActionLabel,
 }: {
   project?: Project;
   revision: number;
   onClose: () => void;
   onReference: (path: string, kind: 'file' | 'directory') => void;
   onOpenWorkspace: (path: string) => void;
+  onChooseProject: () => void;
+  projectActionLabel?: string;
 }) {
   const { t } = useAppearance();
   const [tab, setTab] = useState<'files' | 'changes'>('files');
@@ -194,6 +198,9 @@ export function Inspector({
           <Folder size={30} />
           <strong>{t('还没有打开项目')}</strong>
           <p>{t('打开本地文件夹，查看文件与变更。')}</p>
+          <button className="primary-button" onClick={onChooseProject}>
+            {projectActionLabel ?? t('打开项目')}
+          </button>
         </div>
       ) : (
         <>

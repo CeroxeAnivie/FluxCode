@@ -2,7 +2,6 @@ import { BrandMark } from './BrandMark';
 import { ErrorNotice } from './ErrorNotice';
 import { useAppearance } from '../application/AppearanceProvider';
 import {
-  ArrowUpRight,
   Check,
   Code2,
   Compass,
@@ -42,51 +41,27 @@ const suggestions = [
   },
 ];
 
-export function Welcome({
-  project,
-  onSuggestion,
-}: {
-  project?: string;
-  onSuggestion: (prompt: string) => void;
-}) {
+export function Welcome({ onSuggestion }: { onSuggestion: (prompt: string) => void }) {
   const { t } = useAppearance();
   return (
-    <div className="welcome">
+    <div className="welcome welcome-compact">
       <div className="welcome-symbol">
         <BrandMark />
       </div>
-      <p className="welcome-eyebrow">{t('开始构建你的想法')}</p>
-      <h1>{t('让想法，在代码中发生。')}</h1>
-      <p className="welcome-subtitle">
-        {project ? (
-          <>
-            {t('与 FluxCode 一起，在')}
-            <strong>{project}</strong>
-            {t('中开始下一次构建。')}
-          </>
-        ) : (
-          t('打开一个项目，让 FluxCode 帮你理解、构建与改进代码。')
-        )}
-      </p>
+      <h1>{t('开始一个新任务')}</h1>
+      <p className="welcome-subtitle">{t('描述你想完成的事情，或选择一个起点。')}</p>
       <div className="suggestion-grid">
         {suggestions.map(({ icon: Icon, title, description, prompt }) => (
-          <button className="suggestion-card" key={title} onClick={() => onSuggestion(t(prompt))}>
-            <div>
-              <Icon size={18} />
-              <ArrowUpRight size={14} />
-            </div>
-            <strong>{t(title)}</strong>
-            <span>{t(description)}</span>
+          <button
+            className="suggestion-card"
+            key={title}
+            title={t(description)}
+            onClick={() => onSuggestion(t(prompt))}
+          >
+            <Icon size={16} />
+            <span>{t(title)}</span>
           </button>
         ))}
-      </div>
-      <div className="welcome-hint">
-        <span />
-        {t('本地工作空间')}
-        <span />
-        {t('流式协作')}
-        <span />
-        {t('由你掌控')}
       </div>
     </div>
   );
@@ -160,7 +135,9 @@ function Item({ item, projectRoot }: { item: ChatItem; projectRoot?: string }) {
     return (
       <article className="message assistant-message">
         <div className="message-label">
-          <span className="mini-avatar flux">F</span>
+          <span className="mini-avatar flux">
+            <BrandMark />
+          </span>
           <strong>FluxCode</strong>
         </div>
         <div className="markdown">

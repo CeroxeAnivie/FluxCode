@@ -68,7 +68,7 @@ export function ConversationSearchDialog({
   }
   return (
     <dialog
-      className="conversation-search-dialog"
+      className="conversation-search-dialog action-dialog"
       ref={dialog}
       aria-label={t('搜索对话正文')}
       onCancel={(event) => {
@@ -79,7 +79,6 @@ export function ConversationSearchDialog({
     >
       <header className="dialog-header">
         <div>
-          <span className="eyebrow">{t('任务历史')}</span>
           <h2>{t('搜索对话正文')}</h2>
         </div>
         <button
@@ -135,7 +134,7 @@ export function ConversationSearchDialog({
           </button>
         )}
       </form>
-      <div className="conversation-search-results">
+      <div className="conversation-search-results dialog-scroll-body">
         {cancelled && <p role="status">{t('搜索已取消')}</p>}
         {(running || completed > 0) && (
           <p role="status">

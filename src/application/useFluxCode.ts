@@ -39,6 +39,7 @@ export function useFluxCode() {
   const [providerProfiles, setProviderProfiles] = useState<ProviderProfile[]>([]);
   const [connection, setConnection] = useState<'offline' | 'connecting' | 'ready'>('offline');
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const continuity = useWorkspaceContinuity(setError);
   const [startup, setStartup] = useState<{ ready: boolean; error: string | null }>({
     ready: false,
@@ -79,6 +80,7 @@ export function useFluxCode() {
     hydration.current.clear();
     loaded.current.clear();
     setConnection('offline');
+    setConnectionError(message);
     setConversations((current) => {
       const next = Object.fromEntries(
         Object.entries(current).map(([id, conversation]) => [
@@ -226,10 +228,14 @@ export function useFluxCode() {
         setConnection('connecting');
         try {
           await bridge.connect(saved);
-          if (!disposed) setConnection('ready');
+          if (!disposed) {
+            setConnection('ready');
+            setConnectionError(null);
+          }
         } catch (e) {
           if (!disposed) {
             setConnection('offline');
+            setConnectionError(errorText(e));
             setError(errorText(e));
           }
         } finally {
@@ -324,6 +330,7 @@ export function useFluxCode() {
     connectLock.current = true;
     const wasReady = connection === 'ready';
     setConnection('connecting');
+    setConnectionError(null);
     setError(null);
     try {
       await bridge.connect(next, apiKey, rememberKey, expectedRevision, forceReconnect);
@@ -337,6 +344,7 @@ export function useFluxCode() {
       return true;
     } catch (e) {
       setConnection(wasReady ? 'ready' : 'offline');
+      setConnectionError(wasReady ? null : errorText(e));
       setError(errorText(e));
       return false;
     } finally {
@@ -1229,6 +1237,7 @@ export function useFluxCode() {
     fontSize,
     changeFontSize,
     connection,
+    connectionError,
     error,
     setError,
     selectedProjectId,

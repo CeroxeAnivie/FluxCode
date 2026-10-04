@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import { ErrorNotice } from './ErrorNotice';
 import { useEffect, useState } from 'react';
 import { useAppearance } from '../application/AppearanceProvider';
@@ -81,7 +82,9 @@ export function PluginSettings({ cwd }: { cwd?: string }) {
       )}
       {busy && <p role="status">{t('正在加载…')}</p>}
       {notice && <p role="status">{notice}</p>}
-      {!items.length && !busy && !error && <p>{t('没有可用插件，请先添加市场。')}</p>}
+      {!items.length && !busy && !error && (
+        <ActionNotice>{t('没有可用插件，请先添加市场。')}</ActionNotice>
+      )}
       {items.map((p) => (
         <article key={p.id}>
           <strong>{p.name}</strong>

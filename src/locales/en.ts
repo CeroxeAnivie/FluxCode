@@ -1,5 +1,33 @@
 /** Source-language keys keep UI text reviewable; dynamic provider text is never translated. */
 export const english: Record<string, string> = {
+  可选: 'Optional',
+  开始一个新任务: 'Start a new task',
+  '描述你想完成的事情，或选择一个起点。':
+    'Describe what you want to do, or choose a starting point.',
+
+  前往主窗口: 'Go to main window',
+  '请在主窗口连接执行引擎，当前输入会保留。':
+    'Connect the execution engine in the main window. Your draft is kept.',
+  在主窗口打开项目: 'Open project in main window',
+  在主窗口连接: 'Connect in main window',
+  '先打开项目，再开始任务': 'Open a project to start a task',
+  正在连接执行引擎: 'Connecting to the execution engine',
+  先选择模型渠道: 'Choose a model channel first',
+  执行引擎未连接: 'The execution engine is disconnected',
+  '输入内容会保留，完成这一步后即可发送。': 'Your draft is kept. Complete this step to send it.',
+  请先完成输入框上方的准备步骤: 'Complete the setup step above the composer first',
+  '先打开项目，再创建定时任务': 'Open a project to create a scheduled task',
+  '已填写的任务内容会保留。': 'The task details you entered will be kept.',
+  连接执行引擎: 'Connect engine',
+  '执行引擎未连接，连接后即可使用终端。': 'Connect the execution engine to use the terminal.',
+
+  '操作未完成，请查看下方错误原因。': 'The operation failed. See the error details below.',
+  错误详情: 'Error details',
+  重试连接引擎: 'Reconnect engine',
+  '使用当前配置恢复本地执行引擎连接，不会自动重发消息。':
+    'Restore the local engine connection using the current settings. Messages will not be resent automatically.',
+  '收起此提示，不会改变连接状态': 'Dismiss this notification without changing the connection state',
+
   '渠道已保存，重新连接后使用新密钥。': 'Channel saved. Reconnect to use the new key.',
   '仅显示当前渠道的模型；具体能力以服务实际支持为准。':
     'Models from the current channel. Capabilities depend on the service.',

@@ -1,6 +1,33 @@
 # Verification
 
-## Current Windows working tree — 2026-09-25
+## 0.1.4 interaction update — 2026-10-04
+
+The current UI change passes TypeScript, formatting and strict UTF-8 checks.
+All 35 frontend unit test files pass (126 tests). A targeted browser run passes
+21 workflows across prerequisite guidance, preserved drafts, inline redacted
+errors, scoped recovery actions, pinned channel/list footers, settings, imports,
+schedules, extensions, terminal recovery and Git conflict editing.
+
+New layout checks cover 960×640 through 2560×1440 and 19px fonts. Footers are
+checked against their container bottom before and after scrolling. Earlier
+reconnect duplication was removed and the old SVG-only logo assertion now
+checks the shared image asset. Both affected cases pass in the 21-case run.
+
+After simplifying the default surfaces, an additional 20-case run passed 19.
+The remaining case assumed a context menu in an empty conversation. Its assertion
+now verifies the new empty state and opens the context control after task creation;
+the full manual-compaction workflow then passed separately. Three visual capture
+cases also passed, and the README screenshots show the final simplified layout.
+
+No native engine source or dependencies changed; Codex 0.157.0 is reused.
+See [0.1.4 scope and compatibility](releases/0.1.4.md) for the interaction audit.
+Final installer verification passed: 103,181,169 bytes; SHA-256
+`375f19e5eff0f1dd2a7129fea2e6166efed8a583b4d8ae06deaa57b79bda1914`. The extracted executable matches
+the final production build, all 32 engine/legal resources match, and production
+JavaScript has no test transport. Evidence: `work/release-verification-p4JovG`.
+The deliverable is `artifacts/FluxCode_0.1.4_x64-setup.exe`.
+
+## Historical Windows baseline — 2026-09-25
 
 The most recent complete pre-release baseline passed 97 Rust tests, 89 frontend
 unit tests and 75 Playwright browser workflows. TypeScript, Prettier and strict
@@ -385,7 +412,6 @@ verified the packaged executable against the optimized build, all 32 engine/lega
 resources against current files, engine identity 0.157.0 and absence of production
 test transport. SHA-256 is in RELEASE-CHECKSUMS.txt. This supersedes the earlier
 installer record above; signing and deferred environment matrices remain deferred.
-
 
 ## 2026-10-04 — 0.1.3 desktop/channel acceptance
 

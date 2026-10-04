@@ -106,7 +106,6 @@ export function ChannelsDialog({
     >
       <header className="dialog-header">
         <div>
-          <span className="eyebrow">{t('模型服务')}</span>
           <h2>{t('渠道管理')}</h2>
         </div>
         <button
@@ -169,7 +168,7 @@ export function ChannelsDialog({
             ))}
           </div>
         </nav>
-        <div className="channels-body">
+        <div className={`channels-body${editing ? ' channels-body-editing' : ''}`}>
           {pendingEditor && (
             <div className="settings-unsaved" role="alert">
               <p>{t('还有未保存的内容。继续编辑，或放弃本次修改？')}</p>

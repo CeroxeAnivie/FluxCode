@@ -161,7 +161,6 @@ export function InteractiveTerminal({
           {t('重启终端')}
         </button>
       </div>
-      {!ready && <p>{t('请先连接执行引擎')}</p>}
       {error && (
         <p role="alert">
           <ErrorNotice message={error} />

@@ -1,3 +1,4 @@
+import { ActionNotice } from './ActionNotice';
 import { Select } from './Select';
 import { ErrorNotice } from './ErrorNotice';
 import { CheckpointPanel } from './CheckpointPanel';
@@ -172,7 +173,7 @@ export function GitActions({
               {t('变基到分支')}
             </button>
           </div>
-          {operation.dirty && <p>{t('请先提交或贮藏未提交变更。')}</p>}
+          {operation.dirty && <ActionNotice>{t('请先提交或贮藏未提交变更。')}</ActionNotice>}
         </div>
       )}
       {pending && (
