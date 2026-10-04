@@ -33,10 +33,12 @@ async function openFixture(page: Page, language: 'zh-CN' | 'en' = 'zh-CN') {
           kind: /\.(png|jpe?g|webp|gif)$/i.test(path) ? 'image' : 'file',
         }));
       },
-      previewAttachment: async (path: string) => {
+      storeChatImage: async (path: string) => path,
+      loadChatImage: async (path: string) => {
         localStorage.setItem('fixture-previewed', path);
-        if (path.endsWith('bad.png')) throw new Error('无法预览此图片');
-        if (path.endsWith('remote.png')) return 'https://example.invalid/remote-image.png';
+        if (path.endsWith('bad.png') && !localStorage.getItem('fixture-preview-recovered'))
+          throw new Error('无法预览此图片');
+        if (path.endsWith('remote.png')) throw new Error('图片传输中断');
         return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9PihEAAAAASUVORK5CYII=';
       },
     } as unknown as NonNullable<typeof window.__FLUX_TEST_BRIDGE__>;
@@ -65,9 +67,10 @@ test('image attachment previews on demand, closes with Escape, and can be remove
     .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('fixture-inspected') ?? '[]')))
     .toEqual(['C:/work/design.png']);
   const preview = page.getByRole('button', { name: '预览图片 design.png' });
+  await expect(preview.locator('img')).toBeVisible();
   await preview.focus();
   await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: '预览图片 design.png' });
+  const dialog = page.getByRole('dialog', { name: '图片预览', exact: true });
   await expect(dialog.getByRole('img', { name: 'design.png' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('fixture-previewed'))).toBe(
     'C:/work/design.png',
@@ -114,27 +117,31 @@ test('unreadable, oversized, unsupported and excessive batches fail without losi
   await expect(page.locator('.attachment-item')).toHaveCount(1);
 });
 
-test('image preview failure explains the error without losing the attachment', async ({ page }) => {
+test('image preview failure can retry without losing the attachment', async ({ page }) => {
   await openFixture(page);
   await pick(page, ['C:/work/bad.png']);
   const preview = page.getByRole('button', { name: '预览图片 bad.png' });
+  await expect(preview).toContainText('图片加载失败，点击重试');
+  await expect(page.locator('.attachment-item')).toHaveCount(1);
+  await page.evaluate(() => localStorage.setItem('fixture-preview-recovered', 'true'));
   await preview.click();
-  const dialog = page.getByRole('dialog', { name: '预览图片 bad.png' });
-  await expect(dialog.getByRole('alert')).toContainText('无法预览此图片');
+  await expect(preview.locator('img')).toBeVisible();
+  await preview.click();
+  const dialog = page.getByRole('dialog', { name: '图片预览', exact: true });
+  await expect(dialog.getByRole('img', { name: 'bad.png' })).toBeVisible();
   await dialog.getByRole('button', { name: '关闭图片预览' }).click();
   await expect(preview).toBeFocused();
-  await expect(page.locator('.attachment-item')).toHaveCount(1);
 });
 
-test('English preview failures stay localized and reject remote image URLs', async ({ page }) => {
+test('English image loading failures stay localized and retain the attachment', async ({
+  page,
+}) => {
   await openFixture(page, 'en');
   await pick(page, ['C:/work/remote.png']);
   await expect(page.locator('.attachment-feedback')).toHaveText('1 attachment added');
-  await page.getByRole('button', { name: 'Preview image remote.png' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Preview image remote.png' });
-  await expect(dialog.getByRole('alert')).toContainText(
-    'The image could not be previewed. Check the file and try again.',
-  );
-  await expect(dialog.getByRole('alert')).toContainText('The image preview data is invalid.');
-  await expect(dialog.getByRole('img')).toHaveCount(0);
+  const preview = page.getByRole('button', { name: 'Preview image remote.png' });
+  await expect(preview).toContainText('Image could not be loaded. Click to retry');
+  expect(await preview.innerText()).not.toMatch(/[\u3400-\u9fff]/);
+  await expect(preview.locator('img')).toHaveCount(0);
+  await expect(page.locator('.attachment-item')).toHaveCount(1);
 });

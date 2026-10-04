@@ -10,12 +10,16 @@ runner embeds the same application manifest with the Windows SDK tool; tests run
 with the real dialog plugin. TypeScript, production frontend build, formatting and
 Clippy with warnings denied pass.
 
-Twenty-four distinct targeted UI scenarios cover browser layout/failure recovery,
+Twenty-nine distinct targeted UI scenarios cover browser layout/failure recovery,
 English controls, manual navigation, agent panel acknowledgements, image paste,
 thumbnail/zoom preview, image-only sending, editor creation/save/wrap, external
 conflicts, draft recovery, queue persistence and attachment preservation. An initial
 refresh regression was corrected by recreating the page after a failed open while
-still taking over from automation before manual navigation.
+still taking over from automation before manual navigation. Five existing attachment
+scenarios were migrated to the durable import and lazy thumbnail/zoom interface;
+keyboard close/focus return, removal, deduplication, failed imports, localized errors
+and successful preview retries pass. This test-only follow-up does not change the
+packaged application.
 
 The native integration fixture uses the real desktop, isolated WebView2 profiles,
 bundled Codex 0.157.0, packaged Node/Playwright and a local Responses server. It
