@@ -19,14 +19,17 @@ export function FileEditor({
   content,
   onSaved,
   onClose,
+  onReference,
 }: {
   root: string;
   path: string;
   content: string;
   onSaved: () => void;
   onClose: () => void;
+  onReference?: () => void;
 }) {
   const { t } = useAppearance();
+  const [wrap, setWrap] = useState(true);
   const [initial] = useState(() => {
     try {
       return { draft: loadEditorDraft(root, path), error: '' };
@@ -131,10 +134,33 @@ export function FileEditor({
   return (
     <section className="file-editor">
       <header>
+        <button
+          className="icon-button"
+          aria-label={t('返回文件列表')}
+          title={t('返回文件列表')}
+          disabled={busy}
+          onClick={() => {
+            if (writer.flush()) onClose();
+          }}
+        >
+          ←
+        </button>
         <span>
           {path}
           {dirty ? ' ●' : ''}
         </span>
+        <button aria-pressed={wrap} onClick={() => setWrap((value) => !value)}>
+          {t('自动换行')}
+        </button>
+        {onReference && (
+          <button
+            disabled={dirty || busy}
+            title={dirty ? t('保存后可引用到对话') : t('引用到对话')}
+            onClick={onReference}
+          >
+            {t('引用到对话')}
+          </button>
+        )}
         <button onClick={() => void save()} disabled={!dirty || busy}>
           {t('保存')}
         </button>
@@ -164,6 +190,7 @@ export function FileEditor({
           ) : (
             <CodeEditor
               path={path}
+              wrap={wrap}
               value={text}
               onChange={edit}
               onSave={() => {

@@ -1,5 +1,58 @@
 # Verification
 
+## 0.1.6 browser interaction, images and native window material — 2026-10-04
+
+The complete frontend unit suite passes: 35 files, 129 tests. The Windows native
+suite passes: 128 library tests and two startup tests. The native test executable
+initially lacked Tauri's application Common Controls v6 manifest, so Windows could
+not resolve TaskDialogIndirect before entering tests. The new `pnpm test:native`
+runner embeds the same application manifest with the Windows SDK tool; tests run
+with the real dialog plugin. TypeScript, production frontend build, formatting and
+Clippy with warnings denied pass.
+
+Twenty-four distinct targeted UI scenarios cover browser layout/failure recovery,
+English controls, manual navigation, agent panel acknowledgements, image paste,
+thumbnail/zoom preview, image-only sending, editor creation/save/wrap, external
+conflicts, draft recovery, queue persistence and attachment preservation. An initial
+refresh regression was corrected by recreating the page after a failed open while
+still taking over from automation before manual navigation.
+
+The native integration fixture uses the real desktop, isolated WebView2 profiles,
+bundled Codex 0.157.0, packaged Node/Playwright and a local Responses server. It
+runs 27 tool calls covering discovery, actual accessible element snapshots, form fill/check/select,
+hover/press/click, a single form submission, screenshot image content, scroll,
+stale-reference rejection, native page dialogs, iframe input, paused requests,
+in-flight takeover, disabled-element failure, browser closure and reopening. Durable image
+import/deduplication, invalid-image rejection and an actual image input in the model
+request are checked in the same run. This exercises transport and tools, not a
+production model's autonomous tool selection.
+
+Native DWM readback on this machine reports `native-acrylic`; an explicitly disabled
+material reports a solid fallback. System transparency/high-contrast/energy-saver
+branches are implemented, but all real Windows settings combinations were not
+manually exercised. The driver can be explicitly stopped by the user; native page
+mouse input alone does not automatically pause automation.
+
+The npm audit returned zero advisories. The Windows Rust OSV scan queried 338
+normal/build packages and returned zero known findings. Node's full third-party
+license text, Playwright notices and the image viewer's MIT license are distributed
+with the app. The existing engine notices and corresponding MPL source archives
+remain bundled. These scans record database results at scan time, not a guarantee
+of no vulnerabilities.
+
+No schema migration or production credentials are required. Pictures live in the
+application's `data/attachments` directory and are included in backups; the remote
+browser profile is excluded as cache. The runtime is version/hash pinned in TOML.
+The engine binary is reused. Digital signing, clean-machine installation and the
+previously deferred long-duration/environment acceptance remain outside this round.
+
+Final Windows installer: `FluxCode_0.1.6_x64-setup.exe`, 129,200,990 bytes.
+SHA-256: `2137382c4fbd3222f3979f3b2ad59ade256b214151bcbae0623903f310754852`.
+The extracted application matches the built executable; all 153 bundled
+engine/legal/browser-runtime files match. The packaged Node version and SHA-256,
+Playwright version, driver syntax and release MCP handshake pass. Production test
+transport is absent. The installer is unsigned.
+
 ## 0.1.5 composer, queue and browser tool update — 2026-10-04
 
 TypeScript and the targeted 13 unit tests pass (keyboard, queue settlement,

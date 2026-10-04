@@ -6,7 +6,7 @@ export interface Attachment {
 }
 export function mergeAttachmentPaths(
   existing: Attachment[],
-  additions: Pick<Attachment, 'path' | 'kind'>[],
+  additions: (Pick<Attachment, 'path' | 'kind'> & { name?: string })[],
   newId: () => string = () => crypto.randomUUID(),
 ): Attachment[] {
   const seen = new Set(existing.map((item) => item.path.replaceAll('/', '\\').toLowerCase()));
@@ -23,10 +23,12 @@ export function mergeAttachmentPaths(
       path: item.path,
       kind: item.kind,
       name:
+        item.name ??
         item.path
           .replace(/[/\\]+$/, '')
           .split(/[/\\]/)
-          .at(-1) ?? item.path,
+          .at(-1) ??
+        item.path,
     })),
   ];
   validateAttachments(next);

@@ -158,7 +158,12 @@ export function WorkspaceWindow() {
     let id = taskId;
     try {
       if (!id) {
-        id = await requestWorkspace<string>({ kind: 'create', projectId, title: text, selection });
+        id = await requestWorkspace<string>({
+          kind: 'create',
+          projectId,
+          title: text.trim() || attachments.items[0]?.name || 'image',
+          selection,
+        });
         attachments.transfer(id);
         const created = id;
         continuity.setSession((current) => ({
@@ -393,6 +398,8 @@ export function WorkspaceWindow() {
             attachments={attachments.items}
             attachmentNotice={attachments.notice}
             onAttach={() => void attachments.choose()}
+            onImageFiles={attachments.addFiles}
+            importingAttachments={attachments.importing}
             onRemoveAttachment={attachments.remove}
             onChooseProject={() => void focusMainWindow()}
             onConfigureModel={() => void focusMainWindow()}

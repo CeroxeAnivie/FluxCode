@@ -164,7 +164,7 @@ test('browser panel preserves an open editor and the file button returns to it',
   await page.reload();
   await setup(page);
   await page.getByRole('button', { name: 'README.md', exact: true }).click();
-  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.locator('.file-editor')).toBeVisible();
   const editor = page.getByRole('textbox', { name: '文件内容', exact: true });
   await editor.fill('保留未保存的编辑现场');
   await page.getByRole('button', { name: '打开浏览器', exact: true }).click();
@@ -227,6 +227,13 @@ test.beforeEach(async ({ page }) => {
     let counter = 0;
     window.__FLUX_TEST_BRIDGE__ = {
       available: true,
+      createTextFile: async (root, relative) => {
+        localStorage.setItem('fixture-created-file', JSON.stringify({ root, relative }));
+      },
+      storeChatImage: async (source) =>
+        source.startsWith('data:') ? 'D:/FluxCode/data/attachments/pasted.png' : source,
+      loadChatImage: async () =>
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9PihEAAAAASUVORK5CYII=',
       inspectDroppedPaths: async (paths) => paths.map((path) => ({ path, kind: 'file' as const })),
       previewAttachment: async () =>
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9PihEAAAAASUVORK5CYII=',
@@ -463,7 +470,10 @@ test.beforeEach(async ({ page }) => {
           emit({ method: 'turn/started', params: { threadId, turn: { id: 'turn-1' } } });
           emit({
             method: 'item/completed',
-            params: { threadId, item: { type: 'userMessage', id: 'u-1', content: [{ text }] } },
+            params: {
+              threadId,
+              item: { type: 'userMessage', id: 'u-1', content: p.input as object[] },
+            },
           });
           if (text === 'parallel-question')
             emit({
@@ -2383,7 +2393,7 @@ test('model management remembers labels and removals through refresh and reopeni
   await page.reload();
   await expect(page.getByRole('combobox', { name: '当前会话模型' })).toContainText('我的主力');
   await page.getByRole('button', { name: '渠道管理', exact: true }).click();
-  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.locator('.file-editor')).toBeVisible();
   await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
   await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '全部撤销移除', exact: true }).click();
@@ -3152,7 +3162,7 @@ test('code editor supports undo, save, and explicit external-conflict resolution
 }) => {
   await setup(page);
   await page.getByRole('button', { name: 'README.md', exact: true }).click();
-  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.locator('.file-editor')).toBeVisible();
   const editor = page.getByRole('textbox', { name: '文件内容', exact: true });
   await editor.press('Control+k');
   await editor.press('Control+n');
@@ -3186,12 +3196,12 @@ test('editor flushes drafts on immediate close and preserves Windows line ending
   await setup(page);
   await page.evaluate(() => localStorage.setItem('fixture-file', 'first\r\nsecond\r\n'));
   await page.getByRole('button', { name: 'README.md', exact: true }).click();
-  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.locator('.file-editor')).toBeVisible();
   const editor = page.getByRole('textbox', { name: '文件内容', exact: true });
   await editor.fill('changed\nsecond\n');
   await page.locator('.file-editor').getByRole('button', { name: '关闭', exact: true }).click();
   await page.getByRole('button', { name: 'README.md', exact: true }).click();
-  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.locator('.file-editor')).toBeVisible();
   await expect(editor).toContainText('changed');
   await editor.press('Control+s');
   await expect
@@ -3314,7 +3324,7 @@ test('manual Git conflict editing keeps all three versions and stages the saved 
 test('failed draft storage stays visible and does not close the editor', async ({ page }) => {
   await setup(page);
   await page.getByRole('button', { name: 'README.md', exact: true }).click();
-  await page.getByRole('button', { name: '编辑', exact: true }).click();
+  await expect(page.locator('.file-editor')).toBeVisible();
   await page.evaluate(() => {
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function (key, value) {
@@ -4385,4 +4395,47 @@ test('agent browser tool opens the real panel and acknowledges native navigation
     { id: 'open-fail', error: 'Navigation failed' },
     { id: 'close-1', error: null },
   ]);
+});
+
+test('image paste supports thumbnails, zoom and image-only model input', async ({ page }) => {
+  await setup(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.evaluate((element) => {
+    const transfer = new DataTransfer();
+    transfer.items.add(
+      new File([new Uint8Array([137, 80, 78, 71])], 'clipboard.png', { type: 'image/png' }),
+    );
+    element.dispatchEvent(
+      new ClipboardEvent('paste', { clipboardData: transfer, bubbles: true, cancelable: true }),
+    );
+  });
+  const preview = page.getByRole('button', { name: '预览图片 clipboard.png', exact: true });
+  await expect(preview.locator('img')).toBeVisible();
+  await preview.click();
+  await expect(page.getByRole('button', { name: '放大图片' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(input).toHaveValue('');
+  await page.getByRole('button', { name: '发送任务', exact: true }).click();
+  await expect(page.locator('.message-images img')).toBeVisible();
+  await expect(page.locator('.attachment-list')).toHaveCount(0);
+});
+
+test('new text file opens directly in the editor and keeps wrap and save accessible', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '新建文本文件', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '新建文本文件' });
+  await dialog.getByRole('textbox', { name: '项目内文件路径' }).fill('notes.txt');
+  await dialog.getByRole('button', { name: '创建并编辑' }).click();
+  const editor = page.locator('.file-editor');
+  await expect(editor).toBeVisible();
+  const content = editor.getByRole('textbox', { name: '文件内容' });
+  await content.fill('中文便笺\n第二行');
+  await content.press('Control+s');
+  await expect(editor.getByRole('button', { name: '保存', exact: true })).toBeDisabled();
+  await expect(editor.getByRole('button', { name: '自动换行' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });

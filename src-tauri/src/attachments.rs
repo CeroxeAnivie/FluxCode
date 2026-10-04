@@ -8,6 +8,9 @@ const MAX_IMAGE_PIXELS: u64 = 16_000_000;
 const PREVIEW_EDGE: u32 = 320;
 
 pub fn preview_image(path: &str) -> Result<String, String> {
+    preview_image_sized(path, PREVIEW_EDGE)
+}
+pub fn preview_image_sized(path: &str, edge: u32) -> Result<String, String> {
     let file_path = Path::new(path);
     if !file_path.is_absolute() || path.len() > 4096 {
         return Err("图片路径无效".into());
@@ -72,9 +75,12 @@ pub fn preview_image(path: &str) -> Result<String, String> {
     let decoded = reader.decode().map_err(|_| "图片已损坏或无法解码")?;
     let mut preview = std::io::Cursor::new(Vec::new());
     decoded
-        .thumbnail(PREVIEW_EDGE, PREVIEW_EDGE)
+        .thumbnail(edge.clamp(1, 2048), edge.clamp(1, 2048))
         .write_to(&mut preview, ImageFormat::Png)
         .map_err(|_| "图片预览生成失败")?;
+    if preview.get_ref().len() > 20 * 1024 * 1024 {
+        return Err("图片预览超出大小限制".into());
+    }
     Ok(format!(
         "data:image/png;base64,{}",
         STANDARD.encode(preview.into_inner())

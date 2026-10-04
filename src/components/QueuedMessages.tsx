@@ -124,7 +124,7 @@ function QueuedRow({
             </button>
             <button
               className="queue-save"
-              disabled={working || !edit.text.trim()}
+              disabled={working || (!edit.text.trim() && !item.attachments.length)}
               onClick={() => void save(edit.text)}
             >
               {t('保存修改')}

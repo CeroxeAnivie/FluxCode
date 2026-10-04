@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-3b82f6?style=flat-square" alt="Apache-2.0" /></a>
   <img src="https://img.shields.io/badge/desktop-Windows_x64-27272a?style=flat-square" alt="Windows x64" />
-  <img src="https://img.shields.io/badge/version-0.1.5-27272a?style=flat-square" alt="Version 0.1.5" />
+  <img src="https://img.shields.io/badge/version-0.1.6-27272a?style=flat-square" alt="Version 0.1.6" />
   <a href="docs/VERIFICATION.md"><img src="https://img.shields.io/badge/verification-evidence-27272a?style=flat-square" alt="Verification evidence" /></a>
 </p>
 
@@ -43,7 +43,9 @@
 
 任务运行时，按一次 **Ctrl + Enter** 排队；输入框保持为空时再按一次，将刚才那条消息插入当前轮次。待发送消息紧贴输入框，可直接编辑或取消。
 
-智能体使用内置浏览器工具时，主窗口右侧面板自动展开，显示实际网页和“智能体浏览”提示。工具支持打开、读取页面、前进、后退、刷新及关闭；目前不支持点击或填写表单。详见 [0.1.5 更新说明](docs/releases/0.1.5.md)。
+智能体使用内置浏览器工具时，主窗口右侧面板自动展开，显示实际网页和“智能体浏览”提示。工具支持识别元素、点击、填写、选择、勾选、按键、悬停、滚动、截图和网页弹窗处理；可以随时“停止并接管”。详见 [0.1.6 更新说明](docs/releases/0.1.6.md)。
+
+聊天支持粘贴、拖入或选择图片，点击缩略图放大查看，也可以只发送图片。文件面板直接打开文本编辑器，可新建文件、查找替换、撤销、自动换行和 Ctrl + S 保存。窗口边栏采用 Windows 原生亚克力；系统关闭透明效果或不支持时使用清晰的实色背景。
 
 本轮交付范围、回滚与暂缓验收见 [Windows 交付记录](docs/DELIVERY-2026-09-25.md)，安装包校验值见 [SHA-256](docs/RELEASE-CHECKSUMS.txt)。
 
@@ -52,7 +54,7 @@
 
 ## 开始使用
 
-当前源码版本为 **0.1.5，Windows x86_64**。
+当前源码版本为 **0.1.6，Windows x86_64**。
 已发布的安装包版本以发布页为准。从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
 
 构建出的桌面安装包内置 Codex，使用者不必另外安装 Codex、Rust 或 Node.js。

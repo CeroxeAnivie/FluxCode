@@ -147,7 +147,7 @@ impl Engine {
         browser_args.push(browser_tools.pipe.as_str());
         browser_config.insert("args", browser_args.into());
         browser_config.insert("startup_timeout_sec", 15.into());
-        browser_config.insert("tool_timeout_sec", 25.into());
+        browser_config.insert("tool_timeout_sec", 40.into());
         browser_config.insert("enabled", true.into());
         command
             .arg("-c")

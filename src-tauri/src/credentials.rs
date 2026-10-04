@@ -39,12 +39,11 @@ pub(crate) fn resolve_for_connection(
     if supplied.is_some() {
         return Ok(supplied);
     }
-    if !force {
-        if let Some((_, _, key)) = cached
+    if !force
+        && let Some((_, _, key)) = cached
             .filter(|(base, name, _)| base == &settings.base_url && name == &settings.api_key_env)
-        {
-            return Ok(Some(key.clone()));
-        }
+    {
+        return Ok(Some(key.clone()));
     }
     read_saved(settings)
 }

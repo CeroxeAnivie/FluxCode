@@ -81,6 +81,7 @@ export function CodeEditor({
   onChange,
   onSave,
   readOnly = false,
+  wrap = false,
   label,
 }: {
   path: string;
@@ -88,6 +89,7 @@ export function CodeEditor({
   onChange?: (value: string) => void;
   onSave?: () => void;
   readOnly?: boolean;
+  wrap?: boolean;
   label?: string;
 }) {
   const { language: locale, theme, t } = useAppearance();
@@ -99,6 +101,7 @@ export function CodeEditor({
   const config = useRef(new Compartment());
   const syntax = useRef(new Compartment());
   const configuration = () => [
+    ...(wrap ? [EditorView.lineWrapping] : []),
     EditorState.readOnly.of(readOnly),
     EditorView.editable.of(!readOnly),
     EditorView.contentAttributes.of({
@@ -190,7 +193,7 @@ export function CodeEditor({
   }, []);
   useEffect(() => {
     view.current?.dispatch({ effects: config.current.reconfigure(configuration()) });
-  }, [locale, theme, readOnly, label]);
+  }, [locale, theme, readOnly, label, wrap]);
   useEffect(() => {
     let active = true;
     setLanguageError(false);

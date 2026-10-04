@@ -1,3 +1,4 @@
+import { NewTextFileDialog } from './NewTextFileDialog';
 import { WorkspaceFileList } from './WorkspaceFileList';
 import { WorkspaceSearch } from './WorkspaceSearch';
 import { ErrorNotice } from './ErrorNotice';
@@ -5,7 +6,16 @@ import { useAppearance } from '../application/AppearanceProvider';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 const CodeEditor = lazy(() => import('./CodeEditor').then((m) => ({ default: m.CodeEditor })));
 const DiffReview = lazy(() => import('./DiffReview').then((m) => ({ default: m.DiffReview })));
-import { ArrowLeft, ExternalLink, FileCode2, Folder, GitBranch, RefreshCw, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ExternalLink,
+  FilePlus2,
+  FileCode2,
+  Folder,
+  GitBranch,
+  RefreshCw,
+  X,
+} from 'lucide-react';
 import { bridge } from '../infrastructure/bridge';
 import { allowWorkspaceNavigation } from '../infrastructure/navigationGuard';
 import type { Entry, Project, RepoStatus } from '../domain/types';
@@ -34,6 +44,7 @@ export function Inspector({
 }) {
   const { t } = useAppearance();
   const [tab, setTab] = useState<'files' | 'changes'>('files');
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [conflictPath, setConflictPath] = useState<string | null>(null);
   const [relative, setRelative] = useState('');
@@ -50,6 +61,8 @@ export function Inspector({
   const [refresh, setRefresh] = useState(0);
   const [loading, setLoading] = useState(false);
   const previewEpoch = useRef(0);
+  const currentProjectPath = useRef(project?.path);
+  currentProjectPath.current = project?.path;
   const lastFile = useRef<string | undefined>(undefined);
   const inspector = useRef<HTMLElement>(null);
   const backButton = useRef<HTMLButtonElement>(null);
@@ -58,6 +71,7 @@ export function Inspector({
     if (preview && !editing) backButton.current?.focus();
   }, [preview?.name, editing]);
   useEffect(() => {
+    setCreating(false);
     setEditing(false);
     setConflictPath(null);
     setRelative('');
@@ -119,6 +133,7 @@ export function Inspector({
         content = await bridge.readFile(project.path, path);
       }
       if (epoch === previewEpoch.current) {
+        setEditing(!diff);
         setPreview({
           name: path,
           content,
@@ -182,6 +197,17 @@ export function Inspector({
         <div className="panel-actions">
           <button
             className="icon-button"
+            disabled={!project}
+            aria-label={t('新建文本文件')}
+            title={t('新建文本文件')}
+            onClick={() => {
+              if (allowWorkspaceNavigation()) setCreating(true);
+            }}
+          >
+            <FilePlus2 size={14} />
+          </button>
+          <button
+            className="icon-button"
             title={t('刷新工作区')}
             aria-label={t('刷新工作区')}
             onClick={() => setRefresh((v) => v + 1)}
@@ -193,6 +219,19 @@ export function Inspector({
           </button>
         </div>
       </header>
+      {creating && project && (
+        <NewTextFileDialog
+          directory={relative}
+          onClose={() => setCreating(false)}
+          onCreate={async (path) => {
+            const root = project.path;
+            await bridge.createTextFile(root, path);
+            if (currentProjectPath.current !== root) return;
+            setRefresh((value) => value + 1);
+            await openFile(path);
+          }}
+        />
+      )}
       {!project ? (
         <div className="panel-empty">
           <Folder size={30} />
@@ -228,6 +267,7 @@ export function Inspector({
               path={preview.name}
               content={preview.content}
               onSaved={() => setRefresh((v) => v + 1)}
+              onReference={() => onReference(preview.name, 'file')}
               onClose={closePreview}
             />
           ) : preview ? (

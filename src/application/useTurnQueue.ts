@@ -179,7 +179,7 @@ export function useTurnQueue(
     selection: ModelSelection,
     attachments: Attachment[] = [],
   ) {
-    if (!text.trim()) return false;
+    if (!text.trim() && !attachments.length) return false;
     if (itemsRef.current.length >= 50) {
       report('待发送消息已达 50 条，请先处理现有消息。');
       return false;
@@ -389,7 +389,8 @@ export function useTurnQueue(
       return false;
     }
     if (item.status === 'sending') return false;
-    if (text !== null && (!text.trim() || text.length > 100_000)) return false;
+    if (text !== null && ((!text.trim() && !item.attachments.length) || text.length > 100_000))
+      return false;
     const running = conversations[item.threadId];
     const continues = ready && running?.busy && running.turnId === lease.turnId;
     const original = lease.original;

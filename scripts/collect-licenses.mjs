@@ -44,9 +44,12 @@ for (const pkg of rust.packages.filter((p) => p.id !== rust.resolve.root))
     dirname(pkg.manifest_path),
     pkg.license_file,
   );
+const browserRuntime = resolve(root, 'src-tauri/resources/browser-runtime');
+const runtime = await readJson(resolve(browserRuntime, 'runtime.json'));
+await collect('Node.js', runtime.node, 'MIT', browserRuntime, 'NODE-LICENSE.txt');
 await writeFile(
   resolve(root, 'src-tauri/resources/legal/THIRD-PARTY-NOTICES.txt'),
-  notices.join('\n'),
+  notices.join('\n').replace(/^([ ]+)\t/gm, '$1    '),
   'utf8',
 );
 await writeFile(

@@ -131,20 +131,32 @@ pub async fn browser_command(
             let page_target = owner.clone();
             let popup_label = label.clone();
             let navigation_origin = origin.clone();
+            let surface = if owner == "main" {
+                Some(
+                    app.state::<crate::browser_automation::Automation>()
+                        .prepare(
+                            app.state::<crate::AppState>()
+                                .data_dir
+                                .join("webview-browser"),
+                        )?,
+                )
+            } else {
+                None
+            };
             let builder = WebviewBuilder::new(&label, WebviewUrl::External(url))
                 .initialization_script(include_str!("browser_fit.js"))
                 .incognito(true)
-                .data_directory(
-                    crate::runtime_paths::webview_home(&if owner == "main" {
-                        app.state::<crate::AppState>().data_dir.join("webview")
-                    } else {
-                        app.state::<crate::AppState>()
+                .data_directory(if let Some(surface) = &surface {
+                    surface.profile.clone()
+                } else {
+                    crate::runtime_paths::webview_home(
+                        &app.state::<crate::AppState>()
                             .data_dir
                             .join("webview")
-                            .join(&owner)
-                    })
-                    .map_err(|_| "无法打开浏览器数据目录")?,
-                )
+                            .join(&owner),
+                    )
+                    .map_err(|_| "无法打开浏览器数据目录")?
+                })
                 .disable_drag_drop_handler()
                 .on_navigation(move |url| {
                     let allowed = remote_url(url.as_str(), navigation_origin.as_deref()).is_ok();
@@ -201,6 +213,22 @@ pub async fn browser_command(
                         None,
                     );
                 });
+            let builder = if let Some(surface) = &surface {
+                let mut args = "--remote-debugging-port=0 --remote-debugging-address=127.0.0.1 --disable-features=msWebOOUI,msPdfOOUI".to_owned();
+                if let Some(proxy) = std::env::var("HTTPS_PROXY")
+                    .ok()
+                    .or_else(|| std::env::var("HTTP_PROXY").ok())
+                    && let Ok(proxy) = crate::external_links::validate(&proxy)
+                {
+                    args.push_str(&format!(
+                        " --proxy-server={} --proxy-bypass-list=localhost;127.0.0.1",
+                        proxy.origin().ascii_serialization()
+                    ));
+                }
+                builder.additional_browser_args(&args).initialization_script(format!("Object.defineProperty(globalThis, '__fluxcodeBrowserSurface', {{value: {}, configurable: false}});", serde_json::to_string(&surface.token).unwrap()))
+            } else {
+                builder
+            };
             app.get_window(&owner)
                 .ok_or("主窗口尚未就绪")?
                 .add_child(builder, rect.position, rect.size)
@@ -211,6 +239,9 @@ pub async fn browser_command(
             Ok(())
         }
         BrowserAction::Close => {
+            if owner == "main" {
+                app.state::<crate::browser_automation::Automation>().reset();
+            }
             if let Some(view) = app.get_webview(&label) {
                 view.close().map_err(|_| "无法关闭浏览器")?;
             }

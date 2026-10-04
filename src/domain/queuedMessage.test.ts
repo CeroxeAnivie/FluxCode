@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { settleQueuedMessage, parseQueue, type QueuedMessage } from './queuedMessage';
+import { parseQueue, settleQueuedMessage, type QueuedMessage } from './queuedMessage';
 
 const sending: QueuedMessage = {
   id: 'queued-1',
@@ -55,4 +55,17 @@ it('keeps the actionable queue failure after reload while stripping credentials'
   expect(failed[0].error).not.toContain('sk-queue-secret');
   const restored = parseQueue(JSON.stringify(failed));
   expect(restored[0].error).toBe(failed[0].error);
+});
+
+it('restores image-only queues without accepting empty messages', () => {
+  const item = {
+    id: 'q',
+    threadId: 't',
+    text: '',
+    selection: { model: 'vision', effort: 'off' },
+    attachments: [{ id: 'a', kind: 'image', path: 'D:/data/a.png', name: 'a.png' }],
+    status: 'paused',
+  };
+  expect(parseQueue(JSON.stringify([item]))[0].attachments).toHaveLength(1);
+  expect(() => parseQueue(JSON.stringify([{ ...item, attachments: [] }]))).toThrow();
 });

@@ -5,6 +5,10 @@ import { webLink } from '../domain/links';
 import { browserAddress } from '../domain/browserAddress';
 import {
   browserAvailable,
+  getBrowserAgentState,
+  subscribeBrowserAgentState,
+  listenBrowserAgentState,
+  controlBrowserAgent,
   closeBrowserPanel,
   markBrowserAgentControl,
   completeAgentBrowser,
@@ -22,6 +26,24 @@ import { openWebLink } from '../infrastructure/externalLinks';
 import { scheduleUiStateMirror } from '../infrastructure/uiStateMirror';
 import './browserPanel.css';
 
+const browserActionLabels = {
+  open: '正在打开网页',
+  read_page: '正在读取网页',
+  snapshot: '正在识别网页元素',
+  screenshot: '正在截取网页',
+  click: '正在点击网页元素',
+  fill: '正在填写内容',
+  press: '正在输入按键',
+  select_option: '正在选择选项',
+  set_checked: '正在设置勾选项',
+  hover: '正在悬停查看',
+  scroll: '正在滚动网页',
+  handle_dialog: '正在处理网页对话框',
+  back: '正在后退',
+  forward: '正在前进',
+  reload: '正在刷新网页',
+  close: '正在关闭网页',
+};
 const WIDTH_KEY = 'fluxcode.browser-width.v1';
 const minWidth = 320;
 function clampWidth(value: number) {
@@ -29,6 +51,20 @@ function clampWidth(value: number) {
 }
 
 export function BrowserPanel() {
+  useEffect(() => {
+    let disposed = false;
+    let off: (() => void) | undefined;
+    void listenBrowserAgentState()
+      .then((stop) => {
+        if (disposed) stop();
+        else off = stop;
+      })
+      .catch(() => console.warn('browser_agent_state_subscription_failed'));
+    return () => {
+      disposed = true;
+      off?.();
+    };
+  }, []);
   useEffect(() => {
     if (!browserAvailable()) return;
     let disposed = false;
@@ -46,7 +82,10 @@ export function BrowserPanel() {
           else {
             if (!getBrowserRequest()) throw new Error('Browser is closed');
             markBrowserAgentControl(true);
-            if (event.action !== 'read_page') await browserCommand({ kind: event.action });
+            if (document.querySelector('dialog[open], [role="dialog"]'))
+              throw new Error('An application dialog hides the browser');
+            if (event.action === 'back' || event.action === 'forward' || event.action === 'reload')
+              await browserCommand({ kind: event.action });
           }
           completeAgentBrowser(event.id);
         } catch {
@@ -70,6 +109,23 @@ export function BrowserPanel() {
 
 function BrowserSurface({ request }: { request: BrowserRequest }) {
   const { t } = useAppearance();
+  const agent = useSyncExternalStore(
+    subscribeBrowserAgentState,
+    getBrowserAgentState,
+    getBrowserAgentState,
+  );
+  async function takeOver() {
+    if (agent.active || request.agentControlled) await controlBrowserAgent(true);
+  }
+  async function manualCommand(kind: 'back' | 'forward' | 'reload') {
+    try {
+      await takeOver();
+      markBrowserAgentControl(false);
+      await browserCommand({ kind });
+    } catch {
+      report();
+    }
+  }
   const [width, setWidth] = useState(() => {
     try {
       const saved = Number(localStorage.getItem(WIDTH_KEY));
@@ -113,6 +169,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
   async function close() {
     setClosing(true);
     try {
+      await takeOver();
       if (available) await browserCommand({ kind: 'close' });
       dismissBrowser();
     } catch {
@@ -246,14 +303,33 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
     };
   }, [available, request.revision]);
 
-  function navigate() {
+  async function reloadPage() {
+    try {
+      await takeOver();
+      const rect = bounds();
+      if (!rect) return;
+      setError('');
+      setLoading(true);
+      markBrowserAgentControl(false);
+      // Navigation also recreates a surface whose initial creation failed.
+      await browserCommand({ kind: 'navigate', url: currentUrl, bounds: rect });
+    } catch {
+      report();
+    }
+  }
+  async function navigate() {
     const url = browserAddress(address);
     if (!url) {
       setError('网页链接无效');
       return;
     }
-    requestBrowser(url);
-    addressInput.current?.blur();
+    try {
+      await takeOver();
+      requestBrowser(url);
+      addressInput.current?.blur();
+    } catch {
+      report();
+    }
   }
   return (
     <>
@@ -327,12 +403,29 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             <X size={17} />
           </button>
         </header>
+        {(agent.active || agent.paused || request.agentControlled) && (
+          <div className="browser-agent-controls" role="status">
+            <span>
+              {agent.paused
+                ? t('浏览器已由你接管')
+                : agent.active
+                  ? t(browserActionLabels[agent.action ?? 'snapshot'])
+                  : t('智能体浏览')}
+            </span>
+            <button
+              type="button"
+              onClick={() => void controlBrowserAgent(!agent.paused).catch(report)}
+            >
+              {agent.paused ? t('允许智能体继续') : t('停止并接管')}
+            </button>
+          </div>
+        )}
         <form
           className="browser-toolbar"
           onSubmit={(event) => {
             event.preventDefault();
             if (composing.current) return;
-            navigate();
+            void navigate();
           }}
         >
           <button
@@ -342,8 +435,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             title={t('后退')}
             disabled={!currentUrl || !available}
             onClick={() => {
-              markBrowserAgentControl(false);
-              void browserCommand({ kind: 'back' }).catch(report);
+              void manualCommand('back');
             }}
           >
             <ArrowLeft size={16} />
@@ -355,8 +447,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             title={t('前进')}
             disabled={!currentUrl || !available}
             onClick={() => {
-              markBrowserAgentControl(false);
-              void browserCommand({ kind: 'forward' }).catch(report);
+              void manualCommand('forward');
             }}
           >
             <ArrowRight size={16} />
@@ -368,15 +459,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             title={t('刷新网页')}
             disabled={!currentUrl || !available}
             onClick={() => {
-              setError('');
-              const rect = bounds();
-              if (rect) {
-                markBrowserAgentControl(false);
-                setLoading(true);
-                void browserCommand({ kind: 'navigate', url: currentUrl, bounds: rect }).catch(
-                  report,
-                );
-              }
+              void reloadPage();
             }}
           >
             <RotateCw size={15} />

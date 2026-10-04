@@ -202,6 +202,7 @@ pub async fn open_workspace_window(
     let window = tauri::WebviewWindowBuilder::from_config(&app, &config)
         .map_err(|e| e.to_string())?
         .data_directory(crate::runtime_paths::webview_home(&profile).map_err(|e| e.to_string())?)
+        .transparent(true)
         .build()
         .map_err(|e| format!("无法打开工作区窗口：{e}"))?;
     crate::window_placement::ensure_visible(&window)?;

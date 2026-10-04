@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.6 — Browser interaction, images and native desktop finish (2026-10-04)
+
+- The visible WebView2 browser now supports element snapshots, click, fill, select, checkbox, key, hover, scroll, screenshot and page dialogs through bundled Playwright. User takeover cancels pending automation; stale targets require a fresh snapshot.
+- Paste, drop or select chat images; view thumbnails and zoom previews, send image-only messages, and retain images in conversation history. Image files are stored under the application's data directory with bounded decoding.
+- Text files open directly in the CodeMirror editor. Create a project file, toggle wrapping and reference a saved file in chat; existing conflict detection and draft recovery are preserved.
+- Windows native acrylic follows theme and system transparency preferences, with a verified opaque fallback. App native dialog commands no longer override remote pages' alert/confirm.
+- Ship the pinned Node/Playwright runtime and its licenses inside the installer; reuse Codex 0.157.0 without rebuilding the engine.
+
 ## 0.1.5 — Composer queue and visible browser tools (2026-10-04)
 
 - Remove the permanent Queue and Send now buttons while a task is running; retain Stop.

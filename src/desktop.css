@@ -552,3 +552,29 @@ dialog::backdrop {
   margin: 8px 16px;
   color: var(--warning);
 }
+
+/* One OS-composited backdrop; readable content surfaces remain opaque. */
+:root[data-material='acrylic'] body,
+:root[data-material='acrylic'] .app-shell {
+  background: transparent;
+}
+:root[data-material='acrylic'] {
+  --chrome-tint: color-mix(in srgb, var(--surface) 48%, transparent);
+}
+:root[data-material='acrylic'] :is(.titlebar, .navigation-rail, .sidebar) {
+  backdrop-filter: none;
+}
+:root[data-material='solid'] :is(.titlebar, .navigation-rail, .sidebar) {
+  background: var(--surface);
+  backdrop-filter: none;
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  :root[data-material] body,
+  :root[data-material] .app-shell {
+    background: var(--background);
+  }
+  :root[data-material] :is(.titlebar, .navigation-rail, .sidebar) {
+    background: var(--surface);
+    backdrop-filter: none;
+  }
+}

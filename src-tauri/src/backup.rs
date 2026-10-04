@@ -235,6 +235,7 @@ fn copy_data(
                 Some(
                     "backups"
                         | "webview"
+                        | "webview-browser"
                         | "logs"
                         | "pending-restore.toml"
                         | "restore-ui.json"

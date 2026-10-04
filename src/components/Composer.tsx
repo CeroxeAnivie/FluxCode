@@ -33,6 +33,8 @@ interface Props {
   attachments: Attachment[];
   attachmentNotice: { added: number; duplicates: number } | null;
   onAttach: () => void;
+  onImageFiles?: (files: File[]) => Promise<void>;
+  importingAttachments?: boolean;
   onRemoveAttachment: (id: string) => void;
   onConfigureModel?: () => void;
   onChooseProject: () => void;
@@ -62,6 +64,8 @@ export function Composer({
   attachments,
   attachmentNotice,
   onAttach,
+  onImageFiles,
+  importingAttachments = false,
   onRemoveAttachment,
   onConfigureModel,
   onChooseProject,
@@ -122,7 +126,15 @@ export function Composer({
       return;
     }
     const submitted = text;
-    if (!submitted.trim() || submitting.current || sending || disabled || sendBlocked) return;
+    if (
+      (!submitted.trim() && !attachments.length) ||
+      importingAttachments ||
+      submitting.current ||
+      sending ||
+      disabled ||
+      sendBlocked
+    )
+      return;
     submitting.current = true;
     try {
       if (busy) {
@@ -161,6 +173,11 @@ export function Composer({
           notice={attachmentNotice}
           onRemove={onRemoveAttachment}
         />
+        {importingAttachments && (
+          <span role="status" className="attachment-feedback">
+            {t('正在添加图片…')}
+          </span>
+        )}
         <textarea
           ref={input}
           aria-label={t('任务描述')}
@@ -168,6 +185,28 @@ export function Composer({
           value={text}
           maxLength={100_000}
           rows={3}
+          onPaste={(event) => {
+            const files = Array.from(event.clipboardData.files).filter((file) =>
+              file.type.startsWith('image/'),
+            );
+            if (files.length && onImageFiles) {
+              event.preventDefault();
+              void onImageFiles(files);
+            }
+          }}
+          onDragOver={(event) => {
+            if (event.dataTransfer.types.includes('Files')) event.preventDefault();
+          }}
+          onDrop={(event) => {
+            const files = Array.from(event.dataTransfer.files).filter((file) =>
+              file.type.startsWith('image/'),
+            );
+            if (files.length && onImageFiles) {
+              event.preventDefault();
+              event.stopPropagation();
+              void onImageFiles(files);
+            }
+          }}
           onChange={(e) => {
             queued.current = null;
             setQueuedId(null);
@@ -286,7 +325,13 @@ export function Composer({
                 className="send-button"
                 aria-label={t('发送任务')}
                 onClick={() => void submit()}
-                disabled={!text.trim() || disabled || sendBlocked || sending}
+                disabled={
+                  (!text.trim() && !attachments.length) ||
+                  importingAttachments ||
+                  disabled ||
+                  sendBlocked ||
+                  sending
+                }
                 title={
                   sendBlocked
                     ? t('请先完成输入框上方的准备步骤')

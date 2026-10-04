@@ -5,6 +5,34 @@ const record = (v: unknown): Record<string, unknown> =>
   v !== null && typeof v === 'object' ? (v as Record<string, unknown>) : {};
 const cap = (s: string) => (s.length > 240_000 ? '[较早的输出已截断]\n' + s.slice(-220_000) : s);
 
+function imageContent(content: unknown): { source: string; name: string }[] {
+  if (!Array.isArray(content)) return [];
+  return content
+    .flatMap((value) => {
+      const item = record(value);
+      let source = '';
+      if (item.type === 'localImage') source = text(item.path);
+      if (item.type === 'image' || item.type === 'input_image' || item.type === 'inputImage') {
+        source = text(item.url) || text(item.image_url) || text(item.imageUrl);
+        if (
+          !source &&
+          typeof item.data === 'string' &&
+          /^image\/(png|jpeg|gif|webp)$/.test(text(item.mimeType))
+        )
+          source = 'data:' + item.mimeType + ';base64,' + item.data;
+      }
+      if (!source || source.length > 28 * 1024 * 1024) return [];
+      return [
+        {
+          source,
+          name: source.startsWith('data:')
+            ? '图片'
+            : source.split(/[\\/]/).at(-1)?.split('?')[0] || '图片',
+        },
+      ];
+    })
+    .slice(0, 20);
+}
 export function normalizeItem(value: unknown): ChatItem | null {
   const i = record(value);
   const id = text(i.id);
@@ -14,12 +42,34 @@ export function normalizeItem(value: unknown): ChatItem | null {
       return {
         id,
         kind: 'user',
+        images: imageContent(i.content),
         text: (Array.isArray(i.content) ? i.content : [])
           .map((v) => text(record(v).text))
           .join('\n'),
       };
     case 'agentMessage':
-      return { id, kind: 'assistant', text: text(i.text) };
+      return { id, kind: 'assistant', text: text(i.text), images: imageContent(i.content) };
+    case 'imageGeneration': {
+      const saved = text(i.savedPath);
+      const result = text(i.result);
+      return {
+        id,
+        kind: 'assistant',
+        text: '',
+        images: imageContent(
+          saved
+            ? [{ type: 'localImage', path: saved }]
+            : result
+              ? [
+                  {
+                    type: 'image',
+                    url: result.startsWith('data:') ? result : 'data:image/png;base64,' + result,
+                  },
+                ]
+              : [],
+        ),
+      };
+    }
     case 'commandExecution':
       return {
         id,
@@ -80,6 +130,7 @@ export function normalizeItem(value: unknown): ChatItem | null {
       return {
         id,
         kind: 'tool',
+        images: imageContent(record(i.result).content ?? i.contentItems),
         text: [text(i.server), text(i.tool)].filter(Boolean).join(' / '),
         status: text(i.status),
       };

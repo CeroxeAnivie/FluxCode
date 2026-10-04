@@ -548,7 +548,7 @@ export function useFluxCode() {
     attachments: Attachment[] = [],
     onCreated?: (id: string) => void,
   ): Promise<boolean> {
-    if (sendLock.current || loadingTask || !message.trim()) return false;
+    if (sendLock.current || loadingTask || (!message.trim() && !attachments.length)) return false;
     const project = catalog.projects.find((p) => p.id === selectedProjectId);
     if (!project) {
       setError('请先打开一个项目文件夹。');
@@ -586,7 +586,7 @@ export function useFluxCode() {
             {
               id: taskId,
               projectId: project.id,
-              title: message.trim().slice(0, 52),
+              title: (message.trim() || attachments[0]?.name || 'image').slice(0, 52),
               updatedAt: Date.now(),
               archived: false,
               selection,

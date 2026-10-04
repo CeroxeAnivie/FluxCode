@@ -137,7 +137,7 @@ export default function App({
       await app.addProject(target.projectPath);
       return;
     }
-    context.addMany(target.attachments);
+    await context.importPaths(target.attachments);
   };
   useEffect(() => {
     if (!isTauri()) return;
@@ -526,6 +526,8 @@ export default function App({
                 attachments={context.items}
                 attachmentNotice={context.notice}
                 onAttach={() => void context.choose()}
+                onImageFiles={context.addFiles}
+                importingAttachments={context.importing}
                 onRemoveAttachment={context.remove}
                 onQueue={(text) => {
                   const ok = app.selectedTaskId

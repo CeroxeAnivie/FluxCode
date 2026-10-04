@@ -33,6 +33,9 @@ const installer = await readFile(
 assert.ok(installer.includes('engine\\codex-code-mode-host.exe'), 'Missing bundled code-mode host');
 for (const file of [
   'engine\\codex.exe',
+  'browser-runtime\\node.exe',
+  'browser-runtime\\driver.mjs',
+  'browser-runtime\\NODE-LICENSE.txt',
   'legal\\CODEX-LICENSE.txt',
   'legal\\CODEX-NOTICE.txt',
   'legal\\FLUXCODE-LICENSE.txt',
@@ -108,7 +111,16 @@ const sevenZip =
   resolve(process.env.ProgramFiles || 'C:/Program Files', '7-Zip/7z.exe');
 execFileSync(
   sevenZip,
-  ['x', setupPath, `-o${extracted}`, '-y', 'fluxcode.exe', 'engine/*', 'legal/*'],
+  [
+    'x',
+    setupPath,
+    `-o${extracted}`,
+    '-y',
+    'fluxcode.exe',
+    'engine/*',
+    'legal/*',
+    'browser-runtime/*',
+  ],
   {
     windowsHide: true,
     timeout: 120000,
@@ -121,7 +133,7 @@ assertPackagedExecutable(
 );
 await assertBrowserMcpExecutable(resolve(extracted, 'fluxcode.exe'));
 let resourceCount = 0;
-for (const directory of ['engine', 'legal']) {
+for (const directory of ['engine', 'legal', 'browser-runtime']) {
   const sourceRoot = resolve(root, 'src-tauri/resources', directory);
   for (const name of await readdir(sourceRoot, { recursive: true })) {
     const sourceFile = resolve(sourceRoot, name);
@@ -136,6 +148,32 @@ for (const directory of ['engine', 'legal']) {
     resourceCount++;
   }
 }
+const browserManifest = await readFile(resolve(root, 'config/browser-runtime.toml'), 'utf8');
+const browserValue = (key) =>
+  browserManifest.match(new RegExp('^' + key + ' = "([^"\\n]+)"', 'm'))?.[1];
+const browserRuntime = resolve(extracted, 'browser-runtime');
+assert.equal(
+  createHash('sha256')
+    .update(await readFile(resolve(browserRuntime, 'node.exe')))
+    .digest('hex'),
+  browserValue('node_exe_sha256'),
+);
+assert.equal(
+  execFileSync(resolve(browserRuntime, 'node.exe'), ['--version'], {
+    encoding: 'utf8',
+    windowsHide: true,
+  }).trim(),
+  'v' + browserValue('node_version'),
+);
+const playwright = JSON.parse(
+  await readFile(resolve(browserRuntime, 'node_modules/playwright-core/package.json'), 'utf8'),
+);
+assert.equal(playwright.version, browserValue('playwright_version'));
+execFileSync(
+  resolve(browserRuntime, 'node.exe'),
+  ['--check', resolve(browserRuntime, 'driver.mjs')],
+  { windowsHide: true, timeout: 15000 },
+);
 console.log(
   JSON.stringify(
     {
@@ -146,6 +184,7 @@ console.log(
       productionTestTransport: false,
       executableContentMatches: true,
       browserMcpHandshake: true,
+      browserRuntimeVerified: true,
       verifiedResources: resourceCount,
       extractedEvidence: extracted,
     },

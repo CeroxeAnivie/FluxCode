@@ -2,7 +2,9 @@ mod attachments;
 mod backup;
 mod browser;
 mod browser_agent;
+mod browser_automation;
 pub mod browser_mcp;
+mod chat_media;
 mod config;
 mod configuration;
 mod context;
@@ -17,6 +19,7 @@ mod external_links;
 mod git_service;
 mod headless;
 mod imported_history;
+mod native_dialogs;
 mod window_placement;
 pub use headless::run as run_headless;
 mod model_selection;
@@ -28,6 +31,7 @@ mod runtime_paths;
 mod schedules;
 mod terminal;
 mod ui_state;
+mod window_material;
 mod workspace;
 mod workspace_windows;
 
@@ -738,6 +742,15 @@ async fn save_file(
     editor::save(&root, &relative, &expected, &content).await
 }
 #[tauri::command]
+async fn create_text_file(
+    state: State<'_, AppState>,
+    root: String,
+    relative: String,
+) -> Result<(), String> {
+    let _guard = state.workspace_mutation.lock().await;
+    editor::create(&root, &relative).await
+}
+#[tauri::command]
 async fn repo_status(root: String) -> Result<workspace::RepoStatus, String> {
     workspace::status(&root).await
 }
@@ -1112,6 +1125,7 @@ pub fn run() -> Result<(), String> {
     let app = tauri::Builder::default()
         .manage(browser::BrowserState::default())
         .manage(browser_agent::BrowserAgentState::default())
+        .manage(browser_automation::Automation::default())
         .manage(workspace_windows::Windows::default())
         .plugin(
             tauri_plugin_window_state::Builder::default()
@@ -1130,7 +1144,7 @@ pub fn run() -> Result<(), String> {
                 let _ = window.set_focus();
             }
         }))
-        .plugin(tauri_plugin_dialog::init())
+        .plugin(native_dialogs::init())
         .plugin(
             tauri_plugin_opener::Builder::new()
                 .open_js_links_on_click(false)
@@ -1198,7 +1212,9 @@ pub fn run() -> Result<(), String> {
             });
             let window_config = app.config().app.windows.first().ok_or_else(|| std::io::Error::other("Missing main window configuration"))?;
             let window = tauri::WebviewWindowBuilder::from_config(app, window_config)?
-                .data_directory(runtime_paths::webview_home(&data_dir.join("webview"))?);
+                .data_directory(runtime_paths::webview_home(&data_dir.join("webview"))?).transparent(true);
+            #[cfg(debug_assertions)]
+            let window = if let Ok(args) = std::env::var("FLUXCODE_TEST_WEBVIEW_ARGS") { window.additional_browser_args(&args) } else { window };
             // tao asserts on failed OLE drop registration for long executable
             // paths. Wry retains its separate WebView drop handler.
             #[cfg(windows)]
@@ -1235,6 +1251,8 @@ pub fn run() -> Result<(), String> {
             external_links::open_external_link,
             browser::browser_command,
             browser_agent::complete_browser_agent_request,
+            browser_automation::browser_agent_control,
+            window_material::configure_window_material,
             external_links::open_workspace_file,
             configuration_snapshot,
             configuration_runtime_idle,
@@ -1253,6 +1271,8 @@ pub fn run() -> Result<(), String> {
             remove_imported_conversation,
             inspect_dropped_paths,
             preview_attachment,
+            chat_media::store_chat_image,
+            chat_media::load_chat_image,
             save_provider_profiles,
             save_provider_profile,
             discover_provider,
@@ -1289,6 +1309,7 @@ pub fn run() -> Result<(), String> {
             list_files,
             read_file,
             save_file,
+            create_text_file,
             repo_status,
             git_action,
             git_branches,

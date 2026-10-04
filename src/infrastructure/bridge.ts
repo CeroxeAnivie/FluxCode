@@ -20,7 +20,10 @@ export interface Bridge {
   inspectDroppedPaths(
     paths: string[],
   ): Promise<{ path: string; kind: 'file' | 'directory' | 'image' }[]>;
+  createTextFile(root: string, relative: string): Promise<void>;
   previewAttachment(path: string): Promise<string>;
+  loadChatImage(source: string, full?: boolean): Promise<string>;
+  storeChatImage(source: string): Promise<string>;
   openWorkspaceFile(root: string, relative: string): Promise<void>;
   searchWorkspace(
     root: string,
@@ -97,8 +100,11 @@ const unavailable = () =>
 
 const desktop: Bridge = {
   available: isTauri(),
+  createTextFile: (root, relative) => invoke('create_text_file', { root, relative }),
   inspectDroppedPaths: (paths) => invoke('inspect_dropped_paths', { paths }),
   previewAttachment: (path) => invoke('preview_attachment', { path }),
+  loadChatImage: (source, full = false) => invoke('load_chat_image', { source, full }),
+  storeChatImage: (source) => invoke('store_chat_image', { source }),
   openWorkspaceFile: (root, relative) => invoke('open_workspace_file', { root, relative }),
   searchWorkspace: (root, query, contents) => invoke('search_workspace', { root, query, contents }),
   answerElicitation: (id, result) => invoke('answer_elicitation', { id, result }),
@@ -205,6 +211,6 @@ declare global {
   }
 }
 export const bridge: Bridge =
-  import.meta.env.MODE === 'test' && window.__FLUX_TEST_BRIDGE__
+  import.meta.env.MODE === 'test' && typeof window !== 'undefined' && window.__FLUX_TEST_BRIDGE__
     ? window.__FLUX_TEST_BRIDGE__
     : desktop;

@@ -1,0 +1,5 @@
+# Reproducible Windows browser automation runtime. No Chromium download.
+node_version = "24.21.0"
+node_zip_sha256 = "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541"
+playwright_version = "1.63.0"
+node_exe_sha256 = "ba4e6d110e8c1592a1ecd390f6b05f3da124b13871a5be62b341a07a853c6c32"

@@ -1,3 +1,4 @@
+import { ChatImage } from './ChatImage';
 import { WorkingIndicator } from './WorkingIndicator';
 import { BrandMark } from './BrandMark';
 import { ErrorNotice } from './ErrorNotice';
@@ -68,7 +69,7 @@ export function Welcome({ onSuggestion }: { onSuggestion: (prompt: string) => vo
   );
 }
 
-function Item({ item, projectRoot }: { item: ChatItem; projectRoot?: string }) {
+function ItemBody({ item, projectRoot }: { item: ChatItem; projectRoot?: string }) {
   const { t } = useAppearance();
   if (item.kind === 'compaction')
     return (
@@ -185,6 +186,20 @@ function Item({ item, projectRoot }: { item: ChatItem; projectRoot?: string }) {
   );
 }
 
+function Item(props: Parameters<typeof ItemBody>[0]) {
+  return (
+    <>
+      <ItemBody {...props} />
+      {!!props.item.images?.length && (
+        <div className="message-images">
+          {props.item.images.map((image, index) => (
+            <ChatImage key={index + ':' + image.source.slice(0, 100)} {...image} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 const MemoItem = memo(Item);
 
 export function Conversation({

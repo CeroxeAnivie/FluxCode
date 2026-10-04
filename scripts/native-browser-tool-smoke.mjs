@@ -32,12 +32,31 @@ const server = createServer(async (req, res) => {
   if (req.headers['content-encoding'] === 'zstd') bytes = zstdDecompressSync(bytes);
   const body = JSON.parse(bytes.toString('utf8'));
   payloads.push(body);
+  await writeFile(
+    resolve(data, 'fixture-payloads.json'),
+    JSON.stringify(payloads, null, 2),
+    'utf8',
+  );
   const step = sequence++;
   if (step === 1) {
+    let activePort;
     await expect
       .poll(
         async () => {
-          const remote = browser
+          activePort = await readFile(
+            resolve(data, 'webview-browser/EBWebView/DevToolsActivePort'),
+            'utf8',
+          ).catch(() => '');
+          return activePort;
+        },
+        { timeout: 5000 },
+      )
+      .not.toBe('');
+    isolated = await chromium.connectOverCDP('http://127.0.0.1:' + activePort.split(/\r?\n/)[0]);
+    await expect
+      .poll(
+        async () => {
+          const remote = isolated
             .contexts()
             .flatMap((context) => context.pages())
             .find((page) => page.url() === pageUrl);
@@ -109,8 +128,7 @@ const child = spawn(resolve(root, 'src-tauri/target/debug/fluxcode.exe'), [], {
   env: {
     ...process.env,
     FLUXCODE_TEST_DATA_DIR: data,
-    WEBVIEW2_USER_DATA_FOLDER: resolve(data, 'webview'),
-    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: [
+    FLUXCODE_TEST_WEBVIEW_ARGS: [
       `--remote-debugging-port=${port}`,
       ...(proxy
         ? [`--proxy-server=${new URL(proxy).origin}`, '--proxy-bypass-list=<-loopback>']
@@ -119,6 +137,7 @@ const child = spawn(resolve(root, 'src-tauri/target/debug/fluxcode.exe'), [], {
   },
 });
 let browser;
+let isolated;
 try {
   for (let attempt = 0; attempt < 60; attempt++) {
     if (child.exitCode !== null) throw new Error(`Desktop exited: ${child.exitCode}`);
@@ -205,6 +224,7 @@ try {
   console.error(`Native browser tool diagnostics: ${data}`);
   throw error;
 } finally {
+  await isolated?.close().catch(() => {});
   await browser?.close().catch(() => {});
   if (child.exitCode === null) child.kill();
   await new Promise((done) => server.close(done));

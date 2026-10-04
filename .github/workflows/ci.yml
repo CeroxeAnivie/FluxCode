@@ -52,5 +52,6 @@ jobs:
       - run: pnpm build
       - run: rustup show
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+      - run: node scripts/prepare-browser-runtime.mjs
+      - run: pnpm test:native
       - run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings

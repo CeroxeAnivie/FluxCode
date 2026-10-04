@@ -116,7 +116,7 @@ export function useWorkspaceHost(
       if (command.kind === 'send' || command.kind === 'queue' || command.kind === 'steer') {
         if (
           typeof command.text !== 'string' ||
-          !command.text.trim() ||
+          (!command.text.trim() && !command.attachments?.length) ||
           command.text.length > 100_000 ||
           !isModelSelection(command.selection)
         )

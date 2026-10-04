@@ -1,3 +1,4 @@
+import { observeWindowMaterial } from '../infrastructure/windowMaterial';
 import {
   createContext,
   useCallback,
@@ -122,6 +123,10 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = language;
   }, [theme, language]);
+  useEffect(() => {
+    if (!ready || !themeReady) return;
+    return observeWindowMaterial(theme === 'dark');
+  }, [theme, ready, themeReady]);
   async function update(next: Appearance) {
     if (writeLock.current) return;
     const checked = parseAppearance(next);

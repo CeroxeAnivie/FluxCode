@@ -19,10 +19,33 @@ export interface BrowserPageState {
 }
 export interface AgentBrowserRequest {
   id: string;
-  action: 'open' | 'read_page' | 'back' | 'forward' | 'reload' | 'close';
+  action:
+    | 'open'
+    | 'read_page'
+    | 'snapshot'
+    | 'screenshot'
+    | 'click'
+    | 'fill'
+    | 'press'
+    | 'select_option'
+    | 'set_checked'
+    | 'hover'
+    | 'scroll'
+    | 'handle_dialog'
+    | 'back'
+    | 'forward'
+    | 'reload'
+    | 'close';
   url?: string;
 }
+export interface AgentBrowserState {
+  active: boolean;
+  paused: boolean;
+  action?: AgentBrowserRequest['action'];
+}
 export interface BrowserTransport {
+  controlAgent?(paused: boolean): Promise<void>;
+  subscribeAgentState?(handler: (state: AgentBrowserState) => void): Promise<() => void>;
   command(action: BrowserAction): Promise<void>;
   subscribeAgent?(handler: (event: AgentBrowserRequest) => void): Promise<() => void>;
   completeAgent?(id: string, error: string | null): Promise<void>;
@@ -35,6 +58,9 @@ declare global {
 }
 
 const native: BrowserTransport = {
+  controlAgent: (paused) => invoke('browser_agent_control', { paused }),
+  subscribeAgentState: (handler) =>
+    listen<AgentBrowserState>('browser-agent-state', (event) => handler(event.payload)),
   subscribeAgent: (handler) =>
     listen<AgentBrowserRequest>('browser-agent-request', (event) => handler(event.payload)),
   completeAgent: (id, error) => invoke('complete_browser_agent_request', { id, error }),
@@ -138,4 +164,25 @@ export function subscribeBrowserRequest(listener: () => void) {
   return () => {
     listeners.delete(listener);
   };
+}
+
+let agentState: AgentBrowserState = { active: false, paused: false };
+const agentListeners = new Set<() => void>();
+export const getBrowserAgentState = () => agentState;
+export function subscribeBrowserAgentState(listener: () => void) {
+  agentListeners.add(listener);
+  return () => {
+    agentListeners.delete(listener);
+  };
+}
+function updateAgentState(state: AgentBrowserState) {
+  agentState = state;
+  agentListeners.forEach((listener) => listener());
+}
+export const listenBrowserAgentState = () =>
+  transport().subscribeAgentState?.(updateAgentState) ?? Promise.resolve(() => {});
+export async function controlBrowserAgent(paused: boolean) {
+  await transport().controlAgent?.(paused);
+  updateAgentState({ active: false, paused });
+  if (paused) markBrowserAgentControl(false);
 }

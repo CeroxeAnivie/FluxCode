@@ -62,6 +62,7 @@ export interface RepoStatus {
   git: boolean;
 }
 export interface ChatItem {
+  images?: { source: string; name: string }[];
   steps?: { text: string; status: string }[];
   id: string;
   kind:

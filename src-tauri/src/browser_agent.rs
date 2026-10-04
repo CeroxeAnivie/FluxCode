@@ -18,6 +18,16 @@ pub enum Action {
     Forward,
     Reload,
     Close,
+    Snapshot,
+    Screenshot,
+    Click,
+    Fill,
+    Press,
+    SelectOption,
+    SetChecked,
+    Hover,
+    Scroll,
+    HandleDialog,
 }
 #[derive(Clone, Deserialize, Serialize, schemars::JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -27,6 +37,19 @@ pub struct BrowserInput {
         description = "Absolute HTTP(S) URL, required only for open. Omit for other actions."
     )]
     pub url: Option<String>,
+    #[serde(rename = "snapshotId")]
+    pub snapshot_id: Option<String>,
+    #[serde(rename = "ref")]
+    pub target_ref: Option<String>,
+    pub text: Option<String>,
+    pub key: Option<String>,
+    pub values: Option<Vec<String>>,
+    pub checked: Option<bool>,
+    #[serde(rename = "deltaX")]
+    pub delta_x: Option<i32>,
+    #[serde(rename = "deltaY")]
+    pub delta_y: Option<i32>,
+    pub accept: Option<bool>,
 }
 struct Pending {
     reply: oneshot::Sender<Result<(), String>>,
@@ -73,7 +96,20 @@ pub fn complete_browser_agent_request(
     }
     Ok(())
 }
+struct ActivityGuard(tauri::AppHandle);
+impl Drop for ActivityGuard {
+    fn drop(&mut self) {
+        let _ = self.0.emit_to(tauri::EventTarget::webview("main"), "browser-agent-state", json!({"active":false, "paused":self.0.state::<crate::browser_automation::Automation>().paused()}));
+    }
+}
 async fn dispatch(app: &tauri::AppHandle, input: BrowserInput) -> Result<Value, String> {
+    validate_input(&input)?;
+    if app
+        .state::<crate::browser_automation::Automation>()
+        .paused()
+    {
+        return Err("浏览器已由用户接管，请等待用户在面板中恢复智能体操作。".into());
+    }
     if matches!(input.action, Action::Open) {
         let url = input.url.as_deref().ok_or("open requires a URL")?;
         if url.len() > 8192 {
@@ -103,6 +139,13 @@ async fn dispatch(app: &tauri::AppHandle, input: BrowserInput) -> Result<Value, 
         state: &state,
         id: id.clone(),
     };
+    let _activity = ActivityGuard(app.clone());
+    app.emit_to(
+        tauri::EventTarget::webview("main"),
+        "browser-agent-state",
+        json!({"active":true,"paused":false,"action":input.action}),
+    )
+    .map_err(|_| "无法显示浏览器操作状态")?;
     app.emit_to(
         tauri::EventTarget::webview("main"),
         "browser-agent-request",
@@ -115,8 +158,18 @@ async fn dispatch(app: &tauri::AppHandle, input: BrowserInput) -> Result<Value, 
             |_| "Browser panel did not acknowledge the request. Do not claim the page opened.",
         )?
         .map_err(|_| "Browser request was cancelled")??;
-    if matches!(input.action, Action::ReadPage) {
-        return read_page(app).await;
+    if !matches!(
+        input.action,
+        Action::Open | Action::Back | Action::Forward | Action::Reload | Action::Close
+    ) {
+        let result = app
+            .state::<crate::browser_automation::Automation>()
+            .execute(
+                app,
+                serde_json::to_value(&input).map_err(|_| "浏览器请求无效")?,
+            )
+            .await?;
+        return Ok(json!({"surface":"FluxCode built-in browser", "result":result}));
     }
     Ok(
         json!({"surface":"FluxCode built-in browser", "window":"main", "action":input.action,
@@ -124,30 +177,67 @@ async fn dispatch(app: &tauri::AppHandle, input: BrowserInput) -> Result<Value, 
         "accepted":true, "note":"For navigation, use read_page to inspect the actual page; acceptance is not load completion."}),
     )
 }
-async fn read_page(app: &tauri::AppHandle) -> Result<Value, String> {
-    let view = app
-        .get_webview("restricted-browser")
-        .ok_or("The built-in browser is closed. Use open first.")?;
-    let (tx, rx) = oneshot::channel();
-    let tx = Mutex::new(Some(tx));
-    view.eval_with_callback(include_str!("browser_snapshot.js"), move |result| {
-        if let Some(tx) = tx.lock().unwrap_or_else(|e| e.into_inner()).take() {
-            let _ = tx.send(result);
+fn validate_input(input: &BrowserInput) -> Result<(), String> {
+    if input.text.as_ref().is_some_and(|s| s.len() > 100_000) {
+        return Err("Browser text exceeds the size limit".into());
+    }
+    let needs_target = matches!(
+        input.action,
+        Action::Click
+            | Action::Fill
+            | Action::Press
+            | Action::SelectOption
+            | Action::SetChecked
+            | Action::Hover
+    );
+    if needs_target
+        && (input
+            .snapshot_id
+            .as_ref()
+            .is_none_or(|s| uuid::Uuid::parse_str(s).is_err())
+            || input.target_ref.as_ref().is_none_or(|s| {
+                s.is_empty() || s.len() > 64 || !s.bytes().all(|c| c.is_ascii_alphanumeric())
+            }))
+    {
+        return Err(
+            "Use snapshot first, then provide its snapshotId and an exact element ref".into(),
+        );
+    }
+    match input.action {
+        Action::Fill if input.text.is_none() => {
+            return Err("fill requires text; empty text clears the field".into());
         }
-    })
-    .map_err(|_| "Cannot read the built-in browser")?;
-    let raw = tokio::time::timeout(Duration::from_secs(8), rx)
-        .await
-        .map_err(|_| "Browser page read timed out")?
-        .map_err(|_| "Browser page read was cancelled")?;
-    if raw.len() > 250_000 {
-        return Err("Browser page response exceeds the size limit".into());
+        Action::Press
+            if input
+                .key
+                .as_ref()
+                .is_none_or(|s| s.is_empty() || s.len() > 80) =>
+        {
+            return Err("press requires a valid key".into());
+        }
+        Action::SetChecked if input.checked.is_none() => {
+            return Err("set_checked requires checked".into());
+        }
+        Action::SelectOption
+            if input
+                .values
+                .as_ref()
+                .is_none_or(|v| v.len() > 50 || v.iter().any(|s| s.len() > 1000)) =>
+        {
+            return Err("select_option requires values".into());
+        }
+        Action::Scroll
+            if input.delta_x.unwrap_or(0).unsigned_abs() > 4000
+                || input.delta_y.unwrap_or(0).unsigned_abs() > 4000 =>
+        {
+            return Err("scroll deltas must be within 4000 pixels".into());
+        }
+        Action::HandleDialog if input.accept.is_none() => {
+            return Err("handle_dialog requires accept".into());
+        }
+        _ => {}
     }
-    let value: Value = serde_json::from_str(&raw).map_err(|_| "Invalid browser page response")?;
-    if value.get("url").and_then(Value::as_str).is_none() {
-        return Err("Browser page is not ready; retry read_page after loading".into());
-    }
-    Ok(json!({"surface":"FluxCode built-in browser", "untrustedPageContent":value}))
+    Ok(())
 }
 pub struct Runtime {
     pub pipe: String,
@@ -190,12 +280,12 @@ pub fn start(app: tauri::AppHandle) -> Result<Runtime, String> {
             };
             let mut connection = std::mem::replace(&mut server, next);
             // One bounded request at a time; never queue unbounded page operations.
-            let result = tokio::time::timeout(Duration::from_secs(20), async {
+            let result = tokio::time::timeout(Duration::from_secs(35), async {
                 let size = connection
                     .read_u32_le()
                     .await
                     .map_err(|_| "Browser IPC disconnected")?;
-                if size > 16_384 {
+                if size > 150_000 {
                     return Err("Browser request exceeds the size limit");
                 }
                 let mut bytes = vec![0; size as usize];
@@ -248,9 +338,9 @@ pub async fn request(pipe: &str, input: &BrowserInput) -> Result<Value, String> 
     let mut client = ClientOptions::new()
         .open(pipe)
         .map_err(|_| "Cannot connect to the FluxCode browser; it may be busy or closed")?;
-    tokio::time::timeout(Duration::from_secs(22), async {
+    tokio::time::timeout(Duration::from_secs(38), async {
         let bytes = serde_json::to_vec(input).map_err(|_| "Invalid browser input")?;
-        if bytes.len() > 16_384 {
+        if bytes.len() > 150_000 {
             return Err("Browser request exceeds the size limit".into());
         }
         client
@@ -265,7 +355,7 @@ pub async fn request(pipe: &str, input: &BrowserInput) -> Result<Value, String> 
             .read_u32_le()
             .await
             .map_err(|_| "Browser IPC disconnected")?;
-        if size > 300_000 {
+        if size > 6 * 1024 * 1024 {
             return Err("Browser response exceeds the size limit".into());
         }
         let mut bytes = vec![0; size as usize];
@@ -290,6 +380,28 @@ pub async fn request(_: &str, _: &BrowserInput) -> Result<Value, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn validates_element_actions_and_resource_bounds() {
+        let valid = |value| validate_input(&serde_json::from_value::<BrowserInput>(value).unwrap());
+        let id = uuid::Uuid::new_v4().to_string();
+        assert!(valid(json!({"action":"fill","snapshotId":id,"ref":"f1e3","text":""})).is_ok());
+        assert!(
+            valid(json!({"action":"select_option","snapshotId":id,"ref":"e3","values":[]})).is_ok()
+        );
+        for value in [
+            json!({"action":"click"}),
+            json!({"action":"click","snapshotId":"old","ref":"e3"}),
+            json!({"action":"click","snapshotId":id,"ref":"#injected"}),
+            json!({"action":"fill","snapshotId":id,"ref":"e3"}),
+            json!({"action":"set_checked","snapshotId":id,"ref":"e3"}),
+            json!({"action":"press","snapshotId":id,"ref":"e3","key":""}),
+            json!({"action":"scroll","deltaY":4001}),
+            json!({"action":"handle_dialog"}),
+            json!({"action":"fill","snapshotId":id,"ref":"e3","text":"a".repeat(100001)}),
+        ] {
+            assert!(valid(value).is_err());
+        }
+    }
     #[test]
     fn rejects_unknown_actions_and_script_inputs() {
         assert!(

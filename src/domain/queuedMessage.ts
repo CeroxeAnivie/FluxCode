@@ -47,7 +47,7 @@ export function parseQueue(raw: string | null): QueuedMessage[] {
       !row.threadId ||
       row.threadId.length > 200 ||
       typeof row.text !== 'string' ||
-      !row.text.trim() ||
+      (!row.text.trim() && (!Array.isArray(row.attachments) || !row.attachments.length)) ||
       row.text.length > 100000 ||
       !isModelSelection(row.selection) ||
       !['waiting', 'sending', 'paused', 'failed'].includes(row.status) ||

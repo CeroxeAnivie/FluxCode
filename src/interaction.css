@@ -629,3 +629,46 @@ dialog .dialog-header h2 {
   width: 100%;
   font-size: 12px;
 }
+
+.new-text-dialog {
+  width: min(460px, calc(100vw - 48px));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  color: var(--text);
+  background: var(--surface);
+}
+.new-text-dialog form,
+.new-text-dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.new-text-dialog h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.new-text-dialog input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input);
+  color: var(--text);
+}
+.new-text-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.file-editor header {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.file-editor header > span {
+  flex: 1 0 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

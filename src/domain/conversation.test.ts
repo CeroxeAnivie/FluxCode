@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hydrateItems, reduceEvent } from './conversation';
+import { hydrateItems, reduceEvent, normalizeItem } from './conversation';
 import { defaultSettings, emptyConversation, validateSettings } from './types';
 
 describe('conversation lifecycle', () => {
@@ -93,4 +93,29 @@ describe('settings validation', () => {
       expect(validateSettings({ ...valid, baseUrl })).not.toBeNull();
     expect(validateSettings({ ...valid, apiKeyEnv: 'KEY;whoami' })).not.toBeNull();
   });
+});
+
+it('preserves image-only inputs and browser screenshot content in history', () => {
+  const user = normalizeItem({
+    type: 'userMessage',
+    id: 'image-user',
+    content: [{ type: 'localImage', path: 'D:/data/attachments/a.png' }],
+  });
+  expect(user?.text).toBe('');
+  expect(user?.images).toEqual([{ source: 'D:/data/attachments/a.png', name: 'a.png' }]);
+  const tool = normalizeItem({
+    type: 'mcpToolCall',
+    id: 'shot',
+    server: 'fluxcode_browser',
+    tool: 'browser',
+    result: { content: [{ type: 'image', mimeType: 'image/jpeg', data: 'ZmFrZQ==' }] },
+  });
+  expect(tool?.images?.[0].source).toBe('data:image/jpeg;base64,ZmFrZQ==');
+  expect(
+    normalizeItem({
+      type: 'mcpToolCall',
+      id: 'bad',
+      result: { content: [{ type: 'image', mimeType: 'image/svg+xml', data: 'eA==' }] },
+    })?.images,
+  ).toEqual([]);
 });
