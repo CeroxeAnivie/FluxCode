@@ -43,22 +43,31 @@ export function MotionPanel({
   useLayoutEffect(() => {
     let frame = 0;
     let nextFrame = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      setMoving(false);
+      setPresent(open || keepMounted);
+    };
+    const finishLater = () => {
+      timer = setTimeout(settle, reduced ? 0 : DURATION + 40);
+    };
     setMoving(!reduced);
     if (open) {
       setPresent(true);
-      if (reduced) setExpanded(true);
-      else
+      if (reduced) {
+        setExpanded(true);
+        finishLater();
+      } else
         frame = requestAnimationFrame(() => {
-          nextFrame = requestAnimationFrame(() => setExpanded(true));
+          nextFrame = requestAnimationFrame(() => {
+            setExpanded(true);
+            finishLater();
+          });
         });
-    } else setExpanded(false);
-    const timer = setTimeout(
-      () => {
-        setMoving(false);
-        setPresent(open || keepMounted);
-      },
-      reduced ? 0 : DURATION + 40,
-    );
+    } else {
+      setExpanded(false);
+      finishLater();
+    }
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(nextFrame);

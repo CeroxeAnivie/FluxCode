@@ -11,13 +11,6 @@ const model = 'flux-fixture';
 const home = resolve(root, 'work', `subagent-smoke-${Date.now()}`);
 await mkdir(home, { recursive: true });
 const identity = await readFile(resolve(root, 'config/agent/BASE_INSTRUCTIONS.md'), 'utf8');
-const generic = JSON.parse(
-  await readFile(resolve(root, 'config/agent/generic-model.json'), 'utf8'),
-);
-generic.slug = model;
-generic.display_name = model;
-generic.model_messages.instructions_template = identity;
-await writeFile(resolve(home, 'model-catalog.json'), JSON.stringify({ models: [generic] }), 'utf8');
 const fixture = createServer();
 let inferenceRequests = 0;
 let parentStep = 0;
@@ -42,6 +35,14 @@ fixture.on('request', async (req, res) => {
     if (req.headers['content-encoding'] === 'gzip') bytes = gunzipSync(bytes);
     if (req.headers['content-encoding'] === 'zstd') bytes = zstdDecompressSync(bytes);
     const body = JSON.parse(bytes.toString('utf8'));
+    assert.equal(req.headers.authorization, 'Bearer fixture-not-a-real-secret');
+    for (const item of body.input ?? []) {
+      if (item.type !== 'message') continue;
+      assert.ok(
+        !(item.content ?? []).some((part) => part.type === 'encrypted_content'),
+        'Collaboration instructions must reach child inference as plaintext',
+      );
+    }
     const users = body.input.filter((item) => item.type === 'message' && item.role === 'user');
     const isParent = users.some((item) => JSON.stringify(item).includes('FLUX_PARENT_FIXTURE'));
     if (isParent) parentPayloads.push(body);
@@ -180,44 +181,31 @@ fixture.on('request', async (req, res) => {
   }
 });
 await new Promise((resolve) => fixture.listen(0, '127.0.0.1', resolve));
+await writeFile(
+  resolve(home, 'fluxcode.toml'),
+  (await readFile(resolve(root, 'config/fluxcode.example.toml'), 'utf8'))
+    .replace('https://api.openai.com/v1', 'http://127.0.0.1:' + fixture.address().port + '/v1')
+    .replace(/^model = .*$/m, 'model = "' + model + '"')
+    .replace(/^api_key_env = .*$/m, 'api_key_env = "FLUX_FIXTURE_KEY"'),
+  'utf8',
+);
 const proxy = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.ALL_PROXY;
-const args = ['app-server', '--listen', 'stdio://'];
-for (const config of [
-  `model=${JSON.stringify(model)}`,
-  'model_provider="fluxcode"',
-  `model_catalog_json=${JSON.stringify(resolve(home, 'model-catalog.json'))}`,
-  'model_providers.fluxcode.name="FluxCode fixture"',
-  `model_providers.fluxcode.base_url="http://127.0.0.1:${fixture.address().port}/v1"`,
-  'model_providers.fluxcode.wire_api="responses"',
-  'model_providers.fluxcode.env_key="FLUX_FIXTURE_KEY"',
-  'model_providers.fluxcode.request_max_retries=0',
-  'model_providers.fluxcode.stream_max_retries=0',
-  `instructions=${JSON.stringify(await readFile(resolve(root, 'config/agent/BASE_INSTRUCTIONS.md'), 'utf8'))}`,
-  'skills.bundled.enabled=false',
-  'features.multi_agent_v2.enabled=true',
-  'features.multi_agent_v2.max_concurrent_threads_per_session=9223372036854775807',
-  'features.multi_agent_v2.non_code_mode_only=false',
-  'features.multi_agent_v2.hide_spawn_agent_metadata=false',
-  'features.multi_agent_v2.tool_namespace="collaboration"',
-  `features.multi_agent_v2.root_agent_usage_hint_text=${JSON.stringify(await readFile(resolve(root, 'config/agent/COLLABORATION.md'), 'utf8'))}`,
-  `features.multi_agent_v2.subagent_usage_hint_text=${JSON.stringify(await readFile(resolve(root, 'config/agent/COLLABORATION.md'), 'utf8'))}`,
-  'agents.max_depth=2147483647',
-  'approval_policy="never"',
-  'sandbox_mode="danger-full-access"',
-  'analytics.enabled=false',
-  'check_for_update_on_startup=false',
-])
-  args.push('-c', config);
 const child = spawn(
-  process.env.FLUXCODE_ENGINE_BIN || resolve(root, 'src-tauri/resources/engine/codex.exe'),
-  args,
+  process.env.FLUXCODE_CLI_BIN || resolve(root, 'src-tauri/target/debug/fluxcode-cli.exe'),
+  ['--data-dir', home],
   {
     windowsHide: true,
     env: {
       ...process.env,
       CODEX_HOME: home,
       ...(proxy
-        ? { HTTP_PROXY: proxy, HTTPS_PROXY: proxy, ALL_PROXY: proxy, NO_PROXY: '', no_proxy: '' }
+        ? {
+            HTTP_PROXY: proxy,
+            HTTPS_PROXY: proxy,
+            ALL_PROXY: proxy,
+            NO_PROXY: '127.0.0.1,localhost',
+            no_proxy: '127.0.0.1,localhost',
+          }
         : {}),
       FLUX_FIXTURE_KEY: 'fixture-not-a-real-secret',
     },
@@ -339,7 +327,7 @@ try {
     sandbox: 'danger-full-access',
     approvalPolicy: 'never',
     baseInstructions: identity,
-    config: { model_catalog_json: resolve(home, 'model-catalog.json') },
+    config: { model_catalog_json: resolve(home, 'engine-home', 'model-catalog.json') },
   });
   assert.equal(modelResume.thread.id, started.thread.id);
   assert.doesNotMatch(JSON.stringify(parentPayloads[0].tools), /codex/i);

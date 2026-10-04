@@ -50,6 +50,34 @@ export function ChannelEditor({
   const [error, setError] = useState('');
   const errorNotice = useRef<HTMLParagraphElement>(null);
   const [notice, setNotice] = useState('');
+  const [networkStatus, setNetworkStatus] = useState('');
+  const [checkingNetwork, setCheckingNetwork] = useState(false);
+  const networkRevision = useRef(0);
+  useEffect(() => {
+    networkRevision.current++;
+    setNetworkStatus('');
+  }, [settings.proxyUrl, settings.baseUrl]);
+  async function checkNetwork() {
+    const revision = networkRevision.current;
+    setCheckingNetwork(true);
+    setError('');
+    try {
+      const result = await bridge.networkStatus(settings.proxyUrl, settings.baseUrl);
+      if (revision !== networkRevision.current) return;
+      const source = {
+        manual: '手动代理',
+        environment: '环境变量代理',
+        system: 'Windows 系统代理',
+      }[result.source];
+      setNetworkStatus(
+        `${t(source)} · ${result.bypassed || !result.address ? t('此地址直接连接') : `${t('代理端口可连接')} · ${result.address}`}`,
+      );
+    } catch (cause) {
+      if (revision === networkRevision.current) setError(String(cause));
+    } finally {
+      setCheckingNetwork(false);
+    }
+  }
   const [confirmDeleteKey, setConfirmDeleteKey] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const draft = JSON.stringify({ name, settings, models, labels, hiddenModels, key, manual });
@@ -319,6 +347,7 @@ export function ChannelEditor({
             <label className="form-field">
               {t('网络代理')}
               <input
+                placeholder={t('留空自动使用系统代理')}
                 value={settings.proxyUrl}
                 disabled={busy || fetching}
                 onChange={(e) => {
@@ -327,8 +356,19 @@ export function ChannelEditor({
                 }}
               />
             </label>
+            <p className="muted">
+              {t('留空优先使用进程代理，其次跟随 Windows 系统代理；代理不可用时会显示原因。')}
+            </p>
+            <button
+              type="button"
+              disabled={checkingNetwork || !settings.baseUrl.trim()}
+              onClick={() => void checkNetwork()}
+            >
+              {t(checkingNetwork ? '正在检查连接…' : '检查网络代理')}
+            </button>
+            {networkStatus && <p role="status">{networkStatus}</p>}
             <label className="form-field">
-              {t('API Key 环境变量')}
+              <span>{t('API Key 环境变量')}</span>
               <input
                 value={settings.apiKeyEnv}
                 disabled={busy || fetching}

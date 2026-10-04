@@ -1,3 +1,4 @@
+import { errorMessage } from '../domain/errors';
 import { useAppearance } from '../application/AppearanceProvider';
 import {
   Archive,
@@ -35,7 +36,7 @@ export function Sidebar({
   app: FluxController;
   onManageWorkspaces: () => void;
 }) {
-  const { t } = useAppearance();
+  const { t, language } = useAppearance();
   const [search, setSearch] = useState('');
   const searchInput = useRef<HTMLInputElement>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
@@ -103,7 +104,13 @@ export function Sidebar({
     count: rows.length,
     getScrollElement: () => scrollParent.current,
     estimateSize: (index) =>
-      rows[index].kind === 'agent' ? 54 : rows[index].kind === 'project' ? 47 : 38,
+      rows[index].kind === 'agent'
+        ? rows[index].agent.failure
+          ? 78
+          : 54
+        : rows[index].kind === 'project'
+          ? 47
+          : 38,
     getItemKey: (index) => rows[index].key,
     overscan: 10,
     rangeExtractor: (range) =>
@@ -208,7 +215,9 @@ export function Sidebar({
       </div>
       {subagents.discoveryError && (
         <div className="subagent-discovery-error" role="alert">
-          <span>{t('子智能体列表同步失败')}</span>
+          <span>
+            {t('子智能体列表同步失败')} · {errorMessage(subagents.discoveryError, language)}
+          </span>
           <button onClick={subagents.refresh}>{t('重试')}</button>
         </div>
       )}
@@ -318,6 +327,8 @@ export function Sidebar({
               return (
                 <div
                   key={row.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
                   className="project-virtual-row"
                   data-sidebar-index={virtualRow.index}
                   style={{ transform: `translateY(${virtualRow.start}px)` }}
@@ -325,11 +336,20 @@ export function Sidebar({
                   <button
                     className={`sidebar-agent ${subagents.selected?.threadId === row.agent.threadId ? 'selected' : ''}`}
                     aria-pressed={subagents.selected?.threadId === row.agent.threadId}
-                    title={row.agent.prompt || t('查看运行内容')}
+                    title={
+                      row.agent.failure
+                        ? errorMessage(row.agent.failure, language)
+                        : row.agent.prompt || t('查看运行内容')
+                    }
                     onClick={() => subagents.open(row.agent.threadId)}
                   >
                     <span>{row.agent.name || `${t('子智能体')} ${row.number}`}</span>
                     <AgentStatus status={row.agent.status} />
+                    {row.agent.failure && (
+                      <span className="sidebar-agent-error">
+                        {errorMessage(row.agent.failure, language)}
+                      </span>
+                    )}
                     {row.agent.readError && (
                       <span className="sidebar-agent-warning">{t('同步失败')}</span>
                     )}

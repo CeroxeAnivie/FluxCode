@@ -56,8 +56,8 @@ export function RuntimeHealthSettings() {
         (await bridge.exportDocument('FluxCode-diagnostics.json', JSON.stringify(data, null, 2)))
       )
         setNotice(t('诊断报告已导出'));
-    } catch {
-      setError(t('本机环境检查失败，请重试。'));
+    } catch (cause) {
+      setError(String(cause));
     } finally {
       setBusy(false);
     }
@@ -123,7 +123,7 @@ export function RuntimeHealthSettings() {
                       <button
                         type="button"
                         onClick={() =>
-                          void openWebLink(link).catch(() => setError(t('无法打开系统默认浏览器')))
+                          void openWebLink(link).catch((cause) => setError(String(cause)))
                         }
                       >
                         <ExternalLink size={13} />

@@ -895,3 +895,15 @@ dialog::backdrop {
     }
   }
 }
+
+.sidebar-agent:has(.sidebar-agent-error) {
+  height: 74px;
+}
+.sidebar-agent-error {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--danger);
+  font-size: 11px;
+}

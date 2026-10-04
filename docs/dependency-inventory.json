@@ -1320,6 +1320,16 @@
     "license": "ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)"
   },
   {
+    "name": "axum",
+    "version": "0.8.8",
+    "license": "MIT"
+  },
+  {
+    "name": "axum-core",
+    "version": "0.5.6",
+    "license": "MIT"
+  },
+  {
     "name": "base64",
     "version": "0.21.7",
     "license": "MIT OR Apache-2.0"
@@ -2085,6 +2095,11 @@
     "license": "MIT OR Apache-2.0"
   },
   {
+    "name": "httpdate",
+    "version": "1.0.3",
+    "license": "MIT OR Apache-2.0"
+  },
+  {
     "name": "hyper",
     "version": "1.11.1",
     "license": "MIT"
@@ -2403,6 +2418,11 @@
     "name": "matchers",
     "version": "0.2.0",
     "license": "MIT"
+  },
+  {
+    "name": "matchit",
+    "version": "0.8.4",
+    "license": "MIT AND BSD-3-Clause"
   },
   {
     "name": "memchr",

@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-3b82f6?style=flat-square" alt="Apache-2.0" /></a>
   <img src="https://img.shields.io/badge/desktop-Windows_x64-27272a?style=flat-square" alt="Windows x64" />
-  <img src="https://img.shields.io/badge/version-0.1.7-27272a?style=flat-square" alt="Version 0.1.7" />
+  <img src="https://img.shields.io/badge/version-0.1.8-27272a?style=flat-square" alt="Version 0.1.8" />
   <a href="docs/VERIFICATION.md"><img src="https://img.shields.io/badge/verification-evidence-27272a?style=flat-square" alt="Verification evidence" /></a>
 </p>
 
@@ -54,9 +54,9 @@
 
 ## 开始使用
 
-本轮增加任务下方的子智能体入口、右侧运行详情、实际模型标签，以及统一厚实的亚克力和短促面板过渡。详见 [0.1.7 更新说明](docs/releases/0.1.7.md)。
+本轮修复子智能体明文任务的协议兼容问题，让任务、工具、浏览器、图片、配置和渠道失败直接显示具体原因；新增系统代理识别与检查，恢复内置浏览器原生缩放。详见 [0.1.8 更新说明](docs/releases/0.1.8.md)。
 
-当前源码版本为 **0.1.7，Windows x86_64**。
+当前源码版本为 **0.1.8，Windows x86_64**。
 已发布的安装包版本以发布页为准。从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
 
 构建出的桌面安装包内置 Codex，使用者不必另外安装 Codex、Rust 或 Node.js。

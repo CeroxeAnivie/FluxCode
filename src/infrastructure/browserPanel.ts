@@ -1,6 +1,13 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { webLink } from '../domain/links';
+import { redactDiagnostic } from '../domain/errors';
+export const browserFailureEvent = 'fluxcode:browser-failure';
+export function reportBrowserFailure(cause: unknown) {
+  window.dispatchEvent(
+    new CustomEvent(browserFailureEvent, { detail: redactDiagnostic(String(cause)) }),
+  );
+}
 
 export interface BrowserBounds {
   x: number;
@@ -93,7 +100,7 @@ export const subscribeAgentBrowser = (handler: (event: AgentBrowserRequest) => v
     if (agentRequests.size >= 16) {
       void transport()
         .completeAgent?.(event.id, 'Browser request limit exceeded')
-        .catch(() => console.warn('browser_tool_acknowledgement_failed'));
+        .catch(reportBrowserFailure);
       return;
     }
     agentRequests.set(
@@ -107,9 +114,7 @@ export function completeAgentBrowser(id: string, error: string | null = null): v
   if (timer === undefined) return;
   clearTimeout(timer);
   agentRequests.delete(id);
-  void transport()
-    .completeAgent?.(id, error)
-    .catch(() => console.warn('browser_tool_acknowledgement_failed'));
+  void transport().completeAgent?.(id, error).catch(reportBrowserFailure);
 }
 
 // One browser surface per workspace window, shared by Markdown and the toolbar.

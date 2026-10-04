@@ -23,20 +23,10 @@ pub async fn open(
         vec![terminal.unix_shell, "-i".into()]
     };
     let mut env = terminal.environment;
-    if !config.network.proxy_url.trim().is_empty() {
-        for name in [
-            "HTTP_PROXY",
-            "HTTPS_PROXY",
-            "ALL_PROXY",
-            "http_proxy",
-            "https_proxy",
-            "all_proxy",
-        ] {
-            env.insert(name.into(), config.network.proxy_url.clone());
-        }
-        env.insert("NO_PROXY".into(), String::new());
-        env.insert("no_proxy".into(), String::new());
-    }
+    env.extend(
+        crate::network::process_environment(&config.network.proxy_url, &config.provider.base_url)
+            .await?,
+    );
     // Streaming PTYs retain no unbounded host-side transcript. The UI scrollback is bounded.
     engine
         .request(

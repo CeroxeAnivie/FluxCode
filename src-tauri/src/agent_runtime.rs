@@ -81,6 +81,10 @@ pub fn model_catalog(available: &[String]) -> Result<String, String> {
             .unwrap_or_else(|| generic.clone());
         model["slug"] = Value::String(id.clone());
         model["display_name"] = Value::String(id.clone());
+        // Portable Responses channels use direct calls, whose explicit plaintext
+        // metadata is preserved by the product transport. Code-mode control calls
+        // otherwise force encrypted messages regardless of the provider's ability.
+        model["tool_mode"] = Value::String("direct".into());
         model["multi_agent_version"] = Value::String("v2".into());
         model["model_messages"]["instructions_template"] = Value::String(IDENTITY.into());
         // Upstream migration advertisements do not describe a custom Responses service.
@@ -127,9 +131,9 @@ mod tests {
             &model_catalog(&["gpt-6-sol".into(), "custom-model".into()]).unwrap(),
         )
         .unwrap();
-        assert_eq!(result["models"][0]["tool_mode"], "code_mode_only");
+        assert_eq!(result["models"][0]["tool_mode"], "direct");
         assert_eq!(result["models"][1]["slug"], "custom-model");
-        assert!(result["models"][1]["tool_mode"].is_null());
+        assert_eq!(result["models"][1]["tool_mode"], "direct");
         for current in result["models"].as_array().unwrap() {
             assert_eq!(current["model_messages"]["instructions_template"], IDENTITY);
             assert_eq!(current["multi_agent_version"], "v2");

@@ -254,14 +254,20 @@ impl Settings {
                 continue;
             }
             let url = Url::parse(value).map_err(|_| format!("{name}地址格式无效"))?;
-            if !matches!(url.scheme(), "http" | "https")
+            let supported = matches!(url.scheme(), "http" | "https")
+                || (name == "代理" && matches!(url.scheme(), "socks5" | "socks5h"));
+            if !supported
                 || url.host_str().is_none()
                 || !url.username().is_empty()
                 || url.password().is_some()
                 || url.query().is_some()
                 || url.fragment().is_some()
             {
-                return Err(format!("{name}地址必须是不含凭据或查询参数的 HTTP(S) URL"));
+                return Err(if name == "代理" {
+                    "代理地址必须是不含凭据或查询参数的 HTTP(S)/SOCKS5 URL".into()
+                } else {
+                    format!("{name}地址必须是不含凭据或查询参数的 HTTP(S) URL")
+                });
             }
         }
         if self.model.trim().is_empty() || self.model.len() > 256 {
@@ -304,7 +310,7 @@ impl Settings {
             "analytics.enabled=false".into(),
             "check_for_update_on_startup=false".into(),
             format!(
-                "shell_environment_policy.exclude=[{}]",
+                "shell_environment_policy.exclude=[{},\"FLUXCODE_RESPONSES_TOKEN\"]",
                 quote(&self.api_key_env)
             ),
         ];
@@ -545,6 +551,8 @@ mod tests {
         assert!(settings.validate().is_ok());
         settings.proxy_url = "https://user:secret@proxy.example/".into();
         assert!(settings.validate().is_err());
+        settings.proxy_url = "socks5://localhost:1080".into();
+        assert!(settings.validate().is_ok());
         settings.proxy_url = "not a URL".into();
         assert!(settings.validate().is_err());
         let legacy: Settings = serde_json::from_value(serde_json::json!({

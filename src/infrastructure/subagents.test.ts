@@ -82,3 +82,47 @@ it('reads the last turn summary to distinguish a finished child from an idle chi
   rpc.mockResolvedValueOnce({ data: [{ id: 'last', status: 'completed', items: [] }] });
   expect((await readSubagent('child', false, () => false)).status).toBe('completed');
 });
+
+it('preserves a failed unloaded child without output in sidebar snapshots', async () => {
+  rpc.mockResolvedValueOnce({ thread: { id: 'child', status: { type: 'notLoaded' }, turns: [] } });
+  rpc.mockResolvedValueOnce({
+    data: [
+      {
+        id: 'last',
+        status: 'failed',
+        error: {
+          message: 'Encrypted function output content could not be decrypted or decoded.',
+          additionalDetails: 'HTTP 400',
+        },
+        items: [],
+      },
+    ],
+  });
+  const result = await readSubagent('child', false, () => false);
+  expect(result.status).toBe('errored');
+  expect(result.failure).toContain('could not be decrypted');
+  expect(result.failure).toContain('HTTP 400');
+  expect(result.conversation).toBeUndefined();
+});
+it('does not invent a cause when a failed child has no diagnostic', async () => {
+  rpc.mockResolvedValueOnce({
+    thread: {
+      id: 'child',
+      status: { type: 'idle' },
+      turns: [{ id: 'last', status: 'failed', items: [] }],
+    },
+  });
+  const result = await readSubagent('child', true, () => false);
+  expect(result.failure).toContain('未提供具体错误');
+  expect(result.conversation?.error).toBe(result.failure);
+});
+
+it('explains a native system-error state even when no turn was created', async () => {
+  rpc.mockResolvedValueOnce({
+    thread: { id: 'child', status: { type: 'systemError' }, turns: [] },
+  });
+  const result = await readSubagent('child', true, () => false);
+  expect(result.status).toBe('errored');
+  expect(result.failure).toContain('未提供具体错误');
+  expect(result.conversation?.error).toBe(result.failure);
+});

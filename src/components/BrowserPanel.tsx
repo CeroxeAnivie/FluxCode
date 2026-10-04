@@ -1,3 +1,5 @@
+import { ErrorNotice } from './ErrorNotice';
+import { redactDiagnostic } from '../domain/errors';
 import { MotionPanel } from './MotionPanel';
 import { ArrowLeft, ArrowRight, ExternalLink, Globe, RotateCw, X } from 'lucide-react';
 import {
@@ -13,6 +15,7 @@ import { webLink } from '../domain/links';
 import { browserAddress } from '../domain/browserAddress';
 import {
   browserAvailable,
+  reportBrowserFailure,
   getBrowserAgentState,
   subscribeBrowserAgentState,
   listenBrowserAgentState,
@@ -76,7 +79,9 @@ export function BrowserPanel() {
         if (disposed) stop();
         else off = stop;
       })
-      .catch(() => console.warn('browser_agent_state_subscription_failed'));
+      .catch((cause) => {
+        if (!disposed) reportBrowserFailure(cause);
+      });
     return () => {
       disposed = true;
       off?.();
@@ -105,8 +110,9 @@ export function BrowserPanel() {
               await browserCommand({ kind: event.action });
           }
           completeAgentBrowser(event.id);
-        } catch {
-          completeAgentBrowser(event.id, 'Browser action failed');
+        } catch (cause) {
+          completeAgentBrowser(event.id, redactDiagnostic(String(cause)));
+          reportBrowserFailure(cause);
         }
       })();
     })
@@ -114,7 +120,9 @@ export function BrowserPanel() {
         if (disposed) unsubscribe();
         else off = unsubscribe;
       })
-      .catch(() => console.warn('browser_tool_subscription_failed'));
+      .catch((cause) => {
+        if (!disposed) reportBrowserFailure(cause);
+      });
     return () => {
       disposed = true;
       off?.();
@@ -151,8 +159,8 @@ function BrowserSurface({
       await takeOver();
       markBrowserAgentControl(false);
       await browserCommand({ kind });
-    } catch {
-      report();
+    } catch (cause) {
+      report(cause);
     }
   }
   const [address, setAddress] = useState(request.url);
@@ -173,10 +181,10 @@ function BrowserSurface({
       ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
       : null;
   }
-  function report() {
+  function report(cause?: unknown) {
     if (mounted.current) {
       setLoading(false);
-      setError('浏览器操作未完成，请重试');
+      setError(cause ? String(cause) : '浏览器操作未完成，请重试');
     }
   }
   function saveWidth(next: number) {
@@ -193,8 +201,8 @@ function BrowserSurface({
       await takeOver();
       if (available) await browserCommand({ kind: 'close' });
       dismissBrowser();
-    } catch {
-      report();
+    } catch (cause) {
+      report(cause);
       setClosing(false);
     }
   }
@@ -243,11 +251,11 @@ function BrowserSurface({
       .then(() => {
         if (active && request.agentRequestId) completeAgentBrowser(request.agentRequestId);
       })
-      .catch(() => {
+      .catch((cause) => {
         if (active) {
-          report();
+          report(cause);
           if (request.agentRequestId)
-            completeAgentBrowser(request.agentRequestId, 'Navigation failed');
+            completeAgentBrowser(request.agentRequestId, redactDiagnostic(String(cause)));
         }
       });
     return () => {
@@ -289,8 +297,8 @@ function BrowserSurface({
       try {
         await browserCommand({ kind: 'layout', bounds: rect, visible });
         previous = next;
-      } catch {
-        report();
+      } catch (cause) {
+        report(cause);
       } finally {
         running = false;
         if (again && !stopped) {
@@ -336,8 +344,8 @@ function BrowserSurface({
       markBrowserAgentControl(false);
       // Navigation also recreates a surface whose initial creation failed.
       await browserCommand({ kind: 'navigate', url: currentUrl, bounds: rect });
-    } catch {
-      report();
+    } catch (cause) {
+      report(cause);
     }
   }
   async function navigate() {
@@ -350,8 +358,8 @@ function BrowserSurface({
       await takeOver();
       requestBrowser(url);
       addressInput.current?.blur();
-    } catch {
-      report();
+    } catch (cause) {
+      report(cause);
     }
   }
   return (
@@ -512,9 +520,7 @@ function BrowserSurface({
             aria-label={t('在默认浏览器中打开')}
             title={t('在默认浏览器中打开')}
             disabled={!currentUrl}
-            onClick={() =>
-              void openWebLink(currentUrl).catch(() => setError('无法打开系统默认浏览器'))
-            }
+            onClick={() => void openWebLink(currentUrl).catch(report)}
           >
             <ExternalLink size={16} />
           </button>
@@ -526,7 +532,7 @@ function BrowserSurface({
         />
         {error && (
           <div className="browser-notice" role="alert">
-            <span>{t(error)}</span>
+            <ErrorNotice message={error} />
             <button className="icon-button" aria-label={t('关闭提示')} onClick={() => setError('')}>
               <X size={14} />
             </button>

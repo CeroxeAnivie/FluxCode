@@ -3,7 +3,7 @@ import type { ThreadStartResponse } from '../generated/codex/v2/ThreadStartRespo
 import type { TurnStartParams } from '../generated/codex/v2/TurnStartParams';
 import { readTurnIdentities } from './modelIdentity';
 import { bridge } from './bridge';
-import { hydrateItems } from '../domain/conversation';
+import { failureReason, hydrateItems } from '../domain/conversation';
 import { emptyConversation } from '../domain/types';
 import type { Conversation, Settings } from '../domain/types';
 import { turnModelSettings, isModelSelection } from '../domain/modelSelection';
@@ -52,14 +52,26 @@ export async function resumeThread(
   const result = await bridge.rpc<{
     model?: string;
     reasoningEffort?: string | null;
-    thread: { historyMode: string; turns: { id: string; status: string; items: unknown[] }[] };
+    thread: {
+      historyMode: string;
+      turns: { id: string; status: string; items: unknown[]; error?: unknown }[];
+    };
   }>('thread/resume', {
     threadId,
     sandbox: 'danger-full-access',
     approvalPolicy: 'never',
     excludeTurns: false,
   });
-  const turns = result.thread.turns ?? [];
+  let turns = result.thread.turns ?? [];
+  if (!turns.length && result.thread.historyMode === 'paginated') {
+    const latest = await bridge.rpc<{ data: typeof turns }>('thread/turns/list', {
+      threadId,
+      limit: 1,
+      sortDirection: 'desc',
+      itemsView: 'summary',
+    });
+    turns = latest.data;
+  }
   const identities = readTurnIdentities(threadId);
   const attributed = (item: unknown, turnId: string) =>
     item && typeof item === 'object' ? { ...item, identity: identities[turnId] } : item;
@@ -97,5 +109,11 @@ export async function resumeThread(
     turnId: running?.id ?? null,
     busy: !!running,
     lastTurnStatus: running?.status ?? turns.at(-1)?.status,
+    error: running
+      ? failureReason(running.error) || null
+      : failureReason(turns.at(-1)?.error) ||
+        (turns.at(-1)?.status === 'failed'
+          ? '任务执行失败，但服务未提供具体原因。请查看运行记录。'
+          : null),
   };
 }

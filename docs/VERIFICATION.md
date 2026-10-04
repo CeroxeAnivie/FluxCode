@@ -1,5 +1,49 @@
 # Verification
 
+## 0.1.8 visible failure causes, portable collaboration and system routing — 2026-10-04
+
+Frontend: 39 files / 146 unit tests pass, followed by an additional passing pre-turn
+system-error regression (8 focused subagent tests). TypeScript and production Vite build pass.
+Native tests: 139 library tests and 2 application tests pass, including authenticated
+loopback transport, JSON and fragmented SSE normalization, unchanged reasoning
+ciphertext, HTTP 429/Retry-After preservation, schema literals, key redaction,
+proxy parsing/bypass/reachability and model-list failure details. Clippy passes
+for all targets with warnings denied (MSVC informational linker messages excluded).
+
+The actual FluxCode CLI entry point, with an isolated local Responses fixture,
+creates eight children and exercises parent messaging, interrupt, follow-up, list,
+wait, child-to-parent replies and read-only history. The fixture explicitly rejects
+encrypted-content parts in ordinary child instructions. Evidence:
+work/subagent-smoke-1791125669525. The optimized 0.1.8 CLI also passes with
+the product-generated model catalogue: work/subagent-smoke-1791126962470. This replaces the old raw-engine smoke path that
+failed to detect plaintext instructions misclassified as encrypted input.
+
+25 targeted UI scenarios pass for subagents, browser errors and docking, image
+failure detail, network-route diagnostics, zoom-fit intent, panel motion, engine
+disconnection diagnostics, failed-tool icons/detail and editor draft failures. No production inference calls or
+changes to installed user data were made.
+
+OSV check of 342 Windows runtime/build dependencies on 2026-10-04 reports no
+findings. Third-party notices and the dependency inventory have been regenerated.
+This is an advisory snapshot, not a guarantee against unknown vulnerabilities.
+
+The error audit covered operation catches in application, infrastructure and UI
+layers. User-action failures now retain diagnostics at the appropriate surface;
+benign cleanup/fallback catches (already-terminated PTY cleanup, acrylic fallback,
+invalid optional cached state, flush paths that separately report failures) remain
+quiet. Missing server diagnostics are identified explicitly, never invented.
+
+Not covered: enterprise PAC/NTLM proxy combinations, native wheel feel in the
+installed desktop, clean-system installation/signing and long-duration stability.
+Subprocess proxy variables are a launch snapshot, not a universal per-URL PAC
+implementation for arbitrary programs. Existing user failures are not replayed.
+
+The 0.1.8 NSIS installer passes package verification: executable content matches,
+153 bundled resources match, browser MCP handshake succeeds, the browser runtime
+is verified and test transports are excluded from production. Evidence:
+work/release-verification-yk4ZQU. Installer SHA-256:
+ea6bb39879f7ac2580287eef493e0237a29569ceef70ada635253aeeec54de10.
+
 ## 0.1.7 agent teams, acrylic and panel motion — 2026-10-04
 
 Frontend unit tests: **38 files / 140 tests** pass. TypeScript and Rust formatting

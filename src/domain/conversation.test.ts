@@ -119,3 +119,41 @@ it('preserves image-only inputs and browser screenshot content in history', () =
     })?.images,
   ).toEqual([]);
 });
+
+it('retains an earlier error when a failed completion omits its cause', () => {
+  let state = reduceEvent(emptyConversation(), {
+    method: 'error',
+    params: {
+      error: { message: 'HTTP 429 quota exhausted', additionalDetails: 'Retry-After: 30' },
+    },
+  });
+  state = reduceEvent(state, { method: 'turn/completed', params: { turn: { status: 'failed' } } });
+  expect(state.error).toContain('HTTP 429');
+  expect(state.error).toContain('Retry-After: 30');
+  expect(state.busy).toBe(false);
+  const success = reduceEvent(state, {
+    method: 'turn/completed',
+    params: { turn: { status: 'completed' } },
+  });
+  expect(success.error).toBeNull();
+});
+it('preserves dynamic and MCP tool failures and does not confuse a file diff with its error', () => {
+  const items = hydrateItems([
+    {
+      id: 'mcp',
+      type: 'mcpToolCall',
+      result: { isError: true, content: [{ type: 'text', text: 'Permission denied' }] },
+    },
+    { id: 'dynamic', type: 'dynamicToolCall', success: false, error: 'Browser unavailable' },
+    {
+      id: 'file',
+      type: 'fileChange',
+      status: 'failed',
+      error: { message: 'Disk full' },
+      changes: [{ path: 'a.txt', diff: '+hello' }],
+    },
+  ]);
+  expect(items[0]).toMatchObject({ status: 'failed', detail: 'Permission denied' });
+  expect(items[1]).toMatchObject({ status: 'failed', detail: 'Browser unavailable' });
+  expect(items[2]).toMatchObject({ failure: 'Disk full', detail: '+hello' });
+});

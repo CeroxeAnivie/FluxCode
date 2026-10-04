@@ -1,8 +1,8 @@
 {
-  "checkedAt": "2026-10-04T12:39:15.5582433Z",
-  "packageCount": 338,
-  "findings": [],
+  "checkedAt": "2026-10-04T15:07:57.2623033Z",
   "source": "OSV",
+  "scope": "Windows x86_64 normal and build dependencies, including local patches",
   "ecosystem": "crates.io",
-  "scope": "Windows x86_64 normal and build dependencies, including local patches"
+  "packageCount": 342,
+  "findings": []
 }

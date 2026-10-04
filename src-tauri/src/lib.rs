@@ -15,12 +15,15 @@ mod document_export;
 mod editor;
 mod elicitation;
 mod engine;
+mod error_detail;
 mod extensions;
 mod external_links;
 mod git_service;
 mod headless;
 mod imported_history;
 mod native_dialogs;
+mod network;
+mod responses_transport;
 mod window_placement;
 pub use headless::run as run_headless;
 mod model_selection;
@@ -667,20 +670,10 @@ async fn execute_terminal(
         vec![terminal.unix_shell, "-lc".into(), command]
     };
     let mut env = terminal.environment;
-    if !config.network.proxy_url.trim().is_empty() {
-        for name in [
-            "HTTP_PROXY",
-            "HTTPS_PROXY",
-            "ALL_PROXY",
-            "http_proxy",
-            "https_proxy",
-            "all_proxy",
-        ] {
-            env.insert(name.into(), config.network.proxy_url.clone());
-        }
-        env.insert("NO_PROXY".into(), String::new());
-        env.insert("no_proxy".into(), String::new());
-    }
+    env.extend(
+        crate::network::process_environment(&config.network.proxy_url, &config.provider.base_url)
+            .await?,
+    );
     let (engine, reservation) = reserve_engine(&state).await?;
     let windows = app.state::<workspace_windows::Windows>();
     let _terminal_slot = windows.register_terminal(&process_id, caller.label())?;
@@ -1331,6 +1324,7 @@ pub fn run() -> Result<(), String> {
             finish_ui_restore,
             engine_rpc,
             execute_terminal,
+            network::network_status,
             open_terminal,
             answer_agent,
             answer_elicitation,

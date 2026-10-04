@@ -1,3 +1,4 @@
+import { ErrorNotice } from './ErrorNotice';
 import { useState, type ReactNode } from 'react';
 import { browserAvailable, requestBrowser } from '../infrastructure/browserPanel';
 import { bridge } from '../infrastructure/bridge';
@@ -14,7 +15,7 @@ export function MarkdownLink({
   projectRoot?: string;
 }) {
   const { t } = useAppearance();
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState('');
   const url = webLink(href);
   const relative = projectRoot && !url ? workspaceFileLink(href, projectRoot) : null;
   if (relative && projectRoot)
@@ -25,13 +26,19 @@ export function MarkdownLink({
           className="rendered-link"
           title={`${t('使用默认应用打开文件')} · ${relative}`}
           onClick={() => {
-            setFailed(false);
-            void bridge.openWorkspaceFile(projectRoot, relative).catch(() => setFailed(true));
+            setFailed('');
+            void bridge
+              .openWorkspaceFile(projectRoot, relative)
+              .catch((cause) => setFailed(String(cause)));
           }}
         >
           {children}
         </button>
-        {failed && <span role="alert">{t('无法使用系统默认应用打开文件')}</span>}
+        {failed && (
+          <span role="alert">
+            <ErrorNotice message={failed} />
+          </span>
+        )}
       </>
     );
   if (!url)
@@ -51,19 +58,23 @@ export function MarkdownLink({
         onClick={(event) => {
           if (!browserAvailable()) return;
           event.preventDefault();
-          setFailed(false);
+          setFailed('');
           requestBrowser(url);
         }}
         onAuxClick={(event) => {
           if (event.button !== 1 || !browserAvailable()) return;
           event.preventDefault();
-          setFailed(false);
+          setFailed('');
           requestBrowser(url);
         }}
       >
         {children}
       </a>
-      {failed && <span role="alert">{t('无法打开应用内浏览器')}</span>}
+      {failed && (
+        <span role="alert">
+          <ErrorNotice message={failed} />
+        </span>
+      )}
     </>
   );
 }

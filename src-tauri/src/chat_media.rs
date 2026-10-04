@@ -107,6 +107,7 @@ pub async fn store_chat_image(
 }
 #[tauri::command]
 pub async fn load_chat_image(
+    state: State<'_, crate::AppState>,
     caller: tauri::Webview,
     source: String,
     full: Option<bool>,
@@ -128,32 +129,62 @@ pub async fn load_chat_image(
         .await
         .map_err(|_| "图片预览任务失败")?;
     }
-    let url = crate::browser::remote_url(&source, None)?;
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(15))
-        .redirect(reqwest::redirect::Policy::custom(|attempt| {
-            if attempt.previous().len() >= 5
-                || crate::browser::remote_url(attempt.url().as_str(), None).is_err()
-            {
-                attempt.stop()
-            } else {
-                attempt.follow()
+    let mut url = crate::browser::remote_url(&source, None)?;
+    let proxy = state.configuration.config().await.network.proxy_url;
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(20);
+    let mut response = {
+        let mut redirects = 0;
+        loop {
+            let request = async {
+                let route = crate::network::resolve(&proxy, url.as_str()).await?;
+                route
+                    .client()?
+                    .redirect(reqwest::redirect::Policy::none())
+                    .build()
+                    .map_err(|_| "无法初始化图片加载器".to_string())?
+                    .get(url.clone())
+                    .send()
+                    .await
+                    .map_err(|cause| {
+                        if cause.is_timeout() {
+                            "图片加载超时，请检查连接后重试".to_string()
+                        } else {
+                            "图片连接失败，请检查服务地址、代理和网络".to_string()
+                        }
+                    })
+            };
+            let response = tokio::time::timeout_at(deadline, request)
+                .await
+                .map_err(|_| "图片加载超时")??;
+            if response.status().is_redirection() {
+                if redirects >= 5 {
+                    return Err("图片重定向次数超过限制".into());
+                }
+                let location = response
+                    .headers()
+                    .get(reqwest::header::LOCATION)
+                    .and_then(|value| value.to_str().ok())
+                    .ok_or("图片重定向缺少有效地址")?;
+                let next = url.join(location).map_err(|_| "图片重定向地址无效")?;
+                url = crate::browser::remote_url(next.as_str(), None)?;
+                redirects += 1;
+                continue;
             }
-        }))
-        .build()
-        .map_err(|_| "无法初始化图片加载器")?;
-    let mut response = client
-        .get(url)
-        .send()
-        .await
-        .map_err(|_| "图片加载失败，请检查连接后重试")?
-        .error_for_status()
-        .map_err(|_| "图片服务返回错误")?;
+            if !response.status().is_success() {
+                return Err(format!("图片服务返回 HTTP {}", response.status().as_u16()));
+            }
+            break response;
+        }
+    };
     if response.content_length().is_some_and(|n| n > MAX as u64) {
         return Err("图片超过 20 MiB 上限".into());
     }
     let mut bytes = Vec::new();
-    while let Some(chunk) = response.chunk().await.map_err(|_| "图片传输中断")? {
+    while let Some(chunk) = tokio::time::timeout_at(deadline, response.chunk())
+        .await
+        .map_err(|_| "图片传输超时")?
+        .map_err(|_| "图片传输中断")?
+    {
         if bytes.len() + chunk.len() > MAX {
             return Err("图片超过 20 MiB 上限".into());
         }

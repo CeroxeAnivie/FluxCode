@@ -67,8 +67,8 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       }
       apply(snapshot);
     })()
-      .catch(() => {
-        if (!disposed) setLoadError('外观设置未能载入，请检查配置文件。');
+      .catch((cause) => {
+        if (!disposed) setLoadError(String(cause));
       })
       .finally(() => {
         if (!disposed) setReady(true);
@@ -94,9 +94,9 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
           setThemeReady(true);
         }
       },
-      () => {
+      (cause) => {
         if (!disposed) {
-          setLoadError('系统主题读取失败，请重新打开窗口或手动选择主题。');
+          setLoadError(String(cause));
           setThemeReady(true);
         }
       },
@@ -105,9 +105,9 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
         if (disposed) off();
         else stop = off;
       })
-      .catch(() => {
+      .catch((cause) => {
         if (!disposed) {
-          setLoadError('系统主题读取失败，请重新打开窗口或手动选择主题。');
+          setLoadError(String(cause));
           setThemeReady(true);
         }
       });

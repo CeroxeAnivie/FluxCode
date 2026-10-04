@@ -7,6 +7,7 @@ import { ErrorNotice } from './ErrorNotice';
 import { useAppearance } from '../application/AppearanceProvider';
 import {
   Check,
+  CircleAlert,
   Code2,
   Compass,
   FileCode2,
@@ -102,7 +103,7 @@ function ItemBody({
     );
   if (item.kind === 'agent')
     return (
-      <details className="tool-card agent-card">
+      <details className="tool-card agent-card" open={item.status === 'failed'}>
         <summary>
           <Sparkles size={15} />
           <span>{t(agentOperationLabels[item.agentOperation ?? ''] ?? '协作代理')}</span>
@@ -111,7 +112,15 @@ function ItemBody({
         </summary>
         <div className="tool-card-content">
           {item.text && <p>{item.text}</p>}
-          {item.status === 'failed' && <p role="alert">{t('子智能体操作失败')}</p>}
+          {item.status === 'failed' && (
+            <div role="alert">
+              <ErrorNotice
+                message={
+                  item.failure || '子智能体操作失败，服务未提供具体原因。请查看子智能体详情。'
+                }
+              />
+            </div>
+          )}
           {item.agents?.map((agent, index) => (
             <div className="agent-card-row" key={agent.threadId}>
               {onOpenAgent ? (
@@ -189,7 +198,10 @@ function ItemBody({
   if (item.kind === 'reasoning' && !item.text) return null;
   const Icon = item.kind === 'command' ? Terminal : item.kind === 'file' ? FileCode2 : Sparkles;
   return (
-    <details className={`tool-card ${item.kind}`}>
+    <details
+      className={`tool-card ${item.kind}`}
+      open={item.status === 'failed' || (item.kind === 'command' && !!item.exitCode)}
+    >
       <summary>
         <Icon size={15} />
         <span>
@@ -201,17 +213,31 @@ function ItemBody({
         </span>
         {item.status === 'inProgress' ? (
           <LoaderCircle size={13} className="spin" />
+        ) : item.status === 'failed' || (item.kind === 'command' && !!item.exitCode) ? (
+          <CircleAlert size={13} aria-label={t('失败')} />
         ) : (
           <Check size={13} />
         )}
       </summary>
+      {(item.status === 'failed' || (item.kind === 'command' && !!item.exitCode)) &&
+        !(item.kind === 'command' && item.detail && !item.failure) && (
+          <div className="tool-card-content" role="alert">
+            <ErrorNotice
+              message={
+                item.failure ||
+                (item.kind === 'tool' ? item.detail : '') ||
+                '工具执行失败，但未返回具体原因。请查看运行记录。'
+              }
+            />
+          </div>
+        )}
       {item.kind === 'reasoning' || item.kind === 'plan' ? (
         <div className="tool-card-content markdown">
           <Suspense fallback={<p>{item.text}</p>}>
             <MarkdownContent text={item.text} projectRoot={projectRoot} />
           </Suspense>
         </div>
-      ) : (
+      ) : item.kind === 'tool' && item.status === 'failed' ? null : (
         <pre>
           {item.kind === 'command' &&
             [

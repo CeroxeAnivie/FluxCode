@@ -233,15 +233,14 @@ pub struct Discovery {
 }
 /// Read-only discovery, no redirects, bounded body, no response/key content in errors.
 pub async fn discover(settings: Settings, key: Option<String>) -> Result<Discovery, String> {
-    let mut builder = reqwest::Client::builder()
+    settings.validate_connection()?;
+    let route = crate::network::resolve(&settings.proxy_url, &settings.base_url).await?;
+    let client = route
+        .client()?
         .redirect(reqwest::redirect::Policy::none())
-        .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(25));
-    if !settings.proxy_url.trim().is_empty() {
-        builder =
-            builder.proxy(reqwest::Proxy::all(&settings.proxy_url).map_err(|_| "代理地址无效")?);
-    }
-    let client = builder.build().map_err(|_| "无法初始化网络连接")?;
+        .timeout(Duration::from_secs(25))
+        .build()
+        .map_err(|_| "无法初始化网络连接")?;
     discover_with_client(settings, key, &client).await
 }
 
@@ -255,20 +254,39 @@ async fn discover_with_client(
         "{}/models",
         settings.base_url.trim_end_matches('/')
     ));
-    if let Some(key) = key {
+    if let Some(key) = &key {
         request = request.bearer_auth(key);
     }
     let started = Instant::now();
     let mut response = request.send().await.map_err(network_error)?;
     if !response.status().is_success() {
-        match response.status().as_u16() {
-            401 | 403 => return Err("服务拒绝访问，请检查密钥是否有效及模型权限".into()),
-            404 | 405 => return Err("服务未提供模型目录，可手动填写模型 ID".into()),
-            429 => return Err("服务请求过于频繁，请稍后重试".into()),
-            500..=599 => return Err("模型服务暂时不可用，请稍后重试".into()),
-            _ => {}
+        let status = response.status().as_u16();
+        let guidance = match status {
+            401 | 403 => "服务拒绝访问，请检查密钥是否有效及模型权限",
+            404 | 405 => "服务未提供模型目录，可手动填写模型 ID",
+            429 => "服务请求过于频繁，请稍后重试",
+            500..=599 => "模型服务暂时不可用，请稍后重试",
+            _ => "服务拒绝了模型列表请求",
+        };
+        let mut bytes = Vec::new();
+        while let Ok(Some(chunk)) = response.chunk().await {
+            if bytes.len().saturating_add(chunk.len()) > 65536 {
+                break;
+            }
+            bytes.extend_from_slice(&chunk);
         }
-        return Err(format!("服务返回 HTTP {}", response.status().as_u16()));
+        let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap_or_default();
+        let detail = value
+            .pointer("/error/message")
+            .and_then(serde_json::Value::as_str)
+            .or_else(|| value.get("message").and_then(serde_json::Value::as_str))
+            .unwrap_or("");
+        let detail = crate::error_detail::redact(detail, &[key.as_deref().unwrap_or("")]);
+        return Err(if detail.is_empty() {
+            format!("{guidance}（HTTP {status}）")
+        } else {
+            format!("{guidance}（HTTP {status}）\n{detail}")
+        });
     }
     let mut bytes = Vec::new();
     while let Some(chunk) = response.chunk().await.map_err(network_error)? {
@@ -438,6 +456,25 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn discovery_preserves_upstream_explanation_without_echoing_the_key() {
+        let (url, server) = fixture(vec![FixtureReply::new(
+            "400 Bad Request",
+            r#"{"error":{"message":"Model access disabled for arbitrary-fixture-key"}}"#,
+        )]);
+        let error = discover_with_client(
+            fixture_settings(url),
+            Some("arbitrary-fixture-key".into()),
+            &fixture_client(Duration::from_secs(2)),
+        )
+        .await
+        .err()
+        .unwrap();
+        assert!(error.contains("HTTP 400"));
+        assert!(error.contains("Model access disabled"));
+        assert!(!error.contains("arbitrary-fixture-key"));
+        server.join().unwrap();
+    }
     #[tokio::test]
     async fn discovery_retries_only_when_the_user_requests_it() {
         let (url, server) = fixture(vec![

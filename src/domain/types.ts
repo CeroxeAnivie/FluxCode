@@ -91,6 +91,7 @@ export interface ChatItem {
     | 'agent';
   text: string;
   detail?: string;
+  failure?: string;
   status?: string;
   cwd?: string;
   exitCode?: number | null;
@@ -153,13 +154,13 @@ export function validateSettings(s: Settings): string | null {
     if (s.proxyUrl.trim()) {
       const proxy = new URL(s.proxyUrl);
       if (
-        !['http:', 'https:'].includes(proxy.protocol) ||
+        !['http:', 'https:', 'socks5:', 'socks5h:'].includes(proxy.protocol) ||
         proxy.username ||
         proxy.password ||
         proxy.search ||
         proxy.hash
       )
-        return '代理地址必须是不含凭据的 HTTP(S) URL。';
+        return '代理地址必须是不含凭据的 HTTP(S)/SOCKS5 URL。';
     }
   } catch {
     return '请输入有效的服务地址和代理地址。';

@@ -1,3 +1,4 @@
+import { browserFailureEvent } from './infrastructure/browserPanel';
 import { MotionPanel } from './components/MotionPanel';
 import { ActionNotice } from './components/ActionNotice';
 import { NavigationRail } from './components/NavigationRail';
@@ -105,6 +106,11 @@ export default function App({
     };
     window.addEventListener(uiStorageErrorEvent, report);
     return () => window.removeEventListener(uiStorageErrorEvent, report);
+  }, [app.setError]);
+  useEffect(() => {
+    const report = (event: Event) => app.setError((event as CustomEvent<string>).detail);
+    window.addEventListener(browserFailureEvent, report);
+    return () => window.removeEventListener(browserFailureEvent, report);
   }, [app.setError]);
   useEffect(() => {
     const failure = loadError || app.startup.error;
@@ -302,6 +308,9 @@ export default function App({
           {app.configurationUpdates.message && (
             <div className="configuration-notice" role="status">
               <span>{t(app.configurationUpdates.message)}</span>
+              {app.configurationUpdates.error && (
+                <ErrorNotice message={app.configurationUpdates.error} />
+              )}
               <button onClick={() => void bridge.openUserFile('config').catch(app.setError)}>
                 {t('打开配置文件')}
               </button>

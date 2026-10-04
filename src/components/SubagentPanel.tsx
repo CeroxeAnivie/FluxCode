@@ -80,6 +80,12 @@ export function SubagentPanel({
           </button>
         </div>
       )}
+      {(agent.failure || agent.conversation?.error) &&
+        !((agent.conversation?.items.length || agent.loading) && agent.conversation?.error) && (
+          <div className="subagent-notice" role="alert">
+            <ErrorNotice message={agent.failure || agent.conversation!.error!} />
+          </div>
+        )}
       {agent.truncated && (
         <p className="subagent-notice">{t('仅显示最近 2000 条记录，完整历史仍保存在本地。')}</p>
       )}

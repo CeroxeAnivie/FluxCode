@@ -1,5 +1,29 @@
 /** Source-language keys keep UI text reviewable; dynamic provider text is never translated. */
 export const english: Record<string, string> = {
+  '代理地址必须是不含凭据的 HTTP(S)/SOCKS5 URL。':
+    'Use an HTTP(S) or SOCKS5 proxy URL without credentials.',
+  '任务执行失败，但服务未提供具体原因。请查看运行记录。':
+    'The task failed without a diagnostic from the service. Check the activity history.',
+  '子智能体操作失败，服务未提供具体原因。请查看子智能体详情。':
+    'The agent operation failed without a diagnostic. Open the agent details.',
+  '工具执行失败，但未返回具体原因。请查看运行记录。':
+    'The tool failed without a diagnostic. Check the activity history.',
+  留空自动使用系统代理: 'Leave blank to use the system proxy automatically',
+  '留空优先使用进程代理，其次跟随 Windows 系统代理；代理不可用时会显示原因。':
+    'When blank, use the process proxy first, then Windows proxy settings. Unavailable proxies show an error.',
+  手动代理: 'Manual proxy',
+  环境变量代理: 'Environment proxy',
+  'Windows 系统代理': 'Windows system proxy',
+  此地址直接连接: 'Direct connection for this address',
+  代理端口可连接: 'Proxy port is reachable',
+  '正在检查连接…': 'Checking connection…',
+  检查网络代理: 'Check network proxy',
+  '子任务消息格式不兼容：服务无法解码任务内容。重复重试无效，请更新应用后创建新子任务。':
+    'Task message format is incompatible: the service cannot decode the task content. Repeated retries will not help. Update the app, then create a new subtask.',
+  '子智能体执行失败，但服务未提供具体错误。请查看运行记录。':
+    'The subagent failed without a specific service error. Check its activity history.',
+  '工具执行失败，但未返回具体错误。': 'The tool failed without returning a specific error.',
+
   图片服务不可用: 'Image service unavailable',
   图片格式无法识别: 'Unrecognized image format',
   图片数据无效: 'Invalid image data',

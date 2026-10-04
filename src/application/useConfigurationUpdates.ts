@@ -26,6 +26,8 @@ export function useConfigurationUpdates(
 ) {
   const [snapshot, setSnapshot] = useState<ConfigurationSnapshot | null>(null);
   const [failed, setFailed] = useState(false);
+  const [error, setError] = useState('');
+  const [subscriptionAttempt, setSubscriptionAttempt] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const inFlight = useRef(false);
   const latest = useRef({ connect, setFontSize, applied, connected, busy });
@@ -40,6 +42,7 @@ export function useConfigurationUpdates(
       if (disposed || next.revision < revision) return;
       revision = next.revision;
       setSnapshot(next);
+      setError('');
       setFailed(false);
       latest.current.setFontSize(next.ui.font_size);
       document.documentElement.style.setProperty('--font-size', `${next.ui.font_size}px`);
@@ -60,15 +63,18 @@ export function useConfigurationUpdates(
         return;
       }
       accept(await configuration.load());
-    })().catch(() => {
-      if (!disposed) setFailed(true);
+    })().catch((cause) => {
+      if (!disposed) {
+        setFailed(true);
+        setError(String(cause));
+      }
     });
     return () => {
       disposed = true;
       unlisten?.();
       stopRuntime?.();
     };
-  }, []);
+  }, [subscriptionAttempt]);
   const pending = !!snapshot && !equal(snapshot.settings, applied);
   useEffect(() => {
     if (!pending || !snapshot || snapshot.error || busy || !connected || failed || inFlight.current)
@@ -97,13 +103,17 @@ export function useConfigurationUpdates(
           return;
         if (!(await current.connect(fresh.settings, fresh.settingsRevision))) setFailed(true);
       })
-      .catch(() => setFailed(true))
+      .catch((cause) => {
+        setFailed(true);
+        setError(String(cause));
+      })
       .finally(() => {
         inFlight.current = false;
       });
   }, [snapshot, pending, busy, connected, failed, attempt]);
   return {
     snapshot,
+    error: error || snapshot?.error || '',
     message:
       snapshot && !snapshot.watching
         ? '配置自动监测不可用，请重新启动应用。'
@@ -116,6 +126,8 @@ export function useConfigurationUpdates(
               : null,
     retry: () => {
       setFailed(false);
+      setError('');
+      setSubscriptionAttempt((value) => value + 1);
       setAttempt((value) => value + 1);
     },
     failed,

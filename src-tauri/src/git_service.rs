@@ -396,8 +396,9 @@ fn git_failure(stderr: &[u8], code: Option<i32>) -> String {
         "Git 操作失败，请检查仓库状态后重试"
     };
     format!(
-        "{guidance}（退出码 {}；原始错误可能包含敏感信息，未显示）",
-        code.unwrap_or(-1)
+        "{guidance}（退出码 {}）\n{}",
+        code.unwrap_or(-1),
+        crate::error_detail::redact(&String::from_utf8_lossy(stderr), &[])
     )
 }
 async fn run_env(

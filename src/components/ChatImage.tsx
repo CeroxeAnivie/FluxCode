@@ -1,3 +1,4 @@
+import { ErrorNotice } from './ErrorNotice';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { ImageOff, LoaderCircle } from 'lucide-react';
 import { bridge } from '../infrastructure/bridge';
@@ -43,8 +44,8 @@ export function ChatImage({ source, name }: ChatImageSource) {
       .then((value) => {
         if (live) setThumbnail(value);
       })
-      .catch(() => {
-        if (live) setError('图片加载失败');
+      .catch((cause) => {
+        if (live) setError(String(cause));
       });
     return () => {
       live = false;
@@ -58,8 +59,8 @@ export function ChatImage({ source, name }: ChatImageSource) {
       .then((value) => {
         if (live) setFull(value);
       })
-      .catch(() => {
-        if (live) setError('高清预览加载失败，可查看缩略图');
+      .catch((cause) => {
+        if (live) setError(String(cause));
       });
     return () => {
       live = false;
@@ -93,7 +94,11 @@ export function ChatImage({ source, name }: ChatImageSource) {
           />
         </Suspense>
       )}
-      {open && error && <span role="status">{t(error)}</span>}
+      {error && (
+        <span role="alert">
+          <ErrorNotice message={error} />
+        </span>
+      )}
     </span>
   );
 }

@@ -4,6 +4,10 @@ const sourceByEnglish = new Map(
 );
 const classifiedErrors = [
   {
+    pattern: /encrypted function output|could not be decrypted or decoded/i,
+    message: '子任务消息格式不兼容：服务无法解码任务内容。重复重试无效，请更新应用后创建新子任务。',
+  },
+  {
     pattern: /引擎数据目录.*(?:过长|短路径)|目录别名|足够短的目录/i,
     message: '程序目录过长，请退出后将整个程序文件夹移至较短路径。历史数据仍保留在原目录。',
   },

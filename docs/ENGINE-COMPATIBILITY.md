@@ -42,3 +42,17 @@ without silent fallback.
 Run `node scripts/reasoning-smoke.mjs` for actual HTTP payload assertions against
 the bundled engine, including known/custom models, native levels, and returning
 to Off after an explicit selection. No production model account is needed.
+
+## Plaintext collaboration on custom Responses channels (0.1.8)
+
+The pinned engine classifies direct collaboration arguments as plaintext only when
+`encrypted_function_args` is present and empty. Some compatible gateways omit this
+metadata and return normal task instructions. Without adaptation those instructions
+become encrypted-content input on the child's next request, which can fail while
+the parent keeps working.
+
+FluxCode uses direct tools and a bounded authenticated transport adapter to mark
+ordinary collaboration arguments explicitly. Existing nonempty encryption markers
+and reasoning ciphertext are preserved. The real-product subagent smoke fixture
+rejects encrypted message input, rather than silently accepting malformed child
+payloads. Historical failed messages are not rewritten or automatically replayed.

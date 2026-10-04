@@ -1,5 +1,5 @@
 import { bridge } from './bridge';
-import { hydrateItems } from '../domain/conversation';
+import { failureReason, hydrateItems } from '../domain/conversation';
 import {
   emptyConversation,
   type Conversation,
@@ -17,6 +17,7 @@ export interface AgentSnapshot {
   status: string;
   conversation?: Conversation;
   truncated?: boolean;
+  failure?: string;
 }
 
 // Reading must never resume, fork or change a child agent's configuration.
@@ -31,7 +32,7 @@ export async function readSubagent(
   });
   if (thread.id !== threadId) throw new Error('子智能体会话标识不匹配');
   let turns = thread.turns ?? [];
-  if (!turns.length && thread.status?.type === 'idle' && !cancelled()) {
+  if (!turns.length && ['idle', 'notLoaded'].includes(thread.status?.type) && !cancelled()) {
     const latest = await bridge.rpc<ThreadTurnsListResponse>('thread/turns/list', {
       threadId,
       limit: 1,
@@ -55,7 +56,11 @@ export async function readSubagent(
     busy: status === 'active' || !!running,
     turnId: running?.id ?? null,
     lastTurnStatus: last?.status,
-    error: last?.error?.message ?? null,
+    error:
+      failureReason(last?.error) ||
+      (last?.status === 'failed' || status === 'systemError'
+        ? '子智能体执行失败，但服务未提供具体错误。请查看运行记录。'
+        : null),
   };
   let truncated = false;
   if (includeHistory && !cancelled()) {
@@ -87,6 +92,11 @@ export async function readSubagent(
     conversation.items = hydrateItems(items);
   }
   return {
+    failure:
+      failureReason(last?.error) ||
+      (last?.status === 'failed' || status === 'systemError'
+        ? '子智能体执行失败，但服务未提供具体错误。请查看运行记录。'
+        : undefined),
     name: thread.agentNickname || thread.name || undefined,
     prompt: thread.preview || undefined,
     identity: thread.model ? { model: thread.model } : undefined,

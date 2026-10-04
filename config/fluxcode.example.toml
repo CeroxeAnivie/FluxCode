@@ -13,7 +13,8 @@ api_key_env = "OPENAI_API_KEY"
 wire_api = "responses"
 
 [network]
-# Optional HTTP(S) proxy. Leave empty to use the host's normal network settings.
+# Optional HTTP(S)/SOCKS proxy override. Empty: process environment, then Windows
+# enabled manual/PAC settings. Unreachable configured proxies report an error.
 proxy_url = ""
 
 [execution]
@@ -30,7 +31,8 @@ output_limit_bytes = 1048576
 
 [terminal.environment]
 # Additional non-secret environment variables for the command panel.
-# An explicit [network].proxy_url is passed to new terminals.
+# New terminals and the engine inherit the resolved proxy at launch.
+# URL-dependent PAC rules are resolved per request by application HTTP clients.
 TERM = "xterm-256color"
 
 [ui]

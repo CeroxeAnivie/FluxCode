@@ -15,7 +15,13 @@ import type { Schedule } from '../domain/schedules';
 import type { ProviderProfile, ProviderDiscovery } from '../domain/provider';
 import type { McpDefinition } from '../domain/extensions';
 
+export interface NetworkStatus {
+  source: 'manual' | 'environment' | 'system';
+  address: string | null;
+  bypassed: boolean;
+}
 export interface Bridge {
+  networkStatus(proxy: string, target: string): Promise<NetworkStatus>;
   available: boolean;
   inspectDroppedPaths(
     paths: string[],
@@ -99,6 +105,7 @@ const unavailable = () =>
   Promise.reject(new Error('请使用 FluxCode 桌面应用；浏览器预览无法访问本地执行引擎。'));
 
 const desktop: Bridge = {
+  networkStatus: (proxy, target) => invoke('network_status', { proxy, target }),
   available: isTauri(),
   createTextFile: (root, relative) => invoke('create_text_file', { root, relative }),
   inspectDroppedPaths: (paths) => invoke('inspect_dropped_paths', { paths }),

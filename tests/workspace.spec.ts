@@ -118,9 +118,7 @@ test('browser panel gives recoverable failures and English controls', async ({ p
   const address = panel.getByRole('textbox', { name: 'Web address' });
   await address.fill('https://example.test');
   await address.press('Enter');
-  await expect(panel.getByRole('alert')).toContainText(
-    'The browser operation failed. Please try again.',
-  );
+  await expect(panel.getByRole('alert')).toContainText('fixture navigation failure');
   expect(await panel.innerText()).not.toMatch(/[\u3400-\u9fff]/);
   await expect(panel.getByRole('button', { name: 'Open in default browser' })).toBeEnabled();
   await page.evaluate(() => {
@@ -227,6 +225,7 @@ test.beforeEach(async ({ page }) => {
     let counter = 0;
     window.__FLUX_TEST_BRIDGE__ = {
       available: true,
+      networkStatus: async () => ({ source: 'system', address: null, bypassed: false }),
       createTextFile: async (root, relative) => {
         localStorage.setItem('fixture-created-file', JSON.stringify({ root, relative }));
       },
@@ -817,11 +816,13 @@ test('engine disconnect exposes uncertain tasks without replaying their requests
   await page.evaluate(() =>
     window.__FLUX_TEST_BRIDGE__!.rpc('fixture/event', {
       method: 'engine/disconnected',
-      params: {},
+      params: { message: '执行引擎返回了无效 JSON，连接已停止。' },
     }),
   );
   await expect(page.getByRole('button', { name: '停止任务' })).toHaveCount(0);
-  await expect(page.getByText('连接已断开，请确认执行状态后重试。', { exact: true })).toBeVisible();
+  await expect(page.locator('.conversation-scroll')).toContainText(
+    '执行引擎返回了无效 JSON，连接已停止。',
+  );
   await page.getByRole('button', { name: '任务总览', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '任务总览' }).getByRole('status')).toContainText(
     '失败 1',
@@ -4389,14 +4390,14 @@ test('agent browser tool opens the real panel and acknowledges native navigation
   await expect.poll(replies).toEqual([
     { id: 'open-1', error: null },
     { id: 'read-1', error: null },
-    { id: 'open-fail', error: 'Navigation failed' },
+    { id: 'open-fail', error: 'Error: Fixture navigation failed' },
   ]);
   await dispatch('close-1', 'close');
   await expect(page.getByRole('complementary', { name: '应用内浏览器' })).toHaveCount(0);
   await expect.poll(replies).toEqual([
     { id: 'open-1', error: null },
     { id: 'read-1', error: null },
-    { id: 'open-fail', error: 'Navigation failed' },
+    { id: 'open-fail', error: 'Error: Fixture navigation failed' },
     { id: 'close-1', error: null },
   ]);
 });
@@ -4442,4 +4443,64 @@ test('new text file opens directly in the editor and keeps wrap and save accessi
     'aria-pressed',
     'true',
   );
+});
+
+test('image loading failure displays the actual cause before opening a preview', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.loadChatImage = async () => {
+      throw new Error('HTTP 403: fixture image access denied');
+    };
+  });
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('![example](https://example.test/photo.png)');
+  await input.press('Enter');
+  await expect(page.locator('.chat-image [role="alert"]')).toContainText(
+    'fixture image access denied',
+  );
+  await expect(page.locator('.chat-image-open')).toContainText('点击重试');
+});
+test('network diagnostics show the selected route and clear it when the address changes', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  const base = page.getByLabel('服务地址', { exact: true });
+  await base.fill('https://example.test/v1');
+  await page.getByText('高级连接设置', { exact: true }).click();
+  await page.getByRole('button', { name: '检查网络代理', exact: true }).click();
+  await expect(page.getByText('Windows 系统代理 · 此地址直接连接', { exact: true })).toBeVisible();
+  await base.fill('https://other.test/v1');
+  await expect(page.getByText('Windows 系统代理 · 此地址直接连接', { exact: true })).toHaveCount(0);
+});
+
+test('failed tools expand with their cause and never show a success marker', async ({ page }) => {
+  await setup(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await page.evaluate(() =>
+    window.__FLUX_TEST_BRIDGE__!.rpc('fixture/event', {
+      method: 'item/completed',
+      params: {
+        threadId: 'thread-1',
+        item: {
+          id: 'bad-tool',
+          type: 'dynamicToolCall',
+          tool: 'fixture_action',
+          success: false,
+          contentItems: [{ type: 'text', text: 'HTTP 403: workspace access denied' }],
+        },
+      },
+    }),
+  );
+  const tool = page.locator('.tool-card.tool').filter({ hasText: 'fixture_action' });
+  await expect(tool).toHaveAttribute('open', '');
+  await expect(tool.getByRole('alert')).toContainText('workspace access denied');
+  await expect(tool.locator('summary [aria-label="失败"]')).toBeVisible();
+  await expect(tool.locator('summary .lucide-check')).toHaveCount(0);
 });

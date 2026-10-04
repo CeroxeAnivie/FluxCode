@@ -100,6 +100,25 @@ async function fixture(page: Page, english = false) {
         if (method === 'thread/turns/list')
           return { data: [{ id: 'child-turn', status: 'completed', items: [] }], nextCursor: null };
         if (method === 'thread/read') {
+          if (localStorage.getItem('fixture-empty-failure') === p.threadId)
+            return {
+              thread: {
+                id: p.threadId,
+                agentNickname: 'Reviewer',
+                status: { type: 'idle' },
+                turns: [
+                  {
+                    id: 'failed-turn',
+                    status: 'failed',
+                    error: {
+                      message:
+                        'Encrypted function output content could not be decrypted or decoded.',
+                    },
+                    items: [],
+                  },
+                ],
+              },
+            };
           if (localStorage.getItem('fixture-read-fails') === p.threadId)
             throw new Error('fixture read failure');
           if (p.threadId === 'child-a' && p.includeTurns && localStorage.getItem('fixture-delay'))
@@ -387,4 +406,15 @@ test('native disclosure sections animate their height and respect reduced motion
   expect(
     await disclosure.evaluate((el) => getComputedStyle(el, '::details-content').transitionDuration),
   ).toBe('0s');
+});
+
+test('an empty failed child exposes its cause in the sidebar and detail without a copy action', async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.evaluate(() => localStorage.setItem('fixture-empty-failure', 'child-a'));
+  await page.locator('.sidebar-agent').first().click();
+  await expect(page.locator('.subagent-panel')).toContainText('could not be decrypted or decoded');
+  await expect(page.locator('.sidebar-agent').first()).toContainText('子任务消息格式不兼容');
+  await expect(page.locator('.subagent-panel .error-notice')).toHaveCount(1);
 });

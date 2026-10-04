@@ -115,8 +115,10 @@ export function FileEditor({
       onSaved();
       try {
         saveEditorDraft(root, path, null);
-      } catch {
-        setError('文件已保存，但旧草稿未能清理。重新打开时请核对文件内容。');
+      } catch (cause) {
+        setError(
+          `${t('文件已保存，但旧草稿未能清理。重新打开时请核对文件内容。')}\n${String(cause)}`,
+        );
       }
     } catch (e) {
       setError(String(e));

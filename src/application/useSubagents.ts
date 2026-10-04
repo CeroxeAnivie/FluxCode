@@ -11,6 +11,7 @@ import { bridge } from '../infrastructure/bridge';
 import { listSubagents, readSubagent, type AgentSnapshot } from '../infrastructure/subagents';
 
 export interface SubagentView extends AgentReference {
+  failure?: string;
   conversation?: Conversation;
   loading?: boolean;
   readError?: string;
@@ -148,6 +149,7 @@ export function useSubagents(parentId: string | null, parent: Conversation, conn
         return {
           ...base,
           conversation,
+          failure: conversation.error ?? undefined,
           status: conversationAgentStatus(conversation, base.status),
         };
       });

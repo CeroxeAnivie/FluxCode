@@ -93,7 +93,7 @@ export function useFluxCode() {
             ...conversation,
             busy: false,
             turnId: null,
-            error: conversation.busy ? '连接已断开，请确认执行状态后重试。' : conversation.error,
+            error: conversation.busy ? message : conversation.error,
           },
         ]),
       );
@@ -188,7 +188,11 @@ export function useFluxCode() {
       unsubscribe = await bridge.subscribe((event) => {
         if (event.method === 'engine/disconnected') {
           batch.flush();
-          markDisconnected('执行引擎已断开。重新连接后可恢复任务。');
+          markDisconnected(
+            typeof event.params?.message === 'string'
+              ? event.params.message
+              : '执行引擎已断开。重新连接后可恢复任务。',
+          );
           return;
         }
         if (event.method === 'engine/unsupportedRequest') {

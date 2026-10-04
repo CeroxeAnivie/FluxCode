@@ -32,12 +32,12 @@ FluxCode 的用户设置以 `FluxCode.exe` 所在目录的 `data/fluxcode.toml` 
 
 ## 设置的生效规则
 
-| 内容 | 生效时机 |
-| --- | --- |
-| 语言、主题、字体、面板宽度 | 有效 TOML 编辑后自动更新界面 |
+| 内容                             | 生效时机                                       |
+| -------------------------------- | ---------------------------------------------- |
+| 语言、主题、字体、面板宽度       | 有效 TOML 编辑后自动更新界面                   |
 | 服务、代理、默认模型、上下文预算 | 外部编辑后等待任务、命令及交互终端空闲，再重连 |
-| Shell、终端环境与命令限额 | 新启动的命令或终端使用新值 |
-| 当前任务选择的模型与推理强度 | 仍由该任务记忆，不被全局默认值覆盖 |
+| Shell、终端环境与命令限额        | 新启动的命令或终端使用新值                     |
+| 当前任务选择的模型与推理强度     | 仍由该任务记忆，不被全局默认值覆盖             |
 
 运行中的终端不会被强制重启或注入新环境变量。需要更换连接时，先结束保留的交互终端会话；仅隐藏终端不会结束进程。重新载入窗口会复用相同配置的现有执行引擎。
 
@@ -63,3 +63,9 @@ inspector_width = 294
 ## 网页链接
 
 Markdown 由 `react-markdown` 与 `remark-gfm` 渲染。用户和助手消息中的 HTTP(S) 链接突出显示，点击后通过 Tauri opener 交给系统默认浏览器；不会创建应用内浏览器。拒绝脚本、数据、本地文件协议和带登录凭据的 URL。本地文件引用不被当作网页链接打开。
+
+## Automatic network routing (0.1.8)
+
+An empty `network.proxy_url` resolves the process HTTP(S)/ALL_PROXY environment first, then enabled Windows manual/PAC settings. An explicit URL overrides automatic discovery. Local loopback addresses bypass proxy routing. Application HTTP requests resolve the route per target; remote image redirects are rechecked. Unavailable configured proxies return visible errors rather than silently switching to direct access.
+
+New engine and terminal processes inherit a proxy environment snapshot. Arbitrary command-line applications must support those variables; per-URL PAC decisions cannot be expressed fully in a fixed subprocess environment. WebView2 follows system proxy settings natively; explicit and environment browser overrides apply when its surface is created. Close and reopen the browser after changing such overrides. Proxy checks report TCP reachability, not successful provider authentication.

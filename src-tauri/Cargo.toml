@@ -1,7 +1,7 @@
 [package]
 name = "fluxcode"
 default-run = "fluxcode"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2024"
 rust-version = "1.98"
 description = "A Codex-powered desktop coding workspace"
@@ -30,7 +30,7 @@ rmcp = { version = "=3.2.0", features = ["transport-io"] }
 uuid = { version = "=1.26.1", features = ["v4"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
 url = "2"
-reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json"] }
+reqwest = { version = "=0.13.5", default-features = false, features = ["rustls", "json", "stream", "socks"] }
 toml_edit = { version = "0.23", features = ["serde"] }
 notify = "=8.2.0"
 ignore = "0.4"
@@ -41,9 +41,15 @@ tempfile = "3"
 base64 = "0.22"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
 
+axum = { version = "=0.8.8", default-features = false, features = ["http1", "tokio"] }
+futures-util = "=0.3.34"
+http = "1"
+regex = "=1.13.1"
+hyper-util = { version = "=0.1.20", features = ["client-proxy"] }
+
 [target.'cfg(windows)'.dependencies]
 dunce = "1.0.5"
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Dwm", "Win32_System_Registry", "Win32_System_Power", "Win32_Globalization", "Win32_Storage_FileSystem", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_Security", "Win32_UI_WindowsAndMessaging", "Win32_UI_Accessibility"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Dwm", "Win32_System_Registry", "Win32_System_Power", "Win32_Globalization", "Win32_Networking_WinHttp", "Win32_Storage_FileSystem", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_Security", "Win32_UI_WindowsAndMessaging", "Win32_UI_Accessibility"] }
 
 [patch.crates-io]
 urlpattern = { path = "vendor/urlpattern" }

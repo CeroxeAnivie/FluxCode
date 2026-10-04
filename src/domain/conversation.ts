@@ -35,6 +35,11 @@ function imageContent(content: unknown): { source: string; name: string }[] {
     })
     .slice(0, 20);
 }
+export function failureReason(value: unknown): string {
+  if (typeof value === 'string') return value;
+  const error = record(value);
+  return [text(error.message), text(error.additionalDetails)].filter(Boolean).join('\n');
+}
 export function normalizeItem(value: unknown): ChatItem | null {
   const i = record(value);
   const id = text(i.id);
@@ -100,6 +105,7 @@ export function normalizeItem(value: unknown): ChatItem | null {
           (Array.isArray(i.changes) ? i.changes : []).map((v) => text(record(v).diff)).join('\n'),
         ),
         status: text(i.status),
+        failure: failureReason(i.error) || undefined,
       };
     case 'reasoning':
       return {
@@ -113,6 +119,7 @@ export function normalizeItem(value: unknown): ChatItem | null {
         kind: 'agent',
         text: text(i.prompt),
         status: text(i.status),
+        failure: failureReason(i.error) || undefined,
         agentOperation: text(i.tool),
         agents: normalizeAgentReferences(i),
       };
@@ -151,7 +158,20 @@ export function normalizeItem(value: unknown): ChatItem | null {
         kind: 'tool',
         images: imageContent(record(i.result).content ?? i.contentItems),
         text: [text(i.server), text(i.tool)].filter(Boolean).join(' / '),
-        status: text(i.status),
+        status:
+          i.success === false || i.error || record(i.result).isError === true
+            ? 'failed'
+            : text(i.status),
+        detail: cap(
+          failureReason(i.error) ||
+            (Array.isArray(record(i.result).content ?? i.contentItems)
+              ? ((record(i.result).content ?? i.contentItems) as unknown[])
+              : []
+            )
+              .map((v) => text(record(v).text))
+              .filter(Boolean)
+              .join('\n'),
+        ),
       };
     default:
       return null;
@@ -218,10 +238,17 @@ export function reduceEvent(state: Conversation, event: RpcEvent): Conversation 
             : item,
         ),
         turnId: null,
-        error: text(record(record(p.turn).error).message) || null,
+        error:
+          failureReason(record(p.turn).error) ||
+          (record(p.turn).status === 'failed'
+            ? state.error || '任务执行失败，但服务未提供具体原因。请查看运行记录。'
+            : null),
       };
     case 'error':
-      return { ...state, error: text(record(p.error).message) || 'Codex 执行失败' };
+      return {
+        ...state,
+        error: failureReason(p.error) || '任务执行失败，但服务未提供具体原因。请查看运行记录。',
+      };
     case 'item/started':
     case 'item/completed': {
       const normalized = normalizeItem(p.item);

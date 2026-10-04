@@ -25,8 +25,11 @@ pub fn run(args: Vec<String>) -> Result<i32, String> {
     let sqlite_home = crate::runtime_paths::sqlite_home(&home)
         .map_err(|e| format!("Unable to resolve engine data directory: {e}"))?;
     let catalog = home.join("model-catalog.json");
-    std::fs::write(&catalog, include_str!("../../config/engine-models.json"))
-        .map_err(|e| e.to_string())?;
+    std::fs::write(
+        &catalog,
+        crate::agent_runtime::model_catalog(std::slice::from_ref(&settings.model))?,
+    )
+    .map_err(|e| e.to_string())?;
     let executable = std::env::current_exe().map_err(|e| e.to_string())?;
     let binary = if cfg!(debug_assertions) {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/engine")
@@ -48,7 +51,7 @@ pub fn run(args: Vec<String>) -> Result<i32, String> {
         .env("CODEX_SQLITE_HOME", &sqlite_home)
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .stderr(Stdio::null());
+        .stderr(Stdio::inherit());
     command.arg("-c").arg(format!(
         "model_catalog_json={}",
         serde_json::to_string(&catalog).map_err(|e| e.to_string())?
@@ -60,21 +63,28 @@ pub fn run(args: Vec<String>) -> Result<i32, String> {
         "sqlite_home={}",
         serde_json::to_string(&sqlite_home).map_err(|e| e.to_string())?
     ));
-    if !settings.proxy_url.trim().is_empty() {
-        for name in [
-            "HTTP_PROXY",
-            "HTTPS_PROXY",
-            "ALL_PROXY",
-            "http_proxy",
-            "https_proxy",
-            "all_proxy",
-        ] {
-            command.env(name, &settings.proxy_url);
-        }
-        command.env("NO_PROXY", "").env("no_proxy", "");
-    }
-    if let Some(key) = credentials::load(&settings)? {
-        command.env(&settings.api_key_env, key);
+    let proxy_env = runtime.block_on(crate::network::process_environment(
+        &settings.proxy_url,
+        &settings.base_url,
+    ))?;
+    let transport = runtime.block_on(crate::responses_transport::start(
+        &settings,
+        credentials::load(&settings)?,
+    ))?;
+    command
+        .envs(proxy_env)
+        .env("FLUXCODE_RESPONSES_TOKEN", &transport.token);
+    command.arg("-c").arg(format!(
+        "model_providers.fluxcode.base_url={}",
+        serde_json::to_string(&transport.base_url).map_err(|e| e.to_string())?
+    ));
+    command
+        .arg("-c")
+        .arg("model_providers.fluxcode.supports_websockets=false")
+        .arg("-c")
+        .arg("model_providers.fluxcode.env_key=\"FLUXCODE_RESPONSES_TOKEN\"");
+    for setting in crate::agent_runtime::overrides()? {
+        command.arg("-c").arg(setting);
     }
     let status = command
         .status()

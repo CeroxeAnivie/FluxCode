@@ -92,6 +92,7 @@ impl Drop for PendingRequest<'_> {
 }
 
 pub struct Engine {
+    _responses_transport: crate::responses_transport::Runtime,
     _browser_tools: crate::browser_agent::Runtime,
     #[cfg(windows)]
     job: Mutex<Option<std::os::windows::io::OwnedHandle>>,
@@ -131,6 +132,9 @@ impl Engine {
         let sqlite_home = crate::runtime_paths::sqlite_home(home)
             .map_err(|e| format!("无法解析引擎数据目录：{e}"))?;
         let browser_tools = crate::browser_agent::start(app.clone())?;
+        let responses_transport = crate::responses_transport::start(settings, api_key).await?;
+        let proxy_env =
+            crate::network::process_environment(&settings.proxy_url, &settings.base_url).await?;
         let mut command = Command::new(binary);
         // CreateProcess still rejects some long working directories even when
         // filesystem APIs accept the extended-length path. This alias refers
@@ -185,22 +189,18 @@ impl Engine {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
-        if !settings.proxy_url.trim().is_empty() {
-            for name in [
-                "HTTP_PROXY",
-                "HTTPS_PROXY",
-                "ALL_PROXY",
-                "http_proxy",
-                "https_proxy",
-                "all_proxy",
-            ] {
-                command.env(name, &settings.proxy_url);
-            }
-            command.env("NO_PROXY", "").env("no_proxy", "");
-        }
-        if let Some(key) = api_key.filter(|s| !s.trim().is_empty()) {
-            command.env(&settings.api_key_env, key);
-        }
+        command
+            .envs(proxy_env)
+            .env("FLUXCODE_RESPONSES_TOKEN", &responses_transport.token);
+        command.arg("-c").arg(format!(
+            "model_providers.fluxcode.base_url={}",
+            serde_json::to_string(&responses_transport.base_url).map_err(|e| e.to_string())?
+        ));
+        command
+            .arg("-c")
+            .arg("model_providers.fluxcode.supports_websockets=false")
+            .arg("-c")
+            .arg("model_providers.fluxcode.env_key=\"FLUXCODE_RESPONSES_TOKEN\"");
         #[cfg(windows)]
         command.creation_flags(0x08000000);
         let mut child = command
@@ -214,6 +214,7 @@ impl Engine {
         let engine = Arc::new(Self {
             #[cfg(windows)]
             job: Mutex::new(Some(job)),
+            _responses_transport: responses_transport,
             _browser_tools: browser_tools,
             child: AsyncMutex::new(child),
             stdin: AsyncMutex::new(stdin),
@@ -235,11 +236,12 @@ impl Engine {
         tokio::spawn(async move {
             let mut reader = BufReader::new(stdout);
             let mut frame = Vec::new();
-            loop {
+            let failure = loop {
                 // fill_buf bounds allocation even if a faulty process never emits a newline.
                 let bytes = match reader.fill_buf().await {
                     Ok(bytes) if !bytes.is_empty() => bytes,
-                    _ => break,
+                    Ok(_) => break "执行引擎输出流已关闭，请重新连接并查看任务状态。".to_string(),
+                    Err(error) => break format!("无法读取执行引擎输出：{error}"),
                 };
                 let len = bytes
                     .iter()
@@ -247,7 +249,7 @@ impl Engine {
                     .map_or(bytes.len(), |n| n + 1);
                 if frame.len() + len > MAX_FRAME {
                     tracing::error!("engine_frame_too_large");
-                    break;
+                    break "执行引擎返回的消息超过大小限制，连接已停止。".to_string();
                 }
                 frame.extend_from_slice(&bytes[..len]);
                 reader.consume(len);
@@ -256,17 +258,24 @@ impl Engine {
                 }
                 match serde_json::from_slice::<Value>(&frame) {
                     Ok(message) => reader_engine.receive(message, &app).await,
-                    Err(_) => tracing::warn!("engine_invalid_json_frame"),
+                    Err(error) => {
+                        tracing::warn!("engine_invalid_json_frame");
+                        break format!(
+                            "执行引擎返回了无效 JSON（第 {} 行，第 {} 列），连接已停止。",
+                            error.line(),
+                            error.column()
+                        );
+                    }
                 }
                 frame.clear();
-            }
+            };
             reader_engine
                 .questions
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
                 .clear();
             let was_alive = reader_engine.alive.swap(false, Ordering::SeqCst);
-            reader_engine.fail_pending("执行引擎已断开，重新连接后可恢复任务。");
+            reader_engine.fail_pending(&failure);
             #[cfg(windows)]
             reader_engine
                 .job
@@ -276,7 +285,7 @@ impl Engine {
             if was_alive && reader_engine.published.load(Ordering::Acquire) {
                 let _ = app.emit(
                     "engine-event",
-                    json!({"method":"engine/disconnected","params":{}}),
+                    json!({"method":"engine/disconnected","params":{"message":failure}}),
                 );
                 let _ = reader_engine.child.lock().await.kill().await;
             }

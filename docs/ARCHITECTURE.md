@@ -48,6 +48,29 @@ On engine exit, pending requests fail and the UI offers reconnection. No automat
 replay of model turns or shell commands. On app exit, the owned engine is stopped.
 No global Codex installation or configuration is modified.
 
+## Model transport and error ownership
+
+The bundled engine remains the only agent loop. Its Responses requests use an
+Axum loopback adapter with an ephemeral bearer token; provider credentials remain
+in the Rust host. The adapter accepts only Responses/model endpoints, bounds
+request/response frames, uses idle-read timeouts and relays service status codes.
+Ordinary collaboration calls receive explicit plaintext-argument markers. Tool
+schema encryption annotations are removed without touching property names,
+literal schema values or reasoning ciphertext. Custom channel models use direct
+tools because the bundled code-mode path interprets collaboration messages as
+encrypted regardless of the gateway's capabilities.
+
+The network module resolves explicit proxy overrides, process environment and
+Windows manual/PAC settings. Each app HTTP target is resolved independently; new
+engine/terminal subprocesses inherit a launch snapshot. WebView2 follows system
+settings natively. The frontend never receives proxy credentials in diagnostics.
+
+Domain reducers retain native errors across completion and history hydration.
+Failure status without a diagnostic gets an explicit missing-cause explanation.
+Presentation uses the existing ErrorNotice to show localized guidance and bounded,
+redacted source details. Cleanup fallbacks remain quiet when they do not represent
+an unsuccessful user operation. No failing model request is automatically replayed.
+
 ## Compatibility and release boundaries
 
 Codex 0.157.0 with the reviewed `engine/security` dependency patches is locked by

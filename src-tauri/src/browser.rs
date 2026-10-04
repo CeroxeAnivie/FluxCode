@@ -115,6 +115,9 @@ pub async fn browser_command(
     match action {
         BrowserAction::Navigate { url, bounds } => {
             let url = remote_url(&url, origin.as_deref())?;
+            let configuration = app.state::<crate::AppState>().configuration.config().await;
+            let route =
+                crate::network::resolve(&configuration.network.proxy_url, url.as_str()).await?;
             let rect = bounds.checked()?;
             if let Some(view) = app.get_webview(&label) {
                 view.set_bounds(rect).map_err(|_| "无法调整浏览器布局")?;
@@ -157,6 +160,7 @@ pub async fn browser_command(
                     )
                     .map_err(|_| "无法打开浏览器数据目录")?
                 })
+                .zoom_hotkeys_enabled(true)
                 .disable_drag_drop_handler()
                 .on_navigation(move |url| {
                     let allowed = remote_url(url.as_str(), navigation_origin.as_deref()).is_ok();
@@ -213,19 +217,38 @@ pub async fn browser_command(
                         None,
                     );
                 });
-            let builder = if let Some(surface) = &surface {
-                let mut args = "--remote-debugging-port=0 --remote-debugging-address=127.0.0.1 --disable-features=msWebOOUI,msPdfOOUI".to_owned();
-                if let Some(proxy) = std::env::var("HTTPS_PROXY")
-                    .ok()
-                    .or_else(|| std::env::var("HTTP_PROXY").ok())
-                    && let Ok(proxy) = crate::external_links::validate(&proxy)
-                {
-                    args.push_str(&format!(
-                        " --proxy-server={} --proxy-bypass-list=localhost;127.0.0.1",
-                        proxy.origin().ascii_serialization()
-                    ));
+            let mut args = "--disable-features=msWebOOUI,msPdfOOUI".to_owned();
+            if surface.is_some() {
+                args.push_str(" --remote-debugging-port=0 --remote-debugging-address=127.0.0.1");
+            }
+            // WebView2 handles Windows proxy/PAC itself. Environment and explicit
+            // overrides apply to every workspace browser, not only the agent surface.
+            if route.source != "system"
+                && let Some(proxy) = &route.proxy
+            {
+                let mut proxy = url::Url::parse(proxy).map_err(|_| "浏览器代理地址无效")?;
+                if !proxy.username().is_empty() || proxy.password().is_some() {
+                    return Err(
+                        "内置浏览器不支持带凭据的代理地址，请通过 Windows 系统代理配置身份验证"
+                            .into(),
+                    );
                 }
-                builder.additional_browser_args(&args).initialization_script(format!("Object.defineProperty(globalThis, '__fluxcodeBrowserSurface', {{value: {}, configurable: false}});", serde_json::to_string(&surface.token).unwrap()))
+                if proxy.scheme() == "socks5h" {
+                    let _ = proxy.set_scheme("socks5");
+                }
+                let bypass = route.bypass.replace(',', ";");
+                if bypass.chars().any(|c| c.is_whitespace() || c == '"') {
+                    return Err("浏览器代理例外列表格式无效".into());
+                }
+                args.push_str(&format!(
+                    " --proxy-server={} --proxy-bypass-list={}",
+                    proxy.as_str().trim_end_matches('/'),
+                    bypass
+                ));
+            }
+            let builder = builder.additional_browser_args(&args);
+            let builder = if let Some(surface) = &surface {
+                builder.initialization_script(format!("Object.defineProperty(globalThis, '__fluxcodeBrowserSurface', {{value: {}, configurable: false}});", serde_json::to_string(&surface.token).unwrap()))
             } else {
                 builder
             };

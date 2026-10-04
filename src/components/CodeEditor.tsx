@@ -1,3 +1,4 @@
+import { ErrorNotice } from './ErrorNotice';
 import { useEffect, useRef, useState } from 'react';
 import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import {
@@ -94,7 +95,7 @@ export function CodeEditor({
 }) {
   const { language: locale, theme, t } = useAppearance();
   const host = useRef<HTMLDivElement>(null);
-  const [languageError, setLanguageError] = useState(false);
+  const [languageError, setLanguageError] = useState('');
   const view = useRef<EditorView | null>(null);
   const callbacks = useRef({ onChange, onSave });
   callbacks.current = { onChange, onSave };
@@ -196,16 +197,16 @@ export function CodeEditor({
   }, [locale, theme, readOnly, label, wrap]);
   useEffect(() => {
     let active = true;
-    setLanguageError(false);
+    setLanguageError('');
     void language(path)
       .then((extension) => {
         if (active) view.current?.dispatch({ effects: syntax.current.reconfigure(extension) });
       })
-      .catch(() => {
+      .catch((cause) => {
         // Editing stays available when an optional language chunk cannot load.
         if (active) {
           view.current?.dispatch({ effects: syntax.current.reconfigure([]) });
-          setLanguageError(true);
+          setLanguageError(String(cause));
         }
       });
     return () => {
@@ -219,7 +220,12 @@ export function CodeEditor({
   }, [value]);
   return (
     <div className="code-editor-container">
-      {languageError && <small role="status">{t('语法高亮暂不可用，仍可编辑和保存。')}</small>}
+      {languageError && (
+        <div role="status">
+          <small>{t('语法高亮暂不可用，仍可编辑和保存。')}</small>
+          <ErrorNotice message={languageError} />
+        </div>
+      )}
       <div className="code-editor" ref={host} />
     </div>
   );
