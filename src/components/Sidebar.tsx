@@ -1,13 +1,11 @@
 import { useAppearance } from '../application/AppearanceProvider';
 import {
   Archive,
-  Cable,
   ChevronDown,
   Circle,
   Folder,
   FolderPlus,
   GitBranch,
-  MessageSquare,
   Plus,
   Search,
   Settings2,
@@ -26,17 +24,9 @@ type SidebarRow =
 
 export function Sidebar({
   app,
-  onSettings,
-  onChannels,
-  onSearchConversations,
-  onImportConversations,
   onManageWorkspaces,
 }: {
   app: FluxController;
-  onSettings: () => void;
-  onChannels: () => void;
-  onSearchConversations: () => void;
-  onImportConversations: () => void;
   onManageWorkspaces: () => void;
 }) {
   const { t } = useAppearance();
@@ -138,10 +128,6 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-actions">
-        <button className="nav-action channel-nav" onClick={onChannels}>
-          <Cable size={15} />
-          {t('渠道管理')}
-        </button>
         <button className="nav-action new-task" onClick={app.newTask}>
           <SquarePen size={17} />
           <span>{t('新建任务')}</span>
@@ -157,12 +143,6 @@ export function Sidebar({
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
-        <button className="nav-action" onClick={onSearchConversations}>
-          <Search size={15} /> {t('搜索对话正文')}
-        </button>
-        <button className="nav-action" onClick={onImportConversations}>
-          {t('导入对话')}
-        </button>
         <button
           className="nav-action"
           aria-pressed={selecting}
@@ -433,33 +413,21 @@ export function Sidebar({
           })}
         </div>
       </div>
-      <div className="sidebar-bottom">
-        <div className="workspace-note">
-          <MessageSquare size={16} />
-          <div>
-            <strong>{t('专注每一次构建')}</strong>
-            <span>{t('在本地工作空间中完成任务')}</span>
-          </div>
-        </div>
-        <button className="settings-nav" aria-label={t('设置')} onClick={onSettings}>
-          <span className="avatar">F</span>
-          <span className="settings-copy">
-            <strong>FluxCode</strong>
-            <small>
-              <Circle
-                size={7}
-                fill="currentColor"
-                className={app.connection === 'ready' ? 'green' : ''}
-              />
-              {app.connection === 'ready'
-                ? t('执行引擎已就绪')
-                : app.connection === 'connecting'
-                  ? t('正在连接…')
-                  : t('配置模型服务')}
-            </small>
-          </span>
-          <Settings2 size={17} />
-        </button>
+      <div className="sidebar-bottom" role="status">
+        <Circle
+          size={7}
+          fill="currentColor"
+          className={app.connection === 'ready' ? 'green' : ''}
+        />
+        <span>
+          {t(
+            app.connection === 'ready'
+              ? '执行引擎已就绪'
+              : app.connection === 'connecting'
+                ? '正在连接…'
+                : '未连接',
+          )}
+        </span>
       </div>
       {editingTask && app.catalog.tasks.find((task) => task.id === editingTask) && (
         <TaskActionsDialog

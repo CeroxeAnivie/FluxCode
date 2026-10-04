@@ -113,3 +113,16 @@ it('compares refreshed models without changing the source lists', () => {
   expect(before).toEqual(['a', 'b']);
   expect(after).toEqual(['b', 'c']);
 });
+
+it('does not resurrect a removed default model from an authoritative catalogue', () => {
+  expect(
+    providerModels({
+      name: 'rotated',
+      settings: { ...defaultSettings, model: 'old' },
+      models: ['new'],
+    }),
+  ).toEqual(['new']);
+  expect(
+    providerModels({ name: 'legacy', settings: { ...defaultSettings, model: 'old' }, models: [] }),
+  ).toEqual(['old']);
+});

@@ -1,3 +1,4 @@
+import { BrandMark } from './BrandMark';
 import { ErrorNotice } from './ErrorNotice';
 import { useAppearance } from '../application/AppearanceProvider';
 import {
@@ -52,8 +53,7 @@ export function Welcome({
   return (
     <div className="welcome">
       <div className="welcome-symbol">
-        <span>F</span>
-        <i />
+        <BrandMark />
       </div>
       <p className="welcome-eyebrow">{t('开始构建你的想法')}</p>
       <h1>{t('让想法，在代码中发生。')}</h1>

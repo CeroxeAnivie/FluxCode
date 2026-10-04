@@ -1649,7 +1649,9 @@ test('sidebar search keeps a predictable keyboard path', async ({ page }) => {
   const search = page.getByRole('textbox', { name: '搜索任务' });
   await search.focus();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: '搜索对话正文', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: '批量整理', exact: true })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(search).toBeFocused();
 });
 
 test('nested channel navigation returns to the channel control', async ({ page }) => {
@@ -2310,7 +2312,7 @@ test('failed channel import keeps the preview and leaves saved profiles unchange
   await expect(page.locator('.channel-card')).toHaveCount(1);
 });
 
-test('model refresh protects the currently running model and previews the complete difference', async ({
+test('model refresh replaces outdated models by default and previews the complete difference', async ({
   page,
 }) => {
   await setup(page);
@@ -2328,8 +2330,7 @@ test('model refresh protects the currently running model and previews the comple
   await page.getByRole('button', { name: '刷新模型', exact: true }).click();
   await expect(page.getByText('保留本次未返回的模型及其配置')).toBeVisible();
   await expect(page.getByRole('button', { name: '应用模型变更', exact: true })).toBeEnabled();
-  await page.getByLabel('保留本次未返回的模型及其配置').uncheck();
-  await expect(page.getByRole('button', { name: '应用模型变更', exact: true })).toBeDisabled();
+  await expect(page.getByLabel('保留本次未返回的模型及其配置')).not.toBeChecked();
   await page.evaluate(() => {
     window.__FLUX_TEST_BRIDGE__!.discoverProvider = async () => ({
       models: ['fixture-model', 'replacement-model'],
@@ -2341,7 +2342,7 @@ test('model refresh protects the currently running model and previews the comple
   await expect(page.getByRole('button', { name: '应用模型变更', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '应用模型变更', exact: true }).click();
   const profiles = await page.evaluate(() => JSON.parse(localStorage.getItem('fixture-profiles')!));
-  expect(profiles[0].models).toEqual(['fixture-model', 'other-model', 'replacement-model']);
+  expect(profiles[0].models).toEqual(['fixture-model', 'replacement-model']);
 });
 
 test('channel catalogue is searchable and keeps the full list after filtering', async ({
@@ -3632,4 +3633,203 @@ test('generated Windows artifact links open the project file', async ({ page }) 
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem('fixture-open-workspace-file')))
     .toContain('pelican-cycle.svg');
+});
+
+test('credential edits invalidate the entire model draft and saving discovers only the new account', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://rotation.example/v1');
+  await page.getByLabel('访问密钥', { exact: true }).fill('test-old-key');
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await page.getByLabel('模型显示名 fixture-model', { exact: true }).fill('旧账户别名');
+  await page.getByLabel('选择模型 fixture-model', { exact: true }).check();
+  await page.getByRole('button', { name: '移除模型 other-model', exact: true }).click();
+  await page.getByLabel('搜索模型', { exact: true }).fill('fixture');
+  await page.getByLabel('访问密钥', { exact: true }).fill('test-new-key');
+  await expect(page.getByLabel('模型显示名 fixture-model', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('已选择 1', { exact: true })).toHaveCount(0);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.discoverProvider = async (_settings, key) => {
+      if (key !== 'test-new-key') throw new Error('Wrong credential');
+      return { models: ['new-account-model'], latencyMs: 1 };
+    };
+  });
+  await page.getByRole('button', { name: '导入并使用', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '当前会话模型' })).toHaveAttribute(
+    'data-value',
+    'new-account-model',
+  );
+  const profile = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('fixture-profiles')!)[0],
+  );
+  expect(profile.models).toEqual(['new-account-model']);
+  expect(profile.model_labels).toEqual({});
+  expect(profile.excluded_models).toEqual([]);
+  await page.reload();
+  await page.getByRole('combobox', { name: '当前会话模型' }).click();
+  await expect(page.locator('.model-picker-dialog [data-value="fixture-model"]')).toHaveCount(0);
+  await expect(page.locator('.model-picker-dialog [data-value="new-account-model"]')).toBeVisible();
+});
+
+test('refresh replaces missing models and resets obsolete selection and search state', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://snapshot.example/v1');
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await page.getByLabel('模型显示名 fixture-model', { exact: true }).fill('保留的别名');
+  await page.getByLabel('选择模型 other-model', { exact: true }).check();
+  await page.getByLabel('搜索模型', { exact: true }).fill('other');
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.discoverProvider = async () => ({
+      models: ['fixture-model', 'new-model'],
+      latencyMs: 1,
+    });
+  });
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await expect(page.getByLabel('模型显示名 other-model', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('模型显示名 fixture-model', { exact: true })).toHaveValue(
+    '保留的别名',
+  );
+  await expect(page.getByLabel('搜索模型', { exact: true })).toHaveValue('');
+  await expect(page.getByText('已选择 1', { exact: true })).toHaveCount(0);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.discoverProvider = async () => {
+      throw new Error('Temporary catalogue failure');
+    };
+  });
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await expect(page.locator('.channel-editor [role="alert"]')).toBeVisible();
+  await expect(page.getByLabel('模型显示名 new-model', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '仅保存', exact: true }).click();
+  const models = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('fixture-profiles')!)[0].models,
+  );
+  expect(models).toEqual(['fixture-model', 'new-model']);
+});
+
+test('composer fills the central workspace at every window and panel width', async ({ page }) => {
+  await setup(page);
+  for (const width of [2560, 1920, 1440, 960]) {
+    await page.setViewportSize({ width, height: 940 });
+    for (const inspector of [true, false]) {
+      if ((await page.locator('.inspector').isVisible()) !== inspector)
+        await page.getByRole('button', { name: '切换文件面板', exact: true }).click();
+      const area = await page.locator('.chat-area').boundingBox();
+      const composer = await page.locator('.composer').boundingBox();
+      expect(area).not.toBeNull();
+      expect(composer).not.toBeNull();
+      expect(Math.abs(composer!.width - (area!.width - 40))).toBeLessThan(2);
+      expect(Math.abs(composer!.x - area!.x - 20)).toBeLessThan(2);
+    }
+  }
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await expect(page.locator('.navigation-rail')).toBeVisible();
+  await expect(page.locator('.welcome-symbol svg')).toBeVisible();
+  if (!(await page.locator('.inspector').isVisible()))
+    await page.getByRole('button', { name: '切换文件面板', exact: true }).click();
+  await page.screenshot({ path: 'test-results/desktop-rewrite-dark.png', animations: 'disabled' });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await expect(page.locator('.settings-navigation')).toBeVisible();
+  await page.screenshot({
+    path: 'test-results/desktop-settings-rewrite.png',
+    animations: 'disabled',
+  });
+  await choose(page.getByRole('combobox', { name: '主题', exact: true }), 'light');
+  await page.keyboard.press('Escape');
+  await page.screenshot({ path: 'test-results/desktop-rewrite-light.png', animations: 'disabled' });
+});
+
+test('channel navigation protects edits and keeps its save actions inside a short window', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.setViewportSize({ width: 960, height: 720 });
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://draft.example/v1');
+  await page.getByRole('button', { name: '全部渠道 0', exact: true }).click();
+  await page.getByRole('button', { name: '继续编辑', exact: true }).click();
+  await expect(page.getByLabel('服务地址', { exact: true })).toHaveValue(
+    'https://draft.example/v1',
+  );
+  await page.getByRole('button', { name: '获取模型列表', exact: true }).click();
+  await page.getByRole('list', { name: '服务模型' }).scrollIntoViewIfNeeded();
+  const dialog = await page.getByRole('dialog', { name: '渠道管理', exact: true }).boundingBox();
+  const save = await page.getByRole('button', { name: '导入并使用', exact: true }).boundingBox();
+  expect(save!.y + save!.height).toBeLessThanOrEqual(dialog!.y + dialog!.height);
+  await page.screenshot({ path: 'test-results/channels-rewrite-dark.png', animations: 'disabled' });
+  await page.getByRole('button', { name: '全部渠道 0', exact: true }).click();
+  await page.getByRole('button', { name: '放弃修改', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '添加渠道', exact: true })).toHaveCount(0);
+});
+
+test('late file preview cannot reopen after switching to changes', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.readFile = async () =>
+      new Promise<string>((resolve) => {
+        Object.assign(window, { finishOldFile: () => resolve('obsolete file preview') });
+      });
+  });
+  await page.getByRole('button', { name: 'README.md', exact: true }).click();
+  await page.getByRole('button', { name: '变更', exact: false }).first().click();
+  await page.evaluate(() => (window as unknown as { finishOldFile: () => void }).finishOldFile());
+  await expect(page.locator('.inspector .file-preview')).toHaveCount(0);
+  await expect(page.locator('.inspector .panel-tabs button.active')).toContainText('变更');
+});
+
+test('capabilities model choices follow the provider catalogue instead of the engine catalogue', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://catalogue.example/v1');
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.discoverProvider = async () => ({
+      models: ['account-only-model'],
+      latencyMs: 1,
+    });
+  });
+  await page.getByRole('button', { name: '导入并使用', exact: true }).click();
+  await page.getByRole('button', { name: '模型与扩展', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '模型与扩展', exact: true });
+  await expect(dialog.locator('article')).toHaveCount(1);
+  await expect(dialog.locator('article code')).toHaveText('account-only-model');
+  await expect(dialog.getByRole('button', { name: '使用模型', exact: true })).toBeEnabled();
+});
+
+test('a delayed custom model save cannot overwrite a newer model choice', async ({ page }) => {
+  await setup(page);
+  await page.getByRole('button', { name: '渠道管理', exact: true }).click();
+  await page.getByRole('button', { name: '添加渠道', exact: true }).click();
+  await page.getByLabel('服务地址', { exact: true }).fill('https://selection.example/v1');
+  await page.getByRole('button', { name: '导入并使用', exact: true }).click();
+  await page.evaluate(() => {
+    const save = window.__FLUX_TEST_BRIDGE__!.saveProviderProfiles;
+    window.__FLUX_TEST_BRIDGE__!.saveProviderProfiles = async (...args) => {
+      await new Promise<void>((resolve) => Object.assign(window, { finishModelSave: resolve }));
+      await save(...args);
+    };
+  });
+  const picker = page.getByRole('combobox', { name: '当前会话模型' });
+  await choose(picker, '__custom__');
+  await page.getByRole('textbox', { name: '模型 ID', exact: true }).fill('late-custom-model');
+  await page.getByRole('button', { name: '使用模型', exact: true }).click();
+  await choose(picker, 'other-model');
+  await page.evaluate(() =>
+    (window as unknown as { finishModelSave: () => void }).finishModelSave(),
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(() => JSON.parse(localStorage.getItem('fixture-profiles')!)[0].models),
+    )
+    .toContain('late-custom-model');
+  await expect(picker).toHaveAttribute('data-value', 'other-model');
 });

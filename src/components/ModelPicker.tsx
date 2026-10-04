@@ -71,6 +71,11 @@ export function ModelPicker({
           {mode === 'list' ? (
             <Command label={t('搜索模型')} loop>
               <Command.Input autoFocus placeholder={t('搜索模型')} aria-label={t('搜索模型')} />
+              {model && !models.includes(model) && (
+                <p className="field-help model-unavailable" role="status">
+                  {t('此模型已不在当前渠道的模型列表中，请重新选择模型。')}
+                </p>
+              )}
               <Command.List>
                 <Command.Empty>{t('没有匹配模型')}</Command.Empty>
                 <Command.Group>

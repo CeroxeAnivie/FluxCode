@@ -14,6 +14,7 @@ export function ChannelEditor({
   onSave,
   onCancel,
   onActivity,
+  onDirtyChange,
   names,
   locked,
 }: {
@@ -23,6 +24,7 @@ export function ChannelEditor({
   busy: boolean;
   locked: boolean;
   onActivity: (working: boolean) => void;
+  onDirtyChange: (dirty: boolean) => void;
   names: string[];
   onSave: (profile: ProviderProfile, key: string, enable: boolean) => Promise<void>;
   onCancel: () => void;
@@ -42,6 +44,7 @@ export function ChannelEditor({
   const [models, setModels] = useState(() => (source ? providerModels(source) : []));
   const [labels, setLabels] = useState<Record<string, string>>(() => source?.model_labels ?? {});
   const [hiddenModels, setHiddenModels] = useState<string[]>(() => source?.excluded_models ?? []);
+  const [catalogueRevision, setCatalogueRevision] = useState(0);
   const [manual, setManual] = useState('');
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +55,9 @@ export function ChannelEditor({
   const draft = JSON.stringify({ name, settings, models, labels, hiddenModels, key, manual });
   const baseline = useRef(draft);
   const epoch = useRef(0);
+  useEffect(() => {
+    onDirtyChange(draft !== baseline.current);
+  }, [draft, onDirtyChange]);
   useEffect(() => {
     onActivity(fetching);
   }, [fetching, onActivity]);
@@ -66,10 +72,12 @@ export function ChannelEditor({
     [onActivity],
   );
   const visibleModels = models.filter((model) => !hiddenModels.includes(model));
-  function address(value: string) {
+  function invalidateCatalogue() {
     epoch.current++;
     setFetching(false);
-    setSettings((s) => ({ ...s, baseUrl: value, model: '' }));
+    setSettings((s) => ({ ...s, model: '' }));
+    setCatalogueRevision((value) => value + 1);
+    setManual('');
     setModels([]);
     setHiddenModels([]);
     setLabels({});
@@ -83,16 +91,21 @@ export function ChannelEditor({
     try {
       const result = await bridge.discoverProvider(settings, key);
       if (generation === epoch.current) {
-        const incoming = result.models.filter((model) => !hiddenModels.includes(model));
+        const incoming = [...new Set(result.models)];
         const added = incoming.filter((model) => !models.includes(model));
-        const missing = visibleModels.filter((model) => !result.models.includes(model));
-        setModels((current) => [...new Set([...current, ...incoming])]);
+        const missing = models.filter((model) => !incoming.includes(model));
+        setModels(incoming);
+        setHiddenModels((current) => current.filter((id) => incoming.includes(id)));
+        setLabels((current) =>
+          Object.fromEntries(Object.entries(current).filter(([id]) => incoming.includes(id))),
+        );
+        setSettings((current) => ({
+          ...current,
+          model: incoming.includes(current.model) ? current.model : '',
+        }));
+        setCatalogueRevision((value) => value + 1);
         setNotice(
-          `${result.models.length} ${t('个模型')} · ${added.length} ${t('个新增模型')}${missing.length ? ` · ${missing.length} ${t('个模型本次未返回，已保留原配置')}` : ''}${
-            result.duplicateModels
-              ? ` · ${result.duplicateModels} ${t('个重复模型 ID 已合并')}`
-              : ''
-          }`,
+          `${incoming.length} ${t('个模型')} · ${added.length} ${t('个新增模型')} · ${missing.length} ${t('个过期模型已移除')}`,
         );
       }
     } catch (e) {
@@ -179,7 +192,10 @@ export function ChannelEditor({
           autoFocus
           required
           value={settings.baseUrl}
-          onChange={(e) => address(e.target.value)}
+          onChange={(e) => {
+            invalidateCatalogue();
+            setSettings((s) => ({ ...s, baseUrl: e.target.value }));
+          }}
           placeholder="https://api.openai.com/v1"
           spellCheck={false}
           disabled={busy || fetching}
@@ -192,8 +208,7 @@ export function ChannelEditor({
           autoComplete="off"
           value={key}
           onChange={(e) => {
-            epoch.current++;
-            setFetching(false);
+            invalidateCatalogue();
             setKey(e.target.value);
           }}
           placeholder={t(source && !copied ? '留空保留已保存的凭据' : '输入渠道密钥')}
@@ -224,6 +239,8 @@ export function ChannelEditor({
                   void bridge
                     .forgetApiKey(source.settings)
                     .then(() => {
+                      invalidateCatalogue();
+                      setKey('');
                       setConfirmDeleteKey(false);
                       setNotice(t('已删除保存的密钥；当前运行中的连接不受影响。'));
                     })
@@ -264,7 +281,7 @@ export function ChannelEditor({
           {t('获取后默认保留全部模型；可改显示名、移除和撤销，保存后生效。实际请求仍使用原始 ID。')}
         </p>
         <ChannelModelList
-          key={settings.baseUrl}
+          key={catalogueRevision}
           models={models}
           labels={labels}
           hiddenModels={hiddenModels}
@@ -279,13 +296,14 @@ export function ChannelEditor({
             {t('模型 ID')}
             <input
               value={manual}
+              disabled={busy || fetching}
               onChange={(e) => setManual(e.target.value)}
               placeholder={t('多个模型用逗号分隔')}
             />
           </label>
           <button
             type="button"
-            disabled={busy || !manual.trim()}
+            disabled={busy || fetching || !manual.trim()}
             onClick={() => {
               const added = manual.split(/[,，\s]+/).filter(Boolean);
               setModels((current) => [...new Set([...current, ...added])]);
@@ -302,10 +320,10 @@ export function ChannelEditor({
             {t('网络代理')}
             <input
               value={settings.proxyUrl}
+              disabled={busy || fetching}
               onChange={(e) => {
-                epoch.current++;
-                setFetching(false);
-                setSettings({ ...settings, proxyUrl: e.target.value });
+                invalidateCatalogue();
+                setSettings((s) => ({ ...s, proxyUrl: e.target.value }));
               }}
             />
           </label>
@@ -313,10 +331,10 @@ export function ChannelEditor({
             {t('API Key 环境变量')}
             <input
               value={settings.apiKeyEnv}
+              disabled={busy || fetching}
               onChange={(e) => {
-                epoch.current++;
-                setFetching(false);
-                setSettings({ ...settings, apiKeyEnv: e.target.value });
+                invalidateCatalogue();
+                setSettings((s) => ({ ...s, apiKeyEnv: e.target.value }));
               }}
             />
           </label>

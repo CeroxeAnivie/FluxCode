@@ -57,9 +57,14 @@ export function Inspector({
     setEditing(false);
     setConflictPath(null);
     setRelative('');
+    setEntries([]);
+    setRepo({ branch: '', changes: [], git: false });
+    setError(null);
+    lastFile.current = undefined;
+    previewOrigin.current = null;
     setPreview(null);
     previewEpoch.current++;
-  }, [project?.id]);
+  }, [project?.id, project?.path]);
   useEffect(() => {
     if (!project || !bridge.available) return;
     let disposed = false;
@@ -125,6 +130,7 @@ export function Inspector({
     return false;
   }
   function closePreview() {
+    previewEpoch.current++;
     const origin = previewOrigin.current;
     const path = preview?.name;
     lastFile.current = path;
@@ -149,6 +155,7 @@ export function Inspector({
             className={tab === 'files' ? 'active' : ''}
             onClick={() => {
               if (!allowWorkspaceNavigation()) return;
+              previewEpoch.current++;
               setTab('files');
               setPreview(null);
             }}
@@ -159,6 +166,7 @@ export function Inspector({
             className={tab === 'changes' ? 'active' : ''}
             onClick={() => {
               if (!allowWorkspaceNavigation()) return;
+              previewEpoch.current++;
               setTab('changes');
               setPreview(null);
             }}

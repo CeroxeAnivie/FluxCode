@@ -1,3 +1,4 @@
+import { version as appVersion } from '../../package.json';
 import { Select } from './Select';
 import { ErrorNotice } from './ErrorNotice';
 import { useAppearance } from '../application/AppearanceProvider';
@@ -167,7 +168,18 @@ export function SettingsDialog({
             </button>
           ))}
         </nav>
-        <div className="settings-body">
+        <div
+          className="settings-body"
+          onScroll={(event) => {
+            const body = event.currentTarget;
+            const top = body.getBoundingClientRect().top + 48;
+            const sections = [...body.querySelectorAll<HTMLElement>('[id^="settings-"]')];
+            const section = sections
+              .filter((section) => section.getBoundingClientRect().top <= top)
+              .at(-1);
+            if (section) setActiveSection(section.id);
+          }}
+        >
           {configurationChanged && (
             <div className="configuration-notice" role="status">
               <span>{t('配置已在其他位置更新，请先载入最新设置。当前输入仍保留。')}</span>
@@ -309,7 +321,7 @@ export function SettingsDialog({
           )}
           <span>
             <ExternalLink size={12} />
-            FluxCode 0.1.2 · Apache-2.0
+            FluxCode {appVersion} · Apache-2.0
           </span>
           <button
             type="submit"

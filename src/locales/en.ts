@@ -1,5 +1,15 @@
 /** Source-language keys keep UI text reviewable; dynamic provider text is never translated. */
 export const english: Record<string, string> = {
+  '渠道已保存，重新连接后使用新密钥。': 'Channel saved. Reconnect to use the new key.',
+  '仅显示当前渠道的模型；具体能力以服务实际支持为准。':
+    'Models from the current channel. Capabilities depend on the service.',
+  渠道列表: 'Channel list',
+  全部渠道: 'All channels',
+  主导航: 'Main navigation',
+  项目与任务: 'Projects and tasks',
+  个过期模型已移除: 'outdated models removed',
+  '此模型已不在当前渠道的模型列表中，请重新选择模型。':
+    'This model is no longer in the current channel. Choose another model.',
   '系统主题读取失败，请重新打开窗口或手动选择主题。':
     'The system theme could not be read. Reopen the window or choose a theme manually.',
   在新窗口打开工作区: 'Open workspace in new window',

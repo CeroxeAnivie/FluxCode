@@ -17,9 +17,11 @@ export function sameConnection(a: Settings, b: Settings): boolean {
 }
 export function providerModels(profile: ProviderProfile): string[] {
   const excluded = new Set(profile.excluded_models ?? []);
-  return [...new Set([...(profile.models ?? []), profile.settings.model].filter(Boolean))].filter(
-    (id) => !excluded.has(id),
-  );
+  return [
+    ...new Set(
+      (profile.models?.length ? profile.models : [profile.settings.model]).filter(Boolean),
+    ),
+  ].filter((id) => !excluded.has(id));
 }
 export function providerModelLabel(profile: ProviderProfile, id: string): string {
   return profile.model_labels?.[id]?.trim() || id;

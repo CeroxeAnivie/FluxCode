@@ -649,7 +649,7 @@ textarea::placeholder {
 }
 .composer-wrap {
   width: calc(100% - 64px);
-  max-width: 840px;
+  max-width: none;
   margin: 0 auto;
   flex-shrink: 0;
   padding-top: 8px;
@@ -2670,23 +2670,7 @@ select {
   justify-content: flex-start;
   padding: clamp(48px, 11vh, 116px) 24px 34px;
 }
-.welcome-symbol {
-  width: 56px;
-  height: 56px;
-  margin-bottom: 20px;
-  border-radius: 16px;
-  background: var(--primary);
-  border: 0;
-  box-shadow: 0 12px 30px color-mix(in srgb, var(--primary) 24%, transparent);
-}
-.welcome-symbol > span {
-  color: #fff;
-  font-size: 28px;
-  font-style: normal;
-}
-.welcome-symbol i {
-  display: none;
-}
+
 .welcome-eyebrow {
   margin-bottom: 8px;
   color: var(--primary);
@@ -2731,7 +2715,7 @@ select {
   font-size: 12px;
 }
 .composer-wrap {
-  width: min(calc(100% - 40px), 900px);
+  width: calc(100% - 40px);
   padding-top: 8px;
 }
 .composer {

@@ -243,19 +243,15 @@ async fn connect_engine(
     let home = state.data_dir.join("engine-home");
     context::ensure_agent_file(&home).await?;
     let supplied_key = api_key.filter(|key| !key.trim().is_empty());
-    let effective_key = if supplied_key.is_some() {
-        supplied_key.clone()
-    } else if force_reconnect.unwrap_or(false) && credentials::load(&settings)?.is_some() {
-        credentials::load(&settings)?
-    } else {
+    let effective_key = {
         let cached = state.session_credential.lock().await;
-        match cached
-            .as_ref()
-            .filter(|(base, name, _)| base == &settings.base_url && name == &settings.api_key_env)
-        {
-            Some((_, _, key)) => Some(key.clone()),
-            None => credentials::load(&settings)?,
-        }
+        credentials::resolve_for_connection(
+            &settings,
+            supplied_key.clone(),
+            force_reconnect.unwrap_or(false),
+            cached.as_ref(),
+            credentials::load,
+        )?
     };
     let previous_credential = if remember_key && supplied_key.is_some() {
         credentials::load(&settings)?

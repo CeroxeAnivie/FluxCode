@@ -385,3 +385,25 @@ verified the packaged executable against the optimized build, all 32 engine/lega
 resources against current files, engine identity 0.157.0 and absence of production
 test transport. SHA-256 is in RELEASE-CHECKSUMS.txt. This supersedes the earlier
 installer record above; signing and deferred environment matrices remain deferred.
+
+
+## 2026-10-04 — 0.1.3 desktop/channel acceptance
+
+See releases/0.1.3.md for the behavior audit and regression details. TypeScript,
+changed-file formatting, strict UTF-8 decoding and diff checks pass. Vitest is
+122/122. The full 141-case browser run had one refresh-status failure; that
+failure was corrected and passed in the four-case targeted rerun, including a
+new delayed-selection regression. Three final layout captures also pass.
+Native credential-resolution tests pass (2/2).
+
+The final release was built with existing Codex 0.157.0 binaries; no engine
+rebuild was performed. verify-release.mjs extracted the NSIS installer, compared
+the packaged executable to the release build, checked all 32 engine/legal
+resources and confirmed the production frontend contains no test transport.
+The installer is 103,127,066 bytes, SHA-256:
+
+a7745f42661d7cc26d4bfe5ffaad9dfbe2ec119e976636d3acb6ec448d2c0927
+
+Formal signing, clean-machine installation and the previously deferred acceptance
+matrices remain outside this iteration. Screenshots in docs/images use declared
+UI test fixtures; they are not screenshots of a paid service session.

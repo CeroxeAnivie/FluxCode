@@ -14,3 +14,5 @@ src-tauri/resources/engine/*
 src-tauri/gen/
 *.tsbuildinfo
 __pycache__/
+
+artifacts/

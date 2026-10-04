@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppearance } from '../application/AppearanceProvider';
 import { compareProviderModels, providerModels, type ProviderProfile } from '../domain/provider';
 import { bridge } from '../infrastructure/bridge';
@@ -6,6 +6,7 @@ import { ErrorNotice } from './ErrorNotice';
 
 interface ModelPreview {
   models: string[];
+  available: string[];
   source: string;
 }
 
@@ -14,59 +15,69 @@ export function ChannelTools({
   profiles,
   onProfiles,
   disabled,
-  activeModel,
   onCopy,
 }: {
   profile: ProviderProfile;
   profiles: ProviderProfile[];
   onProfiles: (rows: ProviderProfile[]) => void;
   disabled: boolean;
-  activeModel: string | null;
   onCopy: () => void;
 }) {
   const { t } = useAppearance();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [noticeSource, setNoticeSource] = useState('');
   const [preview, setPreview] = useState<ModelPreview | null>(null);
-  const [keepMissing, setKeepMissing] = useState(true);
+  const [keepMissing, setKeepMissing] = useState(false);
   const source = JSON.stringify(profile);
+  const request = useRef(0);
+  const currentSource = useRef(source);
+  currentSource.current = source;
+  useEffect(() => {
+    request.current++;
+    setPreview(null);
+    setError('');
+    setBusy(false);
+    return () => {
+      request.current++;
+    };
+  }, [source]);
   const changes =
     preview?.source === source
       ? compareProviderModels(providerModels(profile), preview.models)
       : null;
 
   async function discover(refresh: boolean) {
+    const generation = ++request.current;
     setBusy(true);
     setPreview(null);
-    setKeepMissing(true);
+    setKeepMissing(false);
     setError('');
     setNotice('');
     try {
       const result = await bridge.discoverProvider(profile.settings);
+      if (generation !== request.current || source !== currentSource.current) return;
+      setNoticeSource(source);
       setNotice(
         `${t('模型目录可用')} · ${result.latencyMs} ms · ${result.models.length} ${t('个模型')}${result.duplicateModels ? ` · ${result.duplicateModels} ${t('个重复模型 ID 已合并')}` : ''}`,
       );
       if (refresh)
         setPreview({
+          available: result.models,
           models: result.models.filter((id) => !profile.excluded_models?.includes(id)),
           source,
         });
     } catch (cause) {
-      setError(String(cause));
+      if (generation === request.current && source === currentSource.current)
+        setError(String(cause));
     } finally {
-      setBusy(false);
+      if (generation === request.current && source === currentSource.current) setBusy(false);
     }
   }
 
   async function apply() {
-    if (
-      !preview ||
-      preview.source !== source ||
-      !preview.models.length ||
-      (!keepMissing && activeModel !== null && !preview.models.includes(activeModel))
-    )
-      return;
+    if (!preview || preview.source !== source || !preview.models.length) return;
     setBusy(true);
     setError('');
     try {
@@ -78,9 +89,15 @@ export function ChannelTools({
           ? {
               ...row,
               models,
+              excluded_models: (row.excluded_models ?? []).filter(
+                (id) => keepMissing || preview.available.includes(id),
+              ),
               model_labels: Object.fromEntries(
                 Object.entries(row.model_labels ?? {}).filter(
-                  ([id]) => models.includes(id) || row.excluded_models?.includes(id),
+                  ([id]) =>
+                    models.includes(id) ||
+                    (row.excluded_models?.includes(id) &&
+                      (keepMissing || preview.available.includes(id))),
                 ),
               ),
               settings: {
@@ -93,6 +110,7 @@ export function ChannelTools({
       await bridge.saveProviderProfiles(rows, profiles);
       onProfiles(rows);
       setPreview(null);
+      setNoticeSource(JSON.stringify(rows.find((row) => row.name === profile.name)));
       setNotice(t('模型目录已更新'));
     } catch (cause) {
       setError(String(cause));
@@ -114,7 +132,7 @@ export function ChannelTools({
           {t('刷新模型')}
         </button>
       </div>
-      {notice && (
+      {notice && noticeSource === source && (
         <p role="status">
           {notice}
           <small>{t('仅检测目录访问，模型推理能力以实际请求为准。')}</small>
@@ -136,9 +154,6 @@ export function ChannelTools({
               />
               {t('保留本次未返回的模型及其配置')}
             </label>
-          )}
-          {!keepMissing && activeModel !== null && !preview.models.includes(activeModel) && (
-            <p role="alert">{t('当前模型仍在使用。请保留未返回模型，或先在会话中切换模型。')}</p>
           )}
           {!keepMissing &&
             !preview.models.includes(profile.settings.model) &&
@@ -169,12 +184,7 @@ export function ChannelTools({
             {t('取消')}
           </button>
           <button
-            disabled={
-              busy ||
-              disabled ||
-              !preview.models.length ||
-              (!keepMissing && activeModel !== null && !preview.models.includes(activeModel))
-            }
+            disabled={busy || disabled || !preview.models.length}
             onClick={() => void apply()}
           >
             {t('应用模型变更')}

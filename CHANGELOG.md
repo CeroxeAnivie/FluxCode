@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 — Desktop navigation and channel state (2026-10-04)
+
+- Separate global navigation from the project/task pane; keep terminal, files and browser actions beside the workspace. Settings and channels use persistent category/list columns.
+- Let the composer fill its workspace at every panel and window width. Add a shared original vector FluxCode mark, translucent navigation/floating surfaces, light/dark support and reduced-transparency fallback.
+- Changing an address, key, credential identifier or proxy clears the previous model draft, aliases, exclusions, filter and bulk selection. Successful discovery replaces the directory; failures preserve the last valid directory for the same connection.
+- Refresh removes missing models by default. Retaining them is an explicit choice. Model pickers and the capabilities view use the saved channel catalogue; stale defaults are not reintroduced. Existing conversation choices remain recorded, with an explicit reselection error if no longer available.
+- Explicit reconnect reads current saved credentials, including deletion, instead of falling back to an obsolete session key. Saving without reconnecting reports the deferred key change.
+- Ignore late model-selection saves and file previews after newer selections or scope changes. Keep refresh success feedback associated with the directory that was saved.
+- No provider TOML/schema or database migration; legacy single-model profiles remain readable. No dependencies added and no Cherry Studio source/assets incorporated. Bundled Codex 0.157.0 remains unchanged.
+
 ## 0.1.2 — Models, browser and artifact links (2026-09-27)
 
 - Compact themed model rows, inline aliases, icon removal and a single scroll area for small catalogues. Large catalogues retain virtualization.

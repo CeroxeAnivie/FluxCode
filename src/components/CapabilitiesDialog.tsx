@@ -12,11 +12,13 @@ export function CapabilitiesDialog({
   threadId,
   onClose,
   onModel,
+  availableModels,
 }: {
   cwd?: string;
   threadId?: string;
   onClose: () => void;
   onModel: (model: string) => void;
+  availableModels: string[];
 }) {
   const { t } = useAppearance();
   const dialog = useModalDialog();
@@ -32,6 +34,9 @@ export function CapabilitiesDialog({
     let disposed = false;
     setBusy(true);
     setErrors([]);
+    setModels([]);
+    setSkills([]);
+    setServers([]);
     void Promise.allSettled([
       listModels(),
       cwd ? listSkills(cwd) : Promise.resolve([]),
@@ -108,25 +113,39 @@ export function CapabilitiesDialog({
       ))}
       {tab === 'models' && (
         <>
-          <p>{t('以下为内置引擎的能力目录，不代表当前服务已授权所有模型。')}</p>
-          {models.map((m) => (
-            <article key={m.id}>
-              <strong>{m.name}</strong>
-              <code>{m.id}</code>
-              <p>{m.description}</p>
-              <small>
-                {m.efforts.join(' · ')} / {m.modalities.join(', ')}
-              </small>
-              <button
-                onClick={() => {
-                  onModel(m.id);
-                  onClose();
-                }}
-              >
-                {t('使用模型')}
-              </button>
-            </article>
-          ))}
+          <p>{t('仅显示当前渠道的模型；具体能力以服务实际支持为准。')}</p>
+          {availableModels
+            .map(
+              (id) =>
+                models.find((model) => model.id === id) ?? {
+                  id,
+                  name: id,
+                  description: '',
+                  efforts: [],
+                  modalities: [],
+                },
+            )
+            .map((m) => (
+              <article key={m.id}>
+                <strong>{m.name}</strong>
+                <code>{m.id}</code>
+                {m.description && <p>{m.description}</p>}
+                {!!(m.efforts.length || m.modalities.length) && (
+                  <small>
+                    {[m.efforts.join(' · '), m.modalities.join(', ')].filter(Boolean).join(' / ')}
+                  </small>
+                )}
+                <button
+                  disabled={busy}
+                  onClick={() => {
+                    onModel(m.id);
+                    onClose();
+                  }}
+                >
+                  {t('使用模型')}
+                </button>
+              </article>
+            ))}
         </>
       )}
       {visited.has('plugins') && (

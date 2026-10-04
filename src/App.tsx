@@ -1,3 +1,4 @@
+import { NavigationRail } from './components/NavigationRail';
 const SchedulesDialog = lazy(() =>
   import('./components/SchedulesDialog').then((module) => ({ default: module.SchedulesDialog })),
 );
@@ -268,16 +269,20 @@ export default function App({
         }
       />
       <div className={`app-body${browserRequest ? ' browser-open' : ''}`}>
-        {sidebar && (
-          <Sidebar
-            app={app}
-            onSettings={() => setSettingsOpen(true)}
-            onChannels={openChannels}
-            onSearchConversations={() => setConversationSearchOpen(true)}
-            onImportConversations={() => setConversationImportOpen(true)}
-            onManageWorkspaces={() => setWorkspacesOpen(true)}
-          />
-        )}
+        <NavigationRail
+          projectsVisible={sidebar}
+          onProjects={() => app.togglePanel('sidebar')}
+          onChannels={openChannels}
+          onSearch={() => setConversationSearchOpen(true)}
+          onImport={() => setConversationImportOpen(true)}
+          onCommands={() => setCommandsOpen(true)}
+          onSchedules={() => setSchedulesOpen(true)}
+          onActivity={() => setActivityOpen(true)}
+          onCapabilities={() => setCapabilitiesOpen(true)}
+          capabilitiesDisabled={app.connection !== 'ready' || conversation.busy || app.sending}
+          onSettings={() => setSettingsOpen(true)}
+        />
+        {sidebar && <Sidebar app={app} onManageWorkspaces={() => setWorkspacesOpen(true)} />}
         {sidebar && <PanelResizeHandle panel="sidebar" report={app.setError} />}
         <main className="main-workspace">
           {app.configurationUpdates.message && (
@@ -310,11 +315,6 @@ export default function App({
                 {app.providerProfiles.find((p) => sameProvider(p.settings, app.settings))?.name ??
                   t('选择渠道')}
               </button>
-              <button title="Ctrl K" onClick={() => setCommandsOpen(true)}>
-                {t('命令面板')}
-              </button>
-              <button onClick={() => setSchedulesOpen(true)}>{t('定时任务')}</button>
-              <button onClick={() => setActivityOpen(true)}>{t('任务总览')}</button>
               {task && !task.imported && (
                 <button
                   disabled={
@@ -328,12 +328,6 @@ export default function App({
                   {t('审查变更')}
                 </button>
               )}
-              <button
-                disabled={app.connection !== 'ready' || conversation.busy || app.sending}
-                onClick={() => setCapabilitiesOpen(true)}
-              >
-                {t('模型与扩展')}
-              </button>
               <button
                 className={`icon-button ${terminal ? 'selected' : ''}`}
                 title={t('终端 · Ctrl `')}
@@ -795,6 +789,7 @@ export default function App({
         )}
         {capabilitiesOpen && (
           <CapabilitiesDialog
+            availableModels={app.models}
             cwd={project?.path}
             threadId={task?.id}
             onClose={() => setCapabilitiesOpen(false)}

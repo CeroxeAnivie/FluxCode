@@ -10,6 +10,7 @@ import { ErrorNotice } from './components/ErrorNotice';
 import { initializeUiStateMirror, recoverPreviousUiState } from './infrastructure/uiStateMirror';
 import './styles.css';
 import './controls.css';
+import './desktop.css';
 import { isWorkspaceWindow } from './infrastructure/workspaceWindows';
 import { WorkspaceWindow } from './components/WorkspaceWindow';
 

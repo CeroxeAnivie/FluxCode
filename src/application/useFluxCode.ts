@@ -66,6 +66,7 @@ export function useFluxCode() {
   const sendLock = useRef(false);
   const connectLock = useRef(false);
   const selectionEpoch = useRef(0);
+  const modelSelectionEpoch = useRef(0);
   const conversationsRef = useRef(conversations);
   conversationsRef.current = conversations;
   const catalogRef = useRef(catalog);
@@ -557,6 +558,10 @@ export function useFluxCode() {
       return false;
     }
     if (selectedTaskId && conversationsRef.current[selectedTaskId]?.busy) return false;
+    if (activeProvider && !availableModels.includes(selection.model)) {
+      setError('此模型已不在当前渠道的模型列表中，请重新选择模型。');
+      return false;
+    }
     sendLock.current = true;
     setSending(true);
     setError(null);
@@ -602,6 +607,7 @@ export function useFluxCode() {
         }
         if (restored.busy) throw new Error('任务忙碌，请稍后重试。');
       }
+      assertAvailableModel(turnSelection.model);
       const taskId = id;
       setConversations((c) => ({
         ...c,
@@ -661,6 +667,7 @@ export function useFluxCode() {
       throw new Error('项目或任务内容无效');
     if (sendLock.current || connectLock.current || connection !== 'ready')
       throw new Error('任务忙碌，请稍后重试。');
+    assertAvailableModel(selection.model);
     sendLock.current = true;
     try {
       const id = await startThread(project.path, { ...settings, model: selection.model });
@@ -695,6 +702,7 @@ export function useFluxCode() {
       conversationsRef.current[id]?.busy
     )
       throw new Error('任务忙碌，请稍后重试。');
+    assertAvailableModel(item.selection.model);
     const task = catalogRef.current.tasks.find((task) => task.id === id && !task.archived);
     if (!task || task.imported) throw new Error('任务不存在、已归档或是只读导入历史。');
     updateCatalog((current) => ({
@@ -1108,13 +1116,30 @@ export function useFluxCode() {
         selections: draftSelections,
       });
   }, [sessionReady, selectedProjectId, selectedTaskId, drafts, draftSelections]);
-  const selection: ModelSelection = selectedTaskId
+  const activeProvider = providerProfiles.find((p) => sameProvider(p.settings, settings));
+  const availableModels = activeProvider
+    ? providerModels(activeProvider)
+    : [settings.model].filter(Boolean);
+  const storedSelection: ModelSelection = selectedTaskId
     ? (catalog.tasks.find((t) => t.id === selectedTaskId)?.selection ?? {
         model: settings.model,
         effort: 'off',
       })
     : (draftSelections[modelDraftKey] ?? { model: settings.model, effort: 'off' });
-  function setSelection(next: ModelSelection) {
+  const selection =
+    !selectedTaskId && activeProvider && !availableModels.includes(storedSelection.model)
+      ? {
+          ...storedSelection,
+          model: availableModels.includes(settings.model)
+            ? settings.model
+            : (availableModels[0] ?? ''),
+        }
+      : storedSelection;
+  function assertAvailableModel(model: string) {
+    if (activeProvider && !availableModels.includes(model))
+      throw new Error('此模型已不在当前渠道的模型列表中，请重新选择模型。');
+  }
+  async function setSelection(next: ModelSelection) {
     if (
       sendLock.current ||
       loadingTask ||
@@ -1125,9 +1150,13 @@ export function useFluxCode() {
       setError('请输入有效的模型 ID（最多 200 字符）。');
       return;
     }
-    if (!selectedTaskId) setDraftSelections((d) => ({ ...d, [modelDraftKey]: next }));
+    const sequence = ++modelSelectionEpoch.current;
     const provider = providerProfiles.find((p) => sameProvider(p.settings, settings));
     if (provider && !providerModels(provider).includes(next.model)) {
+      if (next.model === selection.model) {
+        setError('此模型已不在当前渠道的模型列表中，请重新选择模型。');
+        return;
+      }
       const rows = providerProfiles.map((p) =>
         p === provider
           ? {
@@ -1137,28 +1166,25 @@ export function useFluxCode() {
             }
           : p,
       );
-      void bridge
-        .saveProviderProfiles(rows, providerProfiles)
-        .then(() => setProviderProfiles(rows))
-        .catch((e) => setError(errorText(e)));
+      try {
+        await bridge.saveProviderProfiles(rows, providerProfiles);
+        setProviderProfiles((current) => (current === providerProfiles ? rows : current));
+      } catch (cause) {
+        if (sequence === modelSelectionEpoch.current) setError(errorText(cause));
+        return;
+      }
     }
+    if (sequence !== modelSelectionEpoch.current) return;
+    if (!selectedTaskId) setDraftSelections((d) => ({ ...d, [modelDraftKey]: next }));
     updateCatalog((c) => ({
       ...c,
       lastModel: next.model,
       tasks: c.tasks.map((t) => (t.id === selectedTaskId ? { ...t, selection: next } : t)),
     }));
   }
-  const models = [
-    ...new Set(
-      [
-        selection.model,
-        settings.model,
-        ...providerProfiles
-          .filter((p) => sameProvider(p.settings, settings))
-          .flatMap(providerModels),
-      ].filter((m): m is string => !!m),
-    ),
-  ];
+  const models = activeProvider
+    ? availableModels
+    : [...new Set([selection.model, ...availableModels].filter(Boolean))];
   const setDraft = (text: string) => setDrafts((d) => ({ ...d, [draftKey]: text }));
   async function changeFontSize(size: number) {
     fontPreferenceRevision.current++;

@@ -1,3 +1,4 @@
+import { BrandMark } from './BrandMark';
 import { useAppearance } from '../application/AppearanceProvider';
 import { Minus, Square, Copy, X, PanelLeft, PanelsTopLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -49,7 +50,7 @@ export function TitleBar({
   return (
     <header className="titlebar" data-tauri-drag-region>
       <div className="brand">
-        <span className="brand-mark">F</span>
+        <BrandMark className="titlebar-brand" />
         <span>FluxCode</span>
       </div>
       <button
