@@ -61,7 +61,21 @@ export interface RepoStatus {
   changes: Change[];
   git: boolean;
 }
+export interface ModelIdentity {
+  model: string;
+}
+export interface AgentReference {
+  identity?: ModelIdentity;
+  threadId: string;
+  name?: string;
+  status: string;
+  message?: string;
+  prompt?: string;
+}
 export interface ChatItem {
+  identity?: ModelIdentity;
+  agents?: AgentReference[];
+  agentOperation?: string;
   images?: { source: string; name: string }[];
   steps?: { text: string; status: string }[];
   id: string;
@@ -83,6 +97,7 @@ export interface ChatItem {
   durationMs?: number | null;
 }
 export interface Conversation {
+  activeIdentity?: ModelIdentity;
   recoveredTurn?: { id: string; status: string; error?: string };
   lastTurnStatus?: string;
   activeModel?: string;

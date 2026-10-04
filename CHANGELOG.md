@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7 — Visible agent teams and smooth desktop panels (2026-10-04)
+
+- Show descendant agents under the selected task with live, read-only detail panels, localized status and rendered reasoning/tool output. Enable native parent/child/sibling messaging, interruption and follow-up without a small product quota.
+- Apply FluxCode system identity and collaboration capability metadata to known and custom channel models. Preserve upstream technical defaults and legal attribution.
+- Record per-turn model IDs, retain the working label and elapsed time, and animate activity dots even with reduced motion using a gentle opacity pulse.
+- Unify native acrylic tint across chrome and workspace at 90% opacity. Add short panel/disclosure transitions with immediate drag resizing, reduced-motion support, preserved editor/terminal state and stable Markdown link focus.
+- No new dependencies or database schema migration. Reuse the existing patched engine binaries.
+
 ## 0.1.6 — Browser interaction, images and native desktop finish (2026-10-04)
 
 - The visible WebView2 browser now supports element snapshots, click, fill, select, checkbox, key, hover, scroll, screenshot and page dialogs through bundled Playwright. User takeover cancels pending automation; stale targets require a fresh snapshot.

@@ -419,6 +419,7 @@ test.beforeEach(async ({ page }) => {
           }, 300);
           return {} as T;
         }
+        if (method === 'thread/list') return { data: [], nextCursor: null } as T;
         if (method === 'thread/fork') return { thread: { id: `fork-${++counter}` } } as T;
         if (method === 'thread/start') return { thread: { id: `thread-${++counter}` } } as T;
         if (method === 'thread/read')
@@ -3725,8 +3726,11 @@ test('composer fills the central workspace at every window and panel width', asy
     for (const inspector of [true, false]) {
       if ((await page.locator('.inspector').isVisible()) !== inspector)
         await page.getByRole('button', { name: '切换文件面板', exact: true }).click();
-      const area = await page.locator('.chat-area').boundingBox();
-      const composer = await page.locator('.composer').boundingBox();
+      await expect(page.locator('.motion-panel[data-moving="true"]')).toHaveCount(0);
+      const { area, composer } = await page.evaluate(() => ({
+        area: document.querySelector('.chat-area')!.getBoundingClientRect().toJSON(),
+        composer: document.querySelector('.composer')!.getBoundingClientRect().toJSON(),
+      }));
       expect(area).not.toBeNull();
       expect(composer).not.toBeNull();
       expect(Math.abs(composer!.width - (area!.width - 40))).toBeLessThan(2);

@@ -1,6 +1,7 @@
 import type { ThreadStartParams } from '../generated/codex/v2/ThreadStartParams';
 import type { ThreadStartResponse } from '../generated/codex/v2/ThreadStartResponse';
 import type { TurnStartParams } from '../generated/codex/v2/TurnStartParams';
+import { readTurnIdentities } from './modelIdentity';
 import { bridge } from './bridge';
 import { hydrateItems } from '../domain/conversation';
 import { emptyConversation } from '../domain/types';
@@ -59,16 +60,22 @@ export async function resumeThread(
     excludeTurns: false,
   });
   const turns = result.thread.turns ?? [];
-  let items = turns.flatMap((t) => t.items ?? []);
+  const identities = readTurnIdentities(threadId);
+  const attributed = (item: unknown, turnId: string) =>
+    item && typeof item === 'object' ? { ...item, identity: identities[turnId] } : item;
+  let items = turns.flatMap((turn) => (turn.items ?? []).map((item) => attributed(item, turn.id)));
   if (result.thread.historyMode === 'paginated') {
     items = [];
     let cursor: string | null = null;
     for (let page = 0; page < 100; page++) {
-      const response: { data: { item: unknown }[]; nextCursor: string | null } = await bridge.rpc(
-        'thread/items/list',
-        { threadId, cursor, limit: 100, sortDirection: 'asc' },
-      );
-      items.push(...response.data.map((row) => row.item));
+      const response: { data: { item: unknown; turnId: string }[]; nextCursor: string | null } =
+        await bridge.rpc('thread/items/list', {
+          threadId,
+          cursor,
+          limit: 100,
+          sortDirection: 'asc',
+        });
+      items.push(...response.data.map((row) => attributed(row.item, row.turnId)));
       cursor = response.nextCursor;
       if (!cursor) break;
       if (page === 99) throw new Error('任务历史超过当前加载上限（10000 条）。');
@@ -77,6 +84,9 @@ export async function resumeThread(
   const running = turns.find((t) => t.status === 'inProgress');
   return {
     ...emptyConversation(),
+    activeIdentity:
+      identities[running?.id ?? turns.at(-1)?.id ?? ''] ??
+      (running && result.model ? { model: result.model } : undefined),
     selection: isModelSelection({ model: result.model, effort: result.reasoningEffort ?? 'off' })
       ? {
           model: result.model!,

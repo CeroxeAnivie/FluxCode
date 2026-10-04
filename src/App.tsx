@@ -1,3 +1,4 @@
+import { MotionPanel } from './components/MotionPanel';
 import { ActionNotice } from './components/ActionNotice';
 import { NavigationRail } from './components/NavigationRail';
 const SchedulesDialog = lazy(() =>
@@ -28,6 +29,8 @@ import {
 import { useFluxCode } from './application/useFluxCode';
 import { emptyConversation } from './domain/types';
 import { TitleBar } from './components/TitleBar';
+import { useSubagents } from './application/useSubagents';
+import { SubagentPanel } from './components/SubagentPanel';
 import { Sidebar } from './components/Sidebar';
 const WorkspaceManager = lazy(() =>
   import('./components/WorkspaceManager').then((module) => ({ default: module.WorkspaceManager })),
@@ -205,6 +208,14 @@ export default function App({
   const conversation = app.selectedTaskId
     ? (app.conversations[app.selectedTaskId] ?? emptyConversation())
     : emptyConversation();
+  const subagents = useSubagents(app.selectedTaskId, conversation, app.connection === 'ready');
+  const openSubagent = async (id: string) => {
+    await closeBrowserPanel();
+    subagents.open(id);
+  };
+  useEffect(() => {
+    if (browserRequest) subagents.close();
+  }, [browserRequest]);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
@@ -274,8 +285,19 @@ export default function App({
           capabilitiesDisabled={app.connection !== 'ready' || conversation.busy || app.sending}
           onSettings={() => setSettingsOpen(true)}
         />
-        {sidebar && <Sidebar app={app} onManageWorkspaces={() => setWorkspacesOpen(true)} />}
-        {sidebar && <PanelResizeHandle panel="sidebar" report={app.setError} />}
+        <MotionPanel open={sidebar} size="calc(var(--sidebar-width, 246px) + 1px)" keepMounted>
+          <Sidebar
+            app={app}
+            subagents={{
+              ...subagents,
+              open: (id) => {
+                void openSubagent(id).catch(app.setError);
+              },
+            }}
+            onManageWorkspaces={() => setWorkspacesOpen(true)}
+          />
+          <PanelResizeHandle panel="sidebar" report={app.setError} />
+        </MotionPanel>
         <main className="main-workspace">
           {app.configurationUpdates.message && (
             <div className="configuration-notice" role="status">
@@ -419,6 +441,9 @@ export default function App({
                 key={task.id}
                 jumpTarget={searchTarget?.taskId === task.id ? searchTarget.itemId : undefined}
                 state={conversation}
+                onOpenAgent={(id) => {
+                  void openSubagent(id).catch(app.setError);
+                }}
                 loading={app.loadingTask}
                 projectRoot={project?.imported ? undefined : project?.path}
                 initialPosition={app.positions[task.id]}
@@ -607,21 +632,45 @@ export default function App({
             onExecuted={() => setRevision((v) => v + 1)}
           />
         </main>
-        {inspector && project && !project.imported && (
-          <div style={{ display: browserRequest ? 'none' : 'contents' }}>
-            <PanelResizeHandle panel="inspector" report={app.setError} />
-            <Suspense fallback={null}>
-              <Inspector
-                onChooseProject={() => void app.addProject()}
-                onOpenWorkspace={(path) => void app.addProject(path, project?.id)}
-                onReference={(path, kind) => context.add(`${project!.path}/${path}`, kind)}
-                project={project}
-                revision={app.revision + revision}
-                onClose={() => app.togglePanel('inspector')}
+        <MotionPanel
+          open={
+            !!(inspector && project && !project.imported && !browserRequest && !subagents.selected)
+          }
+          keepMounted={!!(inspector && project && !project.imported)}
+          size="calc(min(var(--inspector-width, 294px), 45vw) + 1px)"
+        >
+          {project && !project.imported && (
+            <>
+              <PanelResizeHandle panel="inspector" report={app.setError} />
+              <Suspense fallback={null}>
+                <Inspector
+                  onChooseProject={() => void app.addProject()}
+                  onOpenWorkspace={(path) => void app.addProject(path, project?.id)}
+                  onReference={(path, kind) => context.add(`${project!.path}/${path}`, kind)}
+                  project={project}
+                  revision={app.revision + revision}
+                  onClose={() => app.togglePanel('inspector')}
+                />
+              </Suspense>
+            </>
+          )}
+        </MotionPanel>
+        <MotionPanel
+          open={!!subagents.selected}
+          size="calc(clamp(300px, var(--inspector-width, 420px), 65vw) + 1px)"
+        >
+          {subagents.selected && (
+            <>
+              <PanelResizeHandle
+                panel="inspector"
+                label={t('调整子智能体面板宽度')}
+                minWidth={300}
+                report={app.setError}
               />
-            </Suspense>
-          </div>
-        )}
+              <SubagentPanel controller={subagents} projectRoot={project?.path} />
+            </>
+          )}
+        </MotionPanel>
         <BrowserPanel />
       </div>
       {commandsOpen && (

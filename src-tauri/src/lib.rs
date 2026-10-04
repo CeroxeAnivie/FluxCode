@@ -1,3 +1,4 @@
+mod agent_runtime;
 mod attachments;
 mod backup;
 mod browser;
@@ -264,8 +265,29 @@ async fn connect_engine(
     } else {
         None
     };
-    let engine =
-        Engine::launch(&state.binary, &home, &settings, effective_key.clone(), app).await?;
+    let mut available_models = vec![settings.model.clone()];
+    for profile in providers::list(&state.data_dir).await? {
+        if profile.settings.base_url.trim().trim_end_matches('/')
+            == settings.base_url.trim().trim_end_matches('/')
+            && profile.settings.api_key_env == settings.api_key_env
+        {
+            available_models.extend(
+                profile
+                    .models
+                    .into_iter()
+                    .filter(|model| !profile.excluded_models.contains(model)),
+            );
+        }
+    }
+    let engine = Engine::launch(
+        &state.binary,
+        &home,
+        &settings,
+        &available_models,
+        effective_key.clone(),
+        app,
+    )
+    .await?;
     if remember_key
         && let Some(key) = &supplied_key
         && let Err(error) = credentials::save(&settings, key)
@@ -584,6 +606,7 @@ async fn engine_rpc(
             &config,
             cwd.unwrap_or("Current task working directory reported by the engine")
         ));
+        params["baseInstructions"] = json!(agent_runtime::IDENTITY);
     }
     if matches!(method.as_str(), "turn/start" | "command/exec") {
         params["sandboxPolicy"] = json!({"type":"dangerFullAccess"});
@@ -604,6 +627,12 @@ async fn engine_rpc(
         .await
         .clone()
         .ok_or("请先在设置中连接执行引擎")?;
+    if method == "turn/start"
+        && let (Some(thread_id), Some(model)) =
+            (params["threadId"].as_str(), params["model"].as_str())
+    {
+        engine.prepare_turn_model(thread_id, model).await?;
+    }
     let timeout = if method == "command/exec" { 135 } else { 45 };
     engine
         .request(&method, params, Duration::from_secs(timeout))

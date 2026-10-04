@@ -99,6 +99,9 @@ pub struct Engine {
     stdin: AsyncMutex<ChildStdin>,
     pending: Mutex<Pending>,
     next_id: AtomicU64,
+    catalog_path: std::path::PathBuf,
+    catalog_models: AsyncMutex<Vec<String>>,
+    prepared_thread_models: AsyncMutex<HashMap<String, String>>,
     alive: AtomicBool,
     published: AtomicBool,
     active_threads: Mutex<HashMap<String, String>>,
@@ -114,6 +117,7 @@ impl Engine {
         binary: &Path,
         home: &Path,
         settings: &Settings,
+        available_models: &[String],
         api_key: Option<String>,
         app: tauri::AppHandle,
     ) -> Result<Arc<Self>, String> {
@@ -155,7 +159,7 @@ impl Engine {
         let catalog_path = home.join("model-catalog.json");
         tokio::fs::write(
             &catalog_path,
-            include_str!("../../config/engine-models.json"),
+            crate::agent_runtime::model_catalog(available_models)?,
         )
         .await
         .map_err(|e| format!("无法准备模型目录：{e}"))?;
@@ -163,7 +167,11 @@ impl Engine {
             "model_catalog_json={}",
             serde_json::to_string(&catalog_path).map_err(|e| e.to_string())?
         ));
-        for value in settings.overrides() {
+        for value in settings
+            .overrides()
+            .into_iter()
+            .chain(crate::agent_runtime::overrides()?)
+        {
             command.arg("-c").arg(value);
         }
         command.arg("-c").arg(format!(
@@ -211,6 +219,9 @@ impl Engine {
             stdin: AsyncMutex::new(stdin),
             pending: Mutex::new(HashMap::new()),
             next_id: AtomicU64::new(1),
+            catalog_path,
+            catalog_models: AsyncMutex::new(available_models.to_vec()),
+            prepared_thread_models: AsyncMutex::new(HashMap::new()),
             alive: AtomicBool::new(true),
             published: AtomicBool::new(false),
             active_threads: Mutex::new(HashMap::new()),
@@ -489,6 +500,53 @@ impl Engine {
             .lock()
             .unwrap_or_else(|e| e.into_inner())
             .remove(&key);
+        Ok(())
+    }
+
+    /// Newly imported channel models receive the same team capability profile before
+    /// starting their first turn. Reading an agent never enters this mutation path.
+    pub async fn prepare_turn_model(&self, thread_id: &str, model: &str) -> Result<(), String> {
+        let mut models = self.catalog_models.lock().await;
+        let mut prepared = self.prepared_thread_models.lock().await;
+        if prepared
+            .get(thread_id)
+            .is_some_and(|current| current == model)
+        {
+            return Ok(());
+        }
+        if !models.iter().any(|known| known == model) {
+            let mut expanded = models.clone();
+            expanded.push(model.to_owned());
+            let content = crate::agent_runtime::model_catalog(&expanded)?;
+            let path = self.catalog_path.clone();
+            tokio::task::spawn_blocking(move || {
+                crate::agent_runtime::write_catalog(&path, &content)
+            })
+            .await
+            .map_err(|_| "模型目录更新任务中断")??;
+            *models = expanded;
+        }
+        // A model switch reloads the per-thread catalog snapshot without replaying work.
+        // The resume is metadata-only and carries no user input.
+        self.request(
+            "thread/resume",
+            json!({
+                "threadId": thread_id, "model": model, "modelProvider": "fluxcode",
+                "excludeTurns": true, "deferGoalContinuation": true,
+                "sandbox": "danger-full-access", "approvalPolicy": "never",
+                "baseInstructions": crate::agent_runtime::IDENTITY,
+                "config": {"model_catalog_json": self.catalog_path.to_string_lossy()},
+            }),
+            Duration::from_secs(45),
+        )
+        .await?;
+        // This is only a performance cache, never task history. Bound it for long
+        // application lifetimes; eviction merely repeats a metadata-only prepare.
+        const PREPARED_MODEL_CACHE_LIMIT: usize = 4096;
+        if prepared.len() >= PREPARED_MODEL_CACHE_LIMIT {
+            prepared.clear();
+        }
+        prepared.insert(thread_id.to_owned(), model.to_owned());
         Ok(())
     }
 

@@ -1,3 +1,5 @@
+import { AgentStatus } from './AgentStatus';
+import { agentOperationLabels } from '../domain/subagents';
 import { ChatImage } from './ChatImage';
 import { WorkingIndicator } from './WorkingIndicator';
 import { BrandMark } from './BrandMark';
@@ -69,7 +71,17 @@ export function Welcome({ onSuggestion }: { onSuggestion: (prompt: string) => vo
   );
 }
 
-function ItemBody({ item, projectRoot }: { item: ChatItem; projectRoot?: string }) {
+function ItemBody({
+  item,
+  projectRoot,
+  onOpenAgent,
+  assistantName,
+}: {
+  item: ChatItem;
+  projectRoot?: string;
+  onOpenAgent?: (id: string) => void;
+  assistantName?: string;
+}) {
   const { t } = useAppearance();
   if (item.kind === 'compaction')
     return (
@@ -88,35 +100,59 @@ function ItemBody({ item, projectRoot }: { item: ChatItem; projectRoot?: string 
         )}
       </div>
     );
-  if (item.steps || item.kind === 'agent')
+  if (item.kind === 'agent')
+    return (
+      <details className="tool-card agent-card">
+        <summary>
+          <Sparkles size={15} />
+          <span>{t(agentOperationLabels[item.agentOperation ?? ''] ?? '协作代理')}</span>
+          {item.status === 'inProgress' && <LoaderCircle size={13} className="spin" />}
+          <span className="agent-count">{item.agents?.length || ''}</span>
+        </summary>
+        <div className="tool-card-content">
+          {item.text && <p>{item.text}</p>}
+          {item.status === 'failed' && <p role="alert">{t('子智能体操作失败')}</p>}
+          {item.agents?.map((agent, index) => (
+            <div className="agent-card-row" key={agent.threadId}>
+              {onOpenAgent ? (
+                <button className="agent-open" onClick={() => onOpenAgent(agent.threadId)}>
+                  <span>{agent.name || `${t('子智能体')} ${index + 1}`}</span>
+                  <span>{t('查看运行内容')}</span>
+                </button>
+              ) : (
+                <span>{agent.name || `${t('子智能体')} ${index + 1}`}</span>
+              )}
+              <AgentStatus status={agent.status} />
+              {agent.message && <p>{agent.message}</p>}
+            </div>
+          ))}
+        </div>
+      </details>
+    );
+  if (item.steps)
     return (
       <details className="tool-card" open={item.kind === 'plan'}>
-        <summary>{t(item.kind === 'agent' ? '协作代理' : '执行计划')}</summary>
-        {item.text && <p>{item.text}</p>}
-        {item.steps && (
+        <summary>{t('执行计划')}</summary>
+        <div className="tool-card-content">
+          {item.text && <p>{item.text}</p>}
           <ol>
             {item.steps.map((step, index) => (
               <li key={index}>
                 <span>
                   {t(
                     (
-                      {
-                        pending: '待处理',
-                        inProgress: '进行中',
-                        completed: '已完成',
-                        running: '进行中',
-                        errored: '失败',
-                        shutdown: '已停止',
-                      } as Record<string, string>
-                    )[step.status] ?? '状态未知',
+                      { pending: '待处理', inProgress: '进行中', completed: '已完成' } as Record<
+                        string,
+                        string
+                      >
+                    )[step.status] ?? '等待状态',
                   )}
                 </span>{' '}
                 · {step.text}
               </li>
             ))}
           </ol>
-        )}
-        {item.kind === 'agent' && item.detail && <code>{item.detail}</code>}
+        </div>
       </details>
     );
   if (item.kind === 'user')
@@ -133,6 +169,7 @@ function ItemBody({ item, projectRoot }: { item: ChatItem; projectRoot?: string 
         </div>
       </article>
     );
+  if (item.kind === 'assistant' && !item.text && !item.images?.length) return null;
   if (item.kind === 'assistant')
     return (
       <article className="message assistant-message">
@@ -140,7 +177,7 @@ function ItemBody({ item, projectRoot }: { item: ChatItem; projectRoot?: string 
           <span className="mini-avatar flux">
             <BrandMark />
           </span>
-          <strong>FluxCode</strong>
+          <strong>{item.identity?.model ?? assistantName ?? t('模型未记录')}</strong>
         </div>
         <div className="markdown">
           <Suspense fallback={<p>{item.text}</p>}>
@@ -168,20 +205,28 @@ function ItemBody({ item, projectRoot }: { item: ChatItem; projectRoot?: string 
           <Check size={13} />
         )}
       </summary>
-      <pre>
-        {item.kind === 'command' &&
-          [
-            item.cwd ? `${t('工作目录')}: ${item.cwd}` : null,
-            item.exitCode != null ? `${t('退出码')}: ${item.exitCode}` : null,
-            item.durationMs != null
-              ? `${t('耗时')}: ${(item.durationMs / 1000).toFixed(2)} s`
-              : null,
-          ]
-            .filter((line) => line !== null)
-            .map((line) => `${line}\n`)
-            .join('')}
-        {item.kind === 'reasoning' || item.kind === 'plan' ? item.text : item.detail || item.text}
-      </pre>
+      {item.kind === 'reasoning' || item.kind === 'plan' ? (
+        <div className="tool-card-content markdown">
+          <Suspense fallback={<p>{item.text}</p>}>
+            <MarkdownContent text={item.text} projectRoot={projectRoot} />
+          </Suspense>
+        </div>
+      ) : (
+        <pre>
+          {item.kind === 'command' &&
+            [
+              item.cwd ? `${t('工作目录')}: ${item.cwd}` : null,
+              item.exitCode != null ? `${t('退出码')}: ${item.exitCode}` : null,
+              item.durationMs != null
+                ? `${t('耗时')}: ${(item.durationMs / 1000).toFixed(2)} s`
+                : null,
+            ]
+              .filter((line) => line !== null)
+              .map((line) => `${line}\n`)
+              .join('')}
+          {item.detail || item.text}
+        </pre>
+      )}
     </details>
   );
 }
@@ -209,7 +254,11 @@ export function Conversation({
   initialPosition,
   onPosition,
   jumpTarget,
+  onOpenAgent,
+  assistantName,
 }: {
+  onOpenAgent?: (id: string) => void;
+  assistantName?: string;
   state: ConversationState;
   loading: boolean;
   projectRoot?: string;
@@ -292,7 +341,12 @@ export function Conversation({
                   transform: `translateY(${row.start}px)`,
                 }}
               >
-                <MemoItem item={state.items[row.index]} projectRoot={projectRoot} />
+                <MemoItem
+                  item={state.items[row.index]}
+                  projectRoot={projectRoot}
+                  onOpenAgent={onOpenAgent}
+                  assistantName={assistantName}
+                />
               </div>
             ))}
           </div>
@@ -303,7 +357,12 @@ export function Conversation({
               data-item-index={index}
               className={jumpTarget === item.id ? 'search-target' : undefined}
             >
-              <MemoItem item={item} projectRoot={projectRoot} />
+              <MemoItem
+                item={item}
+                projectRoot={projectRoot}
+                onOpenAgent={onOpenAgent}
+                assistantName={assistantName}
+              />
             </div>
           ))
         )}
@@ -320,7 +379,12 @@ export function Conversation({
             {t('回到最新消息')}
           </button>
         )}
-        {state.busy && <WorkingIndicator key={state.turnId ?? 'working'} />}
+        {state.busy && (
+          <WorkingIndicator
+            key={state.turnId ?? 'working'}
+            name={state.activeIdentity?.model ?? assistantName}
+          />
+        )}
         {state.error && (
           <div className="inline-error" role="alert" aria-live="assertive">
             <ErrorNotice message={state.error} />

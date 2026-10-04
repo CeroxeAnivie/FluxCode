@@ -1,5 +1,55 @@
 # Verification
 
+## 0.1.7 agent teams, acrylic and panel motion — 2026-10-04
+
+Frontend unit tests: **38 files / 140 tests** pass. TypeScript and Rust formatting
+pass. The focused native agent-runtime tests pass (2 tests); Clippy for all native
+targets with warnings denied passes. No dependencies were added or upgraded, and
+existing engine/third-party legal resources are retained.
+
+Nineteen distinct targeted UI scenarios pass: eleven subagent/model/motion/material
+scenarios and eight existing workspace regressions. They cover read-only live child
+views, stale reads across selection changes, failure/retry, stream hydration,
+English localization, activity animation in normal/reduced-motion modes, historical
+model attribution, 90% chrome/workspace tint and forced-color fallback, reversible
+panel motion, native disclosures, browser docking/width persistence/errors,
+Markdown focus restoration, editor state preservation, terminal lifecycle and
+composer sizing. Composer dimensions are read in the same frame after transitions,
+so measurements cannot mix old and new layouts.
+
+The real bundled engine with a local Responses fixture creates **eight** native v2
+children, exercises parent list/message/interrupt/follow-up/wait and child-to-parent
+feedback, reads paginated child history, discovers descendants, and performs the
+metadata-only model resume used before a new model's first turn. It verifies the
+FluxCode default system identity and tool definitions without upstream product
+branding. Evidence: `work/subagent-smoke-1791121844051`. No production credentials
+or model quota were used. This proves protocol/tool execution, not autonomous
+choice by every model a custom provider might expose.
+
+Panel animation uses short CSS geometry transitions, compositor transforms for
+virtual rows, no animation loop driving per-frame React state, and no animated backdrop blur or
+persistent compositor hints. Geometry animation still requires layout work; this
+is not a claim of zero rendering cost or a measured FPS benchmark. Native WebView
+content is hidden during panel geometry transitions, then placed at settled bounds.
+The native DWM mechanism is unchanged; final desktop translucency and animation
+feel remain subject to manual acceptance. Reduced transparency/high contrast use
+solid surfaces; reduced motion disables layout transitions but retains gentle
+working-dot opacity feedback.
+
+Per-turn identity uses existing durable UI storage; no database schema migration.
+Unknown historical identity is not invented. The detail pane caps its view at the
+latest 2,000 items with an explicit notice, without deleting engine history. The
+agent count uses upstream numeric ceilings rather than a small product quota;
+physical memory, service limits and cost remain finite.
+
+Previously deferred clean-system installation, signing and extended/environment
+matrix acceptance remain deferred. Final installer `FluxCode_0.1.7_x64-setup.exe` is 129,286,140 bytes, SHA-256
+`9029c34c1b3f59aaea4079d69e07bc5e1ce9893b87cddef756880b4ad890a400`. Installer extraction matches the newly built executable
+and all 153 staged resources, retains engine 0.157.0, passes the browser MCP
+handshake and runtime verification, and excludes production test transport.
+Evidence: `work/release-verification-SYW6Q6`. The three release-binary verifier
+regression tests also pass.
+
 ## 0.1.6 browser interaction, images and native window material — 2026-10-04
 
 The complete frontend unit suite passes: 35 files, 129 tests. The Windows native

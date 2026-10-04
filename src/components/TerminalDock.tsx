@@ -1,3 +1,4 @@
+import { MotionPanel } from './MotionPanel';
 import { ActionNotice } from './ActionNotice';
 import { useEffect, useRef, useState } from 'react';
 import type { Project } from '../domain/types';
@@ -58,85 +59,89 @@ export function TerminalDock({
     );
   }, [project?.id, visible]);
   return (
-    <section className="terminal-dock" hidden={!visible}>
-      <nav className="terminal-tabs">
-        <button
-          aria-label={t('新建终端')}
-          disabled={!project || sessions.length >= 8}
-          title={t(sessions.length >= 8 ? '最多保留 8 个终端会话，请先结束一个会话。' : '新建终端')}
-          onClick={createSession}
-        >
-          <Plus size={16} />
-        </button>
+    <MotionPanel open={visible} axis="y" keepMounted>
+      <section className="terminal-dock">
+        <nav className="terminal-tabs">
+          <button
+            aria-label={t('新建终端')}
+            disabled={!project || sessions.length >= 8}
+            title={t(
+              sessions.length >= 8 ? '最多保留 8 个终端会话，请先结束一个会话。' : '新建终端',
+            )}
+            onClick={createSession}
+          >
+            <Plus size={16} />
+          </button>
+          {sessions.map((session) => (
+            <span key={session.id}>
+              <button aria-pressed={active === session.id} onClick={() => setActive(session.id)}>
+                {session.name}
+              </button>
+              <button
+                aria-label={`${t('结束终端会话')} ${session.name}`}
+                title={t('关闭终端会话')}
+                onClick={() => {
+                  setSessions((rows) => rows.filter((row) => row.id !== session.id));
+                  if (active === session.id) {
+                    const index = sessions.findIndex((row) => row.id === session.id);
+                    setActive(sessions[index + 1]?.id ?? sessions[index - 1]?.id ?? null);
+                  }
+                }}
+              >
+                <X size={14} />
+              </button>
+            </span>
+          ))}
+        </nav>
+        {!project && !sessions.some((row) => row.id === active) && (
+          <ActionNotice
+            action={
+              <button className="primary-button" onClick={onChooseProject}>
+                {projectActionLabel ?? t('打开项目')}
+              </button>
+            }
+          >
+            {t('打开项目后可使用终端。')}
+          </ActionNotice>
+        )}
+        {project && !sessions.some((row) => row.id === active) && (
+          <p>
+            {t(
+              sessions.length >= 8
+                ? '最多保留 8 个终端会话，请先结束一个会话。'
+                : project
+                  ? '没有打开的终端会话。点击加号新建终端。'
+                  : '打开项目后可使用终端。',
+            )}
+            {project && sessions.length < 8 && (
+              <button onClick={createSession}>{t('创建终端会话')}</button>
+            )}
+          </p>
+        )}
+        {sessions.some((row) => row.id === active) && !ready && (
+          <ActionNotice
+            action={
+              <button className="primary-button" onClick={onConnect}>
+                {connectActionLabel ?? t('连接执行引擎')}
+              </button>
+            }
+          >
+            {t('执行引擎未连接，连接后即可使用终端。')}
+          </ActionNotice>
+        )}
         {sessions.map((session) => (
-          <span key={session.id}>
-            <button aria-pressed={active === session.id} onClick={() => setActive(session.id)}>
-              {session.name}
-            </button>
-            <button
-              aria-label={`${t('结束终端会话')} ${session.name}`}
-              title={t('关闭终端会话')}
-              onClick={() => {
-                setSessions((rows) => rows.filter((row) => row.id !== session.id));
-                if (active === session.id) {
-                  const index = sessions.findIndex((row) => row.id === session.id);
-                  setActive(sessions[index + 1]?.id ?? sessions[index - 1]?.id ?? null);
-                }
-              }}
-            >
-              <X size={14} />
-            </button>
-          </span>
+          <div hidden={session.id !== active} key={session.id}>
+            <TerminalPanel
+              cwd={session.path}
+              ready={ready}
+              fontSize={fontSize}
+              active={visible && session.id === active}
+              onClose={onClose}
+              onExecuted={onExecuted}
+            />
+          </div>
         ))}
-      </nav>
-      {!project && !sessions.some((row) => row.id === active) && (
-        <ActionNotice
-          action={
-            <button className="primary-button" onClick={onChooseProject}>
-              {projectActionLabel ?? t('打开项目')}
-            </button>
-          }
-        >
-          {t('打开项目后可使用终端。')}
-        </ActionNotice>
-      )}
-      {project && !sessions.some((row) => row.id === active) && (
-        <p>
-          {t(
-            sessions.length >= 8
-              ? '最多保留 8 个终端会话，请先结束一个会话。'
-              : project
-                ? '没有打开的终端会话。点击加号新建终端。'
-                : '打开项目后可使用终端。',
-          )}
-          {project && sessions.length < 8 && (
-            <button onClick={createSession}>{t('创建终端会话')}</button>
-          )}
-        </p>
-      )}
-      {sessions.some((row) => row.id === active) && !ready && (
-        <ActionNotice
-          action={
-            <button className="primary-button" onClick={onConnect}>
-              {connectActionLabel ?? t('连接执行引擎')}
-            </button>
-          }
-        >
-          {t('执行引擎未连接，连接后即可使用终端。')}
-        </ActionNotice>
-      )}
-      {sessions.map((session) => (
-        <div hidden={session.id !== active} key={session.id}>
-          <TerminalPanel
-            cwd={session.path}
-            ready={ready}
-            fontSize={fontSize}
-            active={visible && session.id === active}
-            onClose={onClose}
-            onExecuted={onExecuted}
-          />
-        </div>
-      ))}
-    </section>
+      </section>
+    </MotionPanel>
   );
 }

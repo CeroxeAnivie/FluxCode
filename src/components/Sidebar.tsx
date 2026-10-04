@@ -16,17 +16,22 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual';
 import type { FluxController } from '../application/useFluxCode';
 import type { Project, Task } from '../domain/types';
+import type { SubagentsController, SubagentView } from '../application/useSubagents';
+import { AgentStatus } from './AgentStatus';
 import { TaskActionsDialog } from './TaskActionsDialog';
 
 type SidebarRow =
   | { kind: 'project'; project: Project; key: string }
   | { kind: 'task'; task: Task; key: string }
+  | { kind: 'agent'; agent: SubagentView; number: number; key: string }
   | { kind: 'empty'; key: string };
 
 export function Sidebar({
   app,
   onManageWorkspaces,
+  subagents,
 }: {
+  subagents: SubagentsController;
   app: FluxController;
   onManageWorkspaces: () => void;
 }) {
@@ -78,15 +83,27 @@ export function Sidebar({
       result.push({ kind: 'project', project, key: `project:${project.id}` });
       if (collapsed.has(project.id)) continue;
       const group = groupedTasks.get(project.id) ?? [];
-      for (const task of group) result.push({ kind: 'task', task, key: `task:${task.id}` });
+      for (const task of group) {
+        result.push({ kind: 'task', task, key: `task:${task.id}` });
+        if (task.id === app.selectedTaskId)
+          subagents.agents.forEach((agent, index) => {
+            result.push({
+              kind: 'agent',
+              agent,
+              number: index + 1,
+              key: `agent:${agent.threadId}`,
+            });
+          });
+      }
       if (!group.length) result.push({ kind: 'empty', key: `empty:${project.id}` });
     }
     return result;
-  }, [app.catalog.projects, groupedTasks, collapsed]);
+  }, [app.catalog.projects, app.selectedTaskId, groupedTasks, collapsed, subagents.agents]);
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollParent.current,
-    estimateSize: (index) => (rows[index].kind === 'project' ? 47 : 38),
+    estimateSize: (index) =>
+      rows[index].kind === 'agent' ? 54 : rows[index].kind === 'project' ? 47 : 38,
     getItemKey: (index) => rows[index].key,
     overscan: 10,
     rangeExtractor: (range) =>
@@ -189,6 +206,12 @@ export function Sidebar({
           </div>
         )}
       </div>
+      {subagents.discoveryError && (
+        <div className="subagent-discovery-error" role="alert">
+          <span>{t('子智能体列表同步失败')}</span>
+          <button onClick={subagents.refresh}>{t('重试')}</button>
+        </div>
+      )}
       <div className="section-heading">
         <span>{t('项目')}</span>
         <button
@@ -289,6 +312,28 @@ export function Sidebar({
                       )}
                     </div>
                   </div>
+                </div>
+              );
+            if (row.kind === 'agent')
+              return (
+                <div
+                  key={row.key}
+                  className="project-virtual-row"
+                  data-sidebar-index={virtualRow.index}
+                  style={{ transform: `translateY(${virtualRow.start}px)` }}
+                >
+                  <button
+                    className={`sidebar-agent ${subagents.selected?.threadId === row.agent.threadId ? 'selected' : ''}`}
+                    aria-pressed={subagents.selected?.threadId === row.agent.threadId}
+                    title={row.agent.prompt || t('查看运行内容')}
+                    onClick={() => subagents.open(row.agent.threadId)}
+                  >
+                    <span>{row.agent.name || `${t('子智能体')} ${row.number}`}</span>
+                    <AgentStatus status={row.agent.status} />
+                    {row.agent.readError && (
+                      <span className="sidebar-agent-warning">{t('同步失败')}</span>
+                    )}
+                  </button>
                 </div>
               );
             if (row.kind === 'task') {

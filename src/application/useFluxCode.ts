@@ -1,3 +1,5 @@
+import { copyTurnIdentities, saveTurnIdentity } from '../infrastructure/modelIdentity';
+import type { ModelIdentity } from '../domain/types';
 import { eventBatch } from '../infrastructure/eventBatch';
 import { subscribeToResume } from '../infrastructure/resumeSignals';
 import {
@@ -60,6 +62,7 @@ export function useFluxCode() {
   const fontPreferenceRevision = useRef(0);
   const loaded = useRef(new Set<string>());
   const engineGeneration = useRef(0);
+  const pendingIdentities = useRef(new Map<string, ModelIdentity>());
   const hydration = useRef(new Map<string, RpcEvent[]>());
   const resuming = useRef(
     new Map<string, Promise<Conversation & { selection?: ModelSelection }>>(),
@@ -79,6 +82,7 @@ export function useFluxCode() {
     resuming.current.clear();
     hydration.current.clear();
     loaded.current.clear();
+    pendingIdentities.current.clear();
     setConnection('offline');
     setConnectionError(message);
     setConversations((current) => {
@@ -193,6 +197,20 @@ export function useFluxCode() {
         }
         const threadId = event.params?.threadId;
         if (typeof threadId !== 'string') return;
+        if (event.method === 'turn/started') {
+          const turnId = (event.params?.turn as { id?: string } | undefined)?.id;
+          const identity =
+            pendingIdentities.current.get(threadId) ??
+            conversationsRef.current[threadId]?.activeIdentity;
+          if (turnId && identity) {
+            try {
+              saveTurnIdentity(threadId, turnId, identity);
+            } catch (cause) {
+              setError(errorText(cause));
+            }
+          }
+        }
+        if (event.method === 'turn/completed') pendingIdentities.current.delete(threadId);
         hydration.current.get(threadId)?.push(event);
         batch.push(event);
         if (event.method === 'turn/completed') setRevision((v) => v + 1);
@@ -617,11 +635,14 @@ export function useFluxCode() {
       }
       assertAvailableModel(turnSelection.model);
       const taskId = id;
+      const identity = { model: turnSelection.model };
+      pendingIdentities.current.set(taskId, identity);
       setConversations((c) => ({
         ...c,
         [taskId]: {
           ...(c[taskId] ?? emptyConversation()),
           activeModel: turnSelection.model,
+          activeIdentity: identity,
           busy: true,
           error: null,
         },
@@ -725,8 +746,11 @@ export function useFluxCode() {
         const next = await hydrate(id);
         if (next.busy) throw new Error('任务忙碌，请稍后重试。');
       }
+      const identity = { model: item.selection.model };
+      pendingIdentities.current.set(id, identity);
       const pending = {
         ...(conversationsRef.current[id] ?? emptyConversation()),
+        activeIdentity: identity,
         activeModel: item.selection.model,
         busy: true,
         error: null,
@@ -936,6 +960,11 @@ export function useFluxCode() {
       excludeTurns: true,
       deferGoalContinuation: true,
     });
+    try {
+      copyTurnIdentities(id, result.thread.id);
+    } catch (cause) {
+      setError(errorText(cause));
+    }
     const fork = {
       ...source,
       id: result.thread.id,

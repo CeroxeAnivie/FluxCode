@@ -1,3 +1,4 @@
+import { isModelIdentity } from './modelIdentity';
 import type { Catalog, ChatItem } from './types';
 
 const MAX_DOCUMENT = 8_388_608;
@@ -52,6 +53,7 @@ function message(value: unknown): ChatItem {
     row.text.length > 240_000 ||
     (row.detail !== undefined && (typeof row.detail !== 'string' || row.detail.length > 240_000)) ||
     (row.status !== undefined && typeof row.status !== 'string') ||
+    (row.identity !== undefined && !isModelIdentity(row.identity)) ||
     (row.cwd !== undefined && typeof row.cwd !== 'string') ||
     (row.exitCode !== undefined && row.exitCode !== null && typeof row.exitCode !== 'number') ||
     (row.durationMs !== undefined &&
@@ -69,6 +71,7 @@ function message(value: unknown): ChatItem {
     id: row.id,
     kind: row.kind as ChatItem['kind'],
     text: row.text,
+    ...(isModelIdentity(row.identity) ? { identity: row.identity } : {}),
     ...(row.detail !== undefined ? { detail: row.detail as string } : {}),
     ...(row.status !== undefined ? { status: row.status as string } : {}),
     ...(row.cwd !== undefined ? { cwd: row.cwd as string } : {}),

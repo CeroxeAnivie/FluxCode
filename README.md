@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-3b82f6?style=flat-square" alt="Apache-2.0" /></a>
   <img src="https://img.shields.io/badge/desktop-Windows_x64-27272a?style=flat-square" alt="Windows x64" />
-  <img src="https://img.shields.io/badge/version-0.1.6-27272a?style=flat-square" alt="Version 0.1.6" />
+  <img src="https://img.shields.io/badge/version-0.1.7-27272a?style=flat-square" alt="Version 0.1.7" />
   <a href="docs/VERIFICATION.md"><img src="https://img.shields.io/badge/verification-evidence-27272a?style=flat-square" alt="Verification evidence" /></a>
 </p>
 
@@ -54,7 +54,9 @@
 
 ## 开始使用
 
-当前源码版本为 **0.1.6，Windows x86_64**。
+本轮增加任务下方的子智能体入口、右侧运行详情、实际模型标签，以及统一厚实的亚克力和短促面板过渡。详见 [0.1.7 更新说明](docs/releases/0.1.7.md)。
+
+当前源码版本为 **0.1.7，Windows x86_64**。
 已发布的安装包版本以发布页为准。从 [GitHub Releases](https://github.com/CeroxeAnivie/FluxCode/releases) 下载 Windows 安装包，或按下文从源码构建。安装包尚未签名，干净系统验收按当前范围暂缓。
 
 构建出的桌面安装包内置 Codex，使用者不必另外安装 Codex、Rust 或 Node.js。

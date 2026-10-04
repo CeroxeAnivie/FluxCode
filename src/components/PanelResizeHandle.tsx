@@ -5,7 +5,11 @@ import { useAppearance } from '../application/AppearanceProvider';
 export function PanelResizeHandle({
   panel,
   report,
+  label,
+  minWidth,
 }: {
+  label?: string;
+  minWidth?: number;
   panel: 'sidebar' | 'inspector';
   report: (error: string) => void;
 }) {
@@ -14,7 +18,7 @@ export function PanelResizeHandle({
   const drag = useRef<{ x: number; width: number } | null>(null);
   const pending = useRef<number | null>(null);
   const variable = `--${panel}-width`;
-  const min = panel === 'sidebar' ? 190 : 230;
+  const min = minWidth ?? (panel === 'sidebar' ? 190 : 230);
   const max = panel === 'sidebar' ? 360 : 600;
   const width = () =>
     parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable)) ||
@@ -37,7 +41,7 @@ export function PanelResizeHandle({
       role="separator"
       aria-orientation="vertical"
       tabIndex={0}
-      aria-label={t(panel === 'sidebar' ? '调整侧边栏宽度' : '调整文件面板宽度')}
+      aria-label={label ?? t(panel === 'sidebar' ? '调整侧边栏宽度' : '调整文件面板宽度')}
       aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={width()}

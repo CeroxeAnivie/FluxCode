@@ -1,4 +1,6 @@
 import type { ChatItem, Conversation, RpcEvent } from './types';
+import { isModelIdentity } from './modelIdentity';
+import { normalizeAgentReferences } from './subagents';
 
 const text = (v: unknown): string => (typeof v === 'string' ? v : '');
 const record = (v: unknown): Record<string, unknown> =>
@@ -48,7 +50,13 @@ export function normalizeItem(value: unknown): ChatItem | null {
           .join('\n'),
       };
     case 'agentMessage':
-      return { id, kind: 'assistant', text: text(i.text), images: imageContent(i.content) };
+      return {
+        id,
+        kind: 'assistant',
+        text: text(i.text),
+        images: imageContent(i.content),
+        ...(isModelIdentity(i.identity) ? { identity: i.identity } : {}),
+      };
     case 'imageGeneration': {
       const saved = text(i.savedPath);
       const result = text(i.result);
@@ -105,21 +113,32 @@ export function normalizeItem(value: unknown): ChatItem | null {
         kind: 'agent',
         text: text(i.prompt),
         status: text(i.status),
-        detail: (Array.isArray(i.receiverThreadIds) ? i.receiverThreadIds.map(text) : []).join(
-          '\n',
-        ),
-        steps: Object.entries(record(i.agentsStates)).map(([id, value]) => ({
-          text: id,
-          status: text(record(value).status),
-        })),
+        agentOperation: text(i.tool),
+        agents: normalizeAgentReferences(i),
       };
     case 'subAgentActivity':
       return {
         id,
         kind: 'agent',
-        text: text(i.agentPath),
-        detail: text(i.agentThreadId),
+        text: '',
         status: text(i.kind),
+        agents: text(i.agentThreadId)
+          ? [
+              {
+                threadId: text(i.agentThreadId),
+                name: text(i.agentPath),
+                status:
+                  (
+                    {
+                      started: 'running',
+                      interacted: 'unknown',
+                      interrupted: 'interrupted',
+                      completed: 'completed',
+                    } as Record<string, string>
+                  )[text(i.kind)] ?? 'unknown',
+              },
+            ]
+          : [],
       };
     case 'contextCompaction':
       return { id, kind: 'compaction', text: '' };
@@ -205,8 +224,13 @@ export function reduceEvent(state: Conversation, event: RpcEvent): Conversation 
       return { ...state, error: text(record(p.error).message) || 'Codex 执行失败' };
     case 'item/started':
     case 'item/completed': {
-      const item = normalizeItem(p.item);
-      if (!item) return state;
+      const normalized = normalizeItem(p.item);
+      if (!normalized) return state;
+      const previous = state.items.find((item) => item.id === normalized.id);
+      const item = {
+        ...normalized,
+        identity: previous?.identity ?? normalized.identity ?? state.activeIdentity,
+      };
       return {
         ...state,
         items: upsert(
@@ -227,7 +251,12 @@ export function reduceEvent(state: Conversation, event: RpcEvent): Conversation 
         : event.method.includes('reasoning')
           ? 'reasoning'
           : 'assistant';
-      const current = state.items.find((i) => i.id === id) ?? { id, kind, text: '' };
+      const current = state.items.find((i) => i.id === id) ?? {
+        id,
+        kind,
+        text: '',
+        identity: state.activeIdentity,
+      };
       const item =
         kind === 'command'
           ? { ...current, detail: cap((current.detail ?? '') + text(p.delta)) }

@@ -1,0 +1,7 @@
+# Product-owned defaults for the bundled collaboration runtime.
+# "unbounded" means no FluxCode product quota; native integer and physical limits remain.
+# This source policy is embedded in the application, not a machine-specific configuration.
+[collaboration]
+max_concurrent_agents = "unbounded"
+max_depth = "unbounded"
+tool_namespace = "collaboration"

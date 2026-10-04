@@ -1,5 +1,13 @@
+import { MotionPanel } from './MotionPanel';
 import { ArrowLeft, ArrowRight, ExternalLink, Globe, RotateCw, X } from 'lucide-react';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import { useAppearance } from '../application/AppearanceProvider';
 import { webLink } from '../domain/links';
 import { browserAddress } from '../domain/browserAddress';
@@ -51,6 +59,15 @@ function clampWidth(value: number) {
 }
 
 export function BrowserPanel() {
+  const [width, setWidth] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem(WIDTH_KEY));
+      return clampWidth(saved >= minWidth ? saved : window.innerWidth * 0.42);
+    } catch {
+      return clampWidth(window.innerWidth * 0.42);
+    }
+  });
+
   useEffect(() => {
     let disposed = false;
     let off: (() => void) | undefined;
@@ -104,10 +121,22 @@ export function BrowserPanel() {
     };
   }, []);
   const request = useSyncExternalStore(subscribeBrowserRequest, getBrowserRequest, () => null);
-  return request ? <BrowserSurface request={request} /> : null;
+  return (
+    <MotionPanel open={!!request} size={`${width + 1}px`}>
+      {request && <BrowserSurface request={request} width={width} setWidth={setWidth} />}
+    </MotionPanel>
+  );
 }
 
-function BrowserSurface({ request }: { request: BrowserRequest }) {
+function BrowserSurface({
+  request,
+  width,
+  setWidth,
+}: {
+  request: BrowserRequest;
+  width: number;
+  setWidth: Dispatch<SetStateAction<number>>;
+}) {
   const { t } = useAppearance();
   const agent = useSyncExternalStore(
     subscribeBrowserAgentState,
@@ -126,14 +155,6 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
       report();
     }
   }
-  const [width, setWidth] = useState(() => {
-    try {
-      const saved = Number(localStorage.getItem(WIDTH_KEY));
-      return clampWidth(saved >= minWidth ? saved : window.innerWidth * 0.42);
-    } catch {
-      return clampWidth(window.innerWidth * 0.42);
-    }
-  });
   const [address, setAddress] = useState(request.url);
   const [currentUrl, setCurrentUrl] = useState(request.url);
   const [loading, setLoading] = useState(false);
@@ -259,7 +280,9 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
       if (stopped || !rect) return;
       const visible =
         !document.querySelector('dialog[open], [role="dialog"], [role="listbox"]') &&
-        !document.hidden;
+        !document.hidden &&
+        !!getBrowserRequest() &&
+        !viewport.current?.closest('[inert], .motion-panel[data-moving="true"]');
       const next = JSON.stringify({ rect, visible });
       if (next === previous) return;
       running = true;
@@ -288,7 +311,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['open', 'role', 'style'],
+      attributeFilter: ['open', 'role', 'style', 'inert', 'data-moving'],
     });
     window.addEventListener('resize', schedule);
     document.addEventListener('visibilitychange', schedule);
