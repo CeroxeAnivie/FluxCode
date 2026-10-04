@@ -2035,7 +2035,7 @@ test('stopping pauses queued work until an explicit resume', async ({ page }) =>
   await page.getByRole('textbox', { name: '任务描述' }).fill('long-running');
   await page.getByRole('button', { name: '发送任务', exact: true }).click();
   await page.getByRole('textbox', { name: '任务描述' }).fill('queued-work');
-  await page.getByRole('button', { name: '排队发送', exact: true }).click();
+  await page.getByRole('textbox', { name: '任务描述' }).press('Control+Enter');
   await page.getByRole('button', { name: '停止任务', exact: true }).click();
   await expect(page.locator('.queued-messages')).toContainText('已暂停');
   await expect(page.locator('.queued-messages')).toContainText('queued-work');
@@ -2049,7 +2049,7 @@ test('a queued action survives reload without automatic replay', async ({ page }
   await page.getByRole('textbox', { name: '任务描述' }).fill('long-running');
   await page.getByRole('button', { name: '发送任务', exact: true }).click();
   await page.getByRole('textbox', { name: '任务描述' }).fill('after-restart');
-  await page.getByRole('button', { name: '排队发送', exact: true }).click();
+  await page.getByRole('textbox', { name: '任务描述' }).press('Control+Enter');
   await expect(page.locator('.queued-messages')).toContainText('after-restart');
   await page.reload();
   await expect(page.locator('.queued-messages')).toContainText('after-restart');
@@ -2069,7 +2069,7 @@ test('a queued send failure remains visible and does not consume the message', a
   await page.getByRole('textbox', { name: '任务描述' }).fill('long-running');
   await page.getByRole('button', { name: '发送任务', exact: true }).click();
   await page.getByRole('textbox', { name: '任务描述' }).fill('trigger-failure');
-  await page.getByRole('button', { name: '排队发送', exact: true }).click();
+  await page.getByRole('textbox', { name: '任务描述' }).press('Control+Enter');
   await page.getByRole('button', { name: '停止任务', exact: true }).click();
   await page.getByRole('button', { name: '继续发送', exact: true }).click();
   await expect(page.locator('.queued-messages')).toContainText('trigger-failure');
@@ -2077,12 +2077,7 @@ test('a queued send failure remains visible and does not consume the message', a
   await page.reload();
   await expect(page.locator('.queued-messages')).toContainText('trigger-failure');
   await expect(page.locator('.queued-messages')).toContainText('重试');
-  await page.getByRole('button', { name: '移除', exact: true }).click();
-  await expect(page.getByText('确认移除此待发送消息？')).toBeVisible();
-  await page.getByRole('button', { name: '取消', exact: true }).click();
-  await expect(page.locator('.queued-messages')).toContainText('trigger-failure');
-  await page.getByRole('button', { name: '移除', exact: true }).click();
-  await page.getByRole('button', { name: '确认删除', exact: true }).click();
+  await page.getByRole('button', { name: '取消排队', exact: true }).click();
   await expect(page.locator('.queued-messages')).toHaveCount(0);
 });
 
@@ -2091,7 +2086,7 @@ test('a queued turn accepted by the engine remains until stream completion', asy
   await page.getByRole('textbox', { name: '任务描述' }).fill('long-running');
   await page.getByRole('button', { name: '发送任务', exact: true }).click();
   await page.getByRole('textbox', { name: '任务描述' }).fill('stream-failure');
-  await page.getByRole('button', { name: '排队发送', exact: true }).click();
+  await page.getByRole('textbox', { name: '任务描述' }).press('Control+Enter');
   await page.getByRole('button', { name: '停止任务', exact: true }).click();
   await page.getByRole('button', { name: '继续发送', exact: true }).click();
   await expect(page.locator('.queued-messages')).toContainText('发送中');
@@ -4010,4 +4005,384 @@ test('quiet defaults keep one status area and compact starter actions while cont
   await expect(context).toBeVisible();
   await context.locator('summary').click();
   await expect(context.getByRole('button', { name: '压缩上下文' })).toBeVisible();
+});
+
+async function observeSteering(page: import('@playwright/test').Page, fail = false) {
+  await page.evaluate((fail) => {
+    const bridge = window.__FLUX_TEST_BRIDGE__!;
+    const rpc = bridge.rpc.bind(bridge);
+    bridge.rpc = async (method, params) => {
+      if (method === 'turn/steer') {
+        const calls = JSON.parse(localStorage.getItem('fixture-steers') ?? '[]');
+        calls.push(params);
+        localStorage.setItem('fixture-steers', JSON.stringify(calls));
+        if (fail) throw new Error('Fixture insertion rejected');
+      }
+      return rpc(method, params);
+    };
+  }, fail);
+}
+
+test('Ctrl Enter queues once and inserts that exact message on the next press without duplicate buttons', async ({
+  page,
+}) => {
+  await setup(page);
+  await observeSteering(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '排队发送', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '立即补充', exact: true })).toHaveCount(0);
+  await input.fill('insert-this-message');
+  await input.press('Control+Enter');
+  await expect(input).toHaveValue('');
+  await expect(page.locator('.queued-messages')).toContainText('insert-this-message');
+  await expect(page.locator('.composer-shortcut')).toContainText('已加入队列');
+  await expect(input).toBeFocused();
+  await expect(page.locator('.conversation-scroll')).toHaveCount(1);
+  await input.press('Control+Enter');
+  await expect(page.locator('.queued-messages')).toHaveCount(0);
+  await input.press('Control+Enter');
+  const calls = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('fixture-steers') ?? '[]'),
+  );
+  expect(calls).toHaveLength(1);
+  expect(calls[0].input[0].text).toBe('insert-this-message');
+  expect(calls[0].expectedTurnId).toBe('turn-1');
+});
+
+test('Ctrl Enter rapid presses ignore held keys and retain messages when insertion fails', async ({
+  page,
+}) => {
+  await setup(page);
+  await observeSteering(page, true);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await input.fill('keep-on-failure');
+  await input.evaluate((node) => {
+    node.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }),
+    );
+    node.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, repeat: true, bubbles: true }),
+    );
+  });
+  await expect(page.locator('.queued-messages')).toContainText('keep-on-failure');
+  expect(await page.evaluate(() => localStorage.getItem('fixture-steers'))).toBeNull();
+  await input.evaluate((node) => {
+    for (let i = 0; i < 3; i++)
+      node.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }),
+      );
+  });
+  await expect(page.locator('.queued-messages')).toContainText('插入未确认');
+  await expect(page.locator('.queued-messages')).toContainText('keep-on-failure');
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('fixture-steers') ?? '[]').length),
+  ).toBe(1);
+});
+
+test('Ctrl Enter never inserts an older queued draft after the user starts another message', async ({
+  page,
+}) => {
+  await setup(page);
+  await observeSteering(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await input.fill('first-queued');
+  await input.press('Control+Enter');
+  await expect(input).toHaveValue('');
+  await input.fill('second-queued');
+  await input.press('Control+Enter');
+  await expect(page.locator('.queued-messages')).toContainText('first-queued');
+  await expect(page.locator('.queued-messages')).toContainText('second-queued');
+  await input.press('Control+Enter');
+  await expect(page.locator('.queued-messages')).toContainText('first-queued');
+  await expect(page.locator('.queued-messages')).not.toContainText('second-queued');
+  const calls = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('fixture-steers') ?? '[]'),
+  );
+  expect(calls).toHaveLength(1);
+  expect(calls[0].input[0].text).toBe('second-queued');
+});
+
+test('composer controls align right and working feedback stays live with reduced motion', async ({
+  page,
+}) => {
+  await setup(page);
+  await page.setViewportSize({ width: 960, height: 720 });
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  const elapsed = page.locator('.working-elapsed');
+  await expect(elapsed).toBeVisible();
+  const animation = await page
+    .locator('.working-indicator > span')
+    .first()
+    .evaluate((node) => ({
+      name: getComputedStyle(node).animationName,
+      frames: (node.getAnimations()[0]?.effect as KeyframeEffect | null)?.getKeyframes(),
+    }));
+  expect(animation.name).toBe('working-bounce');
+  expect(animation.frames?.some((frame) => frame.transform === 'translateY(-5px)')).toBe(true);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const before = await elapsed.textContent();
+  await expect(elapsed).not.toHaveText(before!);
+  const toolbar = (await page.locator('.composer-toolbar').boundingBox())!;
+  const right = (await page.locator('.composer-right').boundingBox())!;
+  expect(toolbar.x + toolbar.width - right.x - right.width).toBeLessThan(18);
+  expect(right.x).toBeGreaterThanOrEqual(toolbar.x);
+  const model = (await page.getByRole('combobox', { name: '当前会话模型' }).boundingBox())!;
+  const effort = (await page.getByRole('combobox', { name: '推理强度' }).boundingBox())!;
+  expect(effort.x).toBeGreaterThan(model.x);
+  expect(
+    await page.locator('.composer').evaluate((node) => node.scrollWidth <= node.clientWidth),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1440, height: 940 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.screenshot({ path: 'test-results/composer-refined.png' });
+});
+
+test('Ctrl Enter immediate double press preserves attachments and does not target another task', async ({
+  page,
+}) => {
+  await setup(page);
+  await observeSteering(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    window.__FLUX_TEST_BRIDGE__!.chooseAttachments = async () => ['D:/Fixtures/spec.md'];
+  });
+  await page.getByRole('button', { name: '添加文件或图片', exact: true }).click();
+  await expect(page.locator('.attachment-list')).toContainText('spec.md');
+  await input.fill('immediate-with-attachment');
+  await input.evaluate((node) => {
+    for (let i = 0; i < 2; i++)
+      node.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }),
+      );
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(() => JSON.parse(localStorage.getItem('fixture-steers') ?? '[]').length),
+    )
+    .toBe(1);
+  await expect(page.locator('.queued-messages')).toHaveCount(0);
+  const calls = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('fixture-steers') ?? '[]'),
+  );
+  expect(calls[0].input[0].text).toBe('immediate-with-attachment');
+  expect(calls[0].input.length).toBeGreaterThan(1);
+  await input.fill('leave-in-old-task');
+  await input.press('Control+Enter');
+  await expect(page.locator('.queued-messages')).toContainText('leave-in-old-task');
+  await page.getByRole('button', { name: '新建任务 Ctrl N', exact: true }).click();
+  await input.press('Control+Enter');
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('fixture-steers') ?? '[]').length),
+  ).toBe(1);
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('fluxcode.queue.v1') ?? '[]').map(
+        (row: { text: string }) => row.text,
+      ),
+    ),
+  ).toContain('leave-in-old-task');
+});
+
+test('Ctrl Enter cannot insert a message after the running turn stops', async ({ page }) => {
+  await setup(page);
+  await observeSteering(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await input.fill('keep-after-stop');
+  await input.press('Control+Enter');
+  await page.getByRole('button', { name: '停止任务', exact: true }).click();
+  await expect(page.locator('.queued-messages')).toContainText('已暂停');
+  await input.press('Control+Enter');
+  await expect(page.locator('.queued-messages')).toContainText('keep-after-stop');
+  expect(await page.evaluate(() => localStorage.getItem('fixture-steers'))).toBeNull();
+});
+
+test('sent message bubbles center a single line and render Markdown without extra outer spacing', async ({
+  page,
+}) => {
+  await setup(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('单行消息');
+  await input.press('Enter');
+  const first = page.locator('.user-text').first();
+  await expect(first.locator('p')).toHaveText('单行消息');
+  const gaps = await first.evaluate((node) => {
+    const outer = node.getBoundingClientRect();
+    const inner = node.querySelector('p')!.getBoundingClientRect();
+    return { top: inner.top - outer.top, bottom: outer.bottom - inner.bottom };
+  });
+  expect(Math.abs(gaps.top - gaps.bottom)).toBeLessThan(1);
+  await expect(page.getByRole('button', { name: '发送任务', exact: true })).toBeVisible();
+  await input.fill(
+    '# 排版检查\n\n**粗体**、*强调*与 `inline()`，以及 [文档](https://example.test/docs)。\n第二行\n\n- 列表项目\n- 另一个项目\n\n> 引用内容\n\n```ts\nconst answer = 42;\n```\n\n| 名称 | 状态 |\n| --- | --- |\n| Markdown | 可用 |\n\n- [x] 已完成',
+  );
+  await input.press('Enter');
+  const bubble = page.locator('.user-text').last();
+  await expect(bubble.locator('h1')).toHaveText('排版检查');
+  await expect(bubble.locator('strong')).toHaveText('粗体');
+  await expect(bubble.locator('em')).toHaveText('强调');
+  await expect(bubble.getByRole('link', { name: '文档' })).toHaveAttribute(
+    'href',
+    'https://example.test/docs',
+  );
+  await expect(bubble.locator('pre code')).toContainText('const answer = 42;');
+  await expect(bubble.locator('blockquote')).toContainText('引用内容');
+  await expect(bubble.locator('table')).toContainText('Markdown');
+  await expect(bubble.getByRole('checkbox')).toBeChecked();
+  expect(await bubble.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe('normal');
+  const edges = await bubble.evaluate((node) => ({
+    top: getComputedStyle(node.firstElementChild!).marginTop,
+    bottom: getComputedStyle(node.lastElementChild!).marginBottom,
+  }));
+  expect(edges).toEqual({ top: '0px', bottom: '0px' });
+  await page.screenshot({ path: 'test-results/message-markdown.png' });
+});
+
+test('queue docks against the composer and edits in place without losing order or attachments', async ({
+  page,
+}) => {
+  await setup(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await input.fill('first-in-queue');
+  await input.press('Control+Enter');
+  await input.fill('second-in-queue');
+  await input.press('Control+Enter');
+  const queue = page.getByRole('region', { name: '待发送消息' });
+  const first = queue.getByRole('listitem').first();
+  await first.getByRole('button', { name: '编辑待发送消息', exact: true }).click();
+  const editor = first.getByRole('textbox', { name: '编辑待发送消息' });
+  await expect(editor).toHaveValue('first-in-queue');
+  await expect(editor).toBeFocused();
+  await editor.fill('edited-first-message');
+  await first.getByRole('button', { name: '保存修改' }).click();
+  await expect(first).toContainText('edited-first-message');
+  await expect(first).toContainText('等待上一轮完成');
+  await expect(queue.getByRole('listitem').nth(1)).toContainText('second-in-queue');
+  await first.getByRole('button', { name: '编辑待发送消息' }).click();
+  await editor.fill('discard-this-edit');
+  await first.getByRole('button', { name: '取消编辑' }).click();
+  await expect(first).toContainText('edited-first-message');
+  await expect(first).not.toContainText('discard-this-edit');
+  const dock = (await queue.boundingBox())!;
+  const composer = (await page.locator('.composer').boundingBox())!;
+  expect(Math.abs(dock.x - composer.x)).toBeLessThan(1);
+  expect(Math.abs(dock.width - composer.width)).toBeLessThan(1);
+  expect(composer.y - dock.y - dock.height).toBeLessThanOrEqual(7);
+  await page.screenshot({ path: 'test-results/queue-docked.png' });
+  await first.getByRole('button', { name: '取消排队' }).click();
+  await expect(queue.getByRole('listitem')).toHaveCount(1);
+  await expect(queue).not.toContainText('edited-first-message');
+  await expect(queue).toContainText('second-in-queue');
+});
+
+test('an editing queued message stays paused when the running task is stopped', async ({
+  page,
+}) => {
+  await setup(page);
+  const input = page.getByRole('textbox', { name: '任务描述' });
+  await input.fill('long-running');
+  await input.press('Enter');
+  await expect(page.getByRole('button', { name: '停止任务', exact: true })).toBeVisible();
+  await input.fill('edit-while-running');
+  await input.press('Control+Enter');
+  await page.getByRole('button', { name: '编辑待发送消息' }).click();
+  await page.getByRole('textbox', { name: '编辑待发送消息' }).fill('saved-after-stop');
+  await page.getByRole('button', { name: '停止任务', exact: true }).click();
+  await page.getByRole('button', { name: '保存修改' }).click();
+  await expect(page.locator('.queued-messages')).toContainText('已暂停');
+  await expect(page.locator('.queued-messages')).toContainText('saved-after-stop');
+  await expect(page.locator('.user-message')).not.toContainText('saved-after-stop');
+  await page.getByRole('button', { name: '继续发送', exact: true }).click();
+  await expect(page.locator('.user-message')).toContainText('saved-after-stop');
+});
+
+test('agent browser tool opens the real panel and acknowledges native navigation or failure once', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__FLUX_TEST_BROWSER__ = {
+      command: async (action) => {
+        const rows = JSON.parse(localStorage.getItem('fixture-agent-browser-actions') ?? '[]');
+        rows.push(action);
+        localStorage.setItem('fixture-agent-browser-actions', JSON.stringify(rows));
+        if (action.kind === 'navigate' && action.url.endsWith('/fail'))
+          throw new Error('Fixture navigation failed');
+      },
+      subscribe: async () => () => {},
+      subscribeAgent: async (handler) => {
+        const listener = (event: Event) => handler((event as CustomEvent).detail);
+        window.addEventListener('fixture-agent-browser', listener);
+        return () => window.removeEventListener('fixture-agent-browser', listener);
+      },
+      completeAgent: async (id, error) => {
+        const rows = JSON.parse(localStorage.getItem('fixture-agent-browser-replies') ?? '[]');
+        rows.push({ id, error });
+        localStorage.setItem('fixture-agent-browser-replies', JSON.stringify(rows));
+      },
+    };
+  });
+  await page.reload();
+  await setup(page);
+  const dispatch = async (id: string, action: string, url?: string) =>
+    page.evaluate(
+      (detail) => window.dispatchEvent(new CustomEvent('fixture-agent-browser', { detail })),
+      { id, action, url },
+    );
+  const replies = () =>
+    page.evaluate(() => JSON.parse(localStorage.getItem('fixture-agent-browser-replies') ?? '[]'));
+  await dispatch('open-1', 'open', 'https://example.test/preview');
+  await expect(page.getByRole('complementary', { name: '应用内浏览器' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: '网页地址' })).toHaveValue(
+    'https://example.test/preview',
+  );
+  await expect.poll(replies).toEqual([{ id: 'open-1', error: null }]);
+  await expect(page.locator('.browser-agent-badge')).toHaveText('智能体浏览');
+  const navigations = () =>
+    page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem('fixture-agent-browser-actions') ?? '[]').filter(
+          (action: { kind: string }) => action.kind === 'navigate',
+        ).length,
+    );
+  const navigationCount = await navigations();
+  await dispatch('read-1', 'read_page');
+  await expect.poll(replies).toEqual([
+    { id: 'open-1', error: null },
+    { id: 'read-1', error: null },
+  ]);
+  await expect(page.getByRole('complementary', { name: '应用内浏览器' })).toBeVisible();
+  expect(await navigations()).toBe(navigationCount);
+  await dispatch('open-fail', 'open', 'https://example.test/fail');
+  await expect.poll(replies).toEqual([
+    { id: 'open-1', error: null },
+    { id: 'read-1', error: null },
+    { id: 'open-fail', error: 'Navigation failed' },
+  ]);
+  await dispatch('close-1', 'close');
+  await expect(page.getByRole('complementary', { name: '应用内浏览器' })).toHaveCount(0);
+  await expect.poll(replies).toEqual([
+    { id: 'open-1', error: null },
+    { id: 'read-1', error: null },
+    { id: 'open-fail', error: 'Navigation failed' },
+    { id: 'close-1', error: null },
+  ]);
 });
