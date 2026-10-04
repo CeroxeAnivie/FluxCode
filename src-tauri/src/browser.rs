@@ -77,7 +77,7 @@ fn emit(
     }
 }
 
-fn remote_url(value: &str, dev_origin: Option<&str>) -> Result<url::Url, String> {
+pub(crate) fn remote_url(value: &str, dev_origin: Option<&str>) -> Result<url::Url, String> {
     let url = crate::external_links::validate(value)?;
     if matches!(
         url.host_str(),

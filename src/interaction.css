@@ -403,3 +403,229 @@ dialog .dialog-header h2 {
     margin-bottom: 14px;
   }
 }
+
+/* Keep the project on the left and model, reasoning and send controls together. */
+.composer-toolbar {
+  flex-wrap: wrap;
+}
+.composer-toolbar > .composer-options {
+  flex: 1 1 auto;
+}
+.composer-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.composer-model-options {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+}
+.composer-model-options .model-select {
+  min-width: 0;
+  max-width: min(220px, 30cqw);
+}
+.composer-right > .send-button {
+  flex-shrink: 0;
+}
+.composer-footnote {
+  flex-wrap: wrap;
+}
+.composer-shortcut {
+  margin-right: auto;
+  min-width: 0;
+}
+.working-indicator > span:not(.working-text) {
+  width: 6px;
+  height: 6px;
+  animation: working-bounce 1.2s ease-in-out infinite;
+}
+.working-indicator > span:nth-child(2) {
+  animation-delay: 0.16s;
+}
+.working-indicator > span:nth-child(3) {
+  animation-delay: 0.32s;
+}
+.working-elapsed {
+  margin-left: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+@keyframes working-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+/* Markdown blocks own their spacing; the bubble supplies equal outer padding. */
+.user-text.markdown {
+  white-space: normal;
+}
+.user-text.markdown > p {
+  white-space: pre-wrap;
+}
+.markdown > :first-child {
+  margin-top: 0;
+}
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+.markdown :where(pre, blockquote, ul, ol, table) {
+  margin-block: 0 12px;
+}
+.markdown :where(ul, ol) {
+  padding-inline-start: 1.5em;
+}
+.markdown li + li {
+  margin-top: 4px;
+}
+.markdown li > :last-child {
+  margin-bottom: 0;
+}
+.markdown :where(h1, h2, h3, h4, h5, h6) {
+  margin-block: 18px 8px;
+  line-height: 1.4;
+}
+.markdown blockquote {
+  margin-inline: 0;
+  padding: 2px 12px;
+  border-left: 3px solid var(--border);
+  color: var(--muted);
+}
+.markdown blockquote > :last-child {
+  margin-bottom: 0;
+}
+.markdown pre {
+  white-space: pre;
+  overflow-wrap: normal;
+}
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: 16px;
+}
+.markdown .contains-task-list {
+  list-style: none;
+  padding-inline-start: 0;
+}
+.markdown .task-list-item > input {
+  margin-right: 7px;
+  vertical-align: middle;
+}
+
+.composer-wrap > .queued-messages {
+  margin: 0 0 6px;
+  padding: 0;
+  width: 100%;
+  max-height: min(30vh, 260px);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.queued-messages > header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.queue-count {
+  font-variant-numeric: tabular-nums;
+}
+.queued-messages > ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.queued-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+.queued-row + .queued-row {
+  border-top: 1px solid var(--border);
+}
+.queued-content {
+  flex: 1;
+  min-width: 0;
+}
+.queued-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.queued-content small,
+.queued-attachments {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.queued-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.queued-actions .icon-button {
+  width: 28px;
+  height: 28px;
+}
+.queued-actions > button:not(.icon-button) {
+  font-size: 12px;
+  color: var(--primary);
+}
+.queue-editor {
+  width: 100%;
+}
+.queue-editor textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 72px;
+  max-height: 140px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--input);
+}
+.queue-editor-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+.queue-editor-footer small {
+  color: var(--muted);
+  margin-right: auto;
+  font-size: 12px;
+}
+.queue-editor-footer button {
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+.queue-save {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+.queued-error {
+  width: 100%;
+  font-size: 12px;
+}

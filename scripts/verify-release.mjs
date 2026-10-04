@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { assertPackagedExecutable } from './lib/release-binary.mjs';
+import { assertBrowserMcpExecutable } from './lib/browser-mcp-release.mjs';
 import { readEngineRelease } from './lib/engine-release.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -118,6 +119,7 @@ assertPackagedExecutable(
   await readFile(resolve(extracted, 'fluxcode.exe')),
   await readFile(resolve(root, 'src-tauri/target/release/fluxcode.exe')),
 );
+await assertBrowserMcpExecutable(resolve(extracted, 'fluxcode.exe'));
 let resourceCount = 0;
 for (const directory of ['engine', 'legal']) {
   const sourceRoot = resolve(root, 'src-tauri/resources', directory);
@@ -143,6 +145,7 @@ console.log(
       engineVersion: release.version,
       productionTestTransport: false,
       executableContentMatches: true,
+      browserMcpHandshake: true,
       verifiedResources: resourceCount,
       extractedEvidence: extracted,
     },

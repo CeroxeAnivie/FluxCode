@@ -5,6 +5,10 @@ import { webLink } from '../domain/links';
 import { browserAddress } from '../domain/browserAddress';
 import {
   browserAvailable,
+  closeBrowserPanel,
+  markBrowserAgentControl,
+  completeAgentBrowser,
+  subscribeAgentBrowser,
   browserCommand,
   dismissBrowser,
   getBrowserRequest,
@@ -25,6 +29,41 @@ function clampWidth(value: number) {
 }
 
 export function BrowserPanel() {
+  useEffect(() => {
+    if (!browserAvailable()) return;
+    let disposed = false;
+    let off: (() => void) | undefined;
+    void subscribeAgentBrowser((event) => {
+      if (disposed) return;
+      void (async () => {
+        try {
+          if (event.action === 'open') {
+            if (!event.url) throw new Error('Missing URL');
+            requestBrowser(event.url, event.id);
+            return;
+          }
+          if (event.action === 'close') await closeBrowserPanel();
+          else {
+            if (!getBrowserRequest()) throw new Error('Browser is closed');
+            markBrowserAgentControl(true);
+            if (event.action !== 'read_page') await browserCommand({ kind: event.action });
+          }
+          completeAgentBrowser(event.id);
+        } catch {
+          completeAgentBrowser(event.id, 'Browser action failed');
+        }
+      })();
+    })
+      .then((unsubscribe) => {
+        if (disposed) unsubscribe();
+        else off = unsubscribe;
+      })
+      .catch(() => console.warn('browser_tool_subscription_failed'));
+    return () => {
+      disposed = true;
+      off?.();
+    };
+  }, []);
   const request = useSyncExternalStore(subscribeBrowserRequest, getBrowserRequest, () => null);
   return request ? <BrowserSurface request={request} /> : null;
 }
@@ -122,9 +161,17 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
     if (!available || !rect) return;
     setLoading(true);
     let active = true;
-    void browserCommand({ kind: 'navigate', url: request.url, bounds: rect }).catch(() => {
-      if (active) report();
-    });
+    void browserCommand({ kind: 'navigate', url: request.url, bounds: rect })
+      .then(() => {
+        if (active && request.agentRequestId) completeAgentBrowser(request.agentRequestId);
+      })
+      .catch(() => {
+        if (active) {
+          report();
+          if (request.agentRequestId)
+            completeAgentBrowser(request.agentRequestId, 'Navigation failed');
+        }
+      });
     return () => {
       active = false;
     };
@@ -265,6 +312,11 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             <Globe size={15} />
             {t('浏览器')}
           </span>
+          {request.agentControlled && (
+            <span className="browser-agent-badge" role="status">
+              {t('智能体浏览')}
+            </span>
+          )}
           <button
             className="icon-button"
             aria-label={t('关闭浏览器')}
@@ -289,7 +341,10 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             aria-label={t('后退')}
             title={t('后退')}
             disabled={!currentUrl || !available}
-            onClick={() => void browserCommand({ kind: 'back' }).catch(report)}
+            onClick={() => {
+              markBrowserAgentControl(false);
+              void browserCommand({ kind: 'back' }).catch(report);
+            }}
           >
             <ArrowLeft size={16} />
           </button>
@@ -299,7 +354,10 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
             aria-label={t('前进')}
             title={t('前进')}
             disabled={!currentUrl || !available}
-            onClick={() => void browserCommand({ kind: 'forward' }).catch(report)}
+            onClick={() => {
+              markBrowserAgentControl(false);
+              void browserCommand({ kind: 'forward' }).catch(report);
+            }}
           >
             <ArrowRight size={16} />
           </button>
@@ -313,6 +371,7 @@ function BrowserSurface({ request }: { request: BrowserRequest }) {
               setError('');
               const rect = bounds();
               if (rect) {
+                markBrowserAgentControl(false);
                 setLoading(true);
                 void browserCommand({ kind: 'navigate', url: currentUrl, bounds: rect }).catch(
                   report,

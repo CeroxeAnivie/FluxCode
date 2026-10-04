@@ -1,6 +1,8 @@
 mod attachments;
 mod backup;
 mod browser;
+mod browser_agent;
+pub mod browser_mcp;
 mod config;
 mod configuration;
 mod context;
@@ -562,15 +564,22 @@ async fn engine_rpc(
         params["modelProvider"] = json!("fluxcode");
         params.as_object_mut().unwrap().remove("config");
     }
-    if method == "thread/start" {
-        let cwd = params
-            .get("cwd")
-            .and_then(Value::as_str)
-            .ok_or("任务缺少项目目录")?;
-        workspace::scoped_path(cwd, "")?;
+    if matches!(
+        method.as_str(),
+        "thread/start" | "thread/resume" | "thread/fork"
+    ) {
+        let cwd = params.get("cwd").and_then(Value::as_str);
+        if method == "thread/start" && cwd.is_none() {
+            return Err("任务缺少项目目录".into());
+        }
+        if let Some(cwd) = cwd {
+            workspace::scoped_path(cwd, "")?;
+        }
         let config = state.configuration.config().await;
-        let instructions = context::instructions(&config, cwd);
-        params["developerInstructions"] = json!(instructions);
+        params["developerInstructions"] = json!(context::instructions(
+            &config,
+            cwd.unwrap_or("Current task working directory reported by the engine")
+        ));
     }
     if matches!(method.as_str(), "turn/start" | "command/exec") {
         params["sandboxPolicy"] = json!({"type":"dangerFullAccess"});
@@ -1102,6 +1111,7 @@ pub fn run() -> Result<(), String> {
     }
     let app = tauri::Builder::default()
         .manage(browser::BrowserState::default())
+        .manage(browser_agent::BrowserAgentState::default())
         .manage(workspace_windows::Windows::default())
         .plugin(
             tauri_plugin_window_state::Builder::default()
@@ -1224,6 +1234,7 @@ pub fn run() -> Result<(), String> {
             workspace_windows::runtime_resource_usage,
             external_links::open_external_link,
             browser::browser_command,
+            browser_agent::complete_browser_agent_request,
             external_links::open_workspace_file,
             configuration_snapshot,
             configuration_runtime_idle,

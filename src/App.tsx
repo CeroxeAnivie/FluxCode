@@ -487,6 +487,25 @@ export default function App({
             )}
             {!task?.imported && !project?.imported && (
               <Composer
+                queueControl={
+                  <QueuedMessages
+                    items={queue.items.filter((item) => item.threadId === app.selectedTaskId)}
+                    busy={conversation.busy}
+                    onBeginEdit={queue.beginEdit}
+                    onFinishEdit={queue.finishEdit}
+                    onRemove={queue.remove}
+                    onRetry={queue.retry}
+                  />
+                }
+                queueScope={`${app.selectedTaskId ?? project?.id ?? 'new'}:${conversation.turnId ?? ''}`}
+                queuedIds={queue.items
+                  .filter((row) => row.threadId === app.selectedTaskId && row.status === 'waiting')
+                  .map((row) => row.id)}
+                onPromote={(id) =>
+                  app.selectedTaskId && conversation.turnId
+                    ? queue.promote(id, app.selectedTaskId, conversation.turnId)
+                    : Promise.resolve(false)
+                }
                 contextControl={
                   task ? (
                     <UsageIndicator
@@ -514,17 +533,6 @@ export default function App({
                     : false;
                   if (ok) context.clear();
                   return ok;
-                }}
-                onSteer={async (text) => {
-                  if (!app.selectedTaskId || !conversation.turnId) return false;
-                  try {
-                    await queue.steer(app.selectedTaskId, conversation.turnId, text, context.items);
-                    context.clear();
-                    return true;
-                  } catch (e) {
-                    app.setError(String(e));
-                    return false;
-                  }
                 }}
                 project={project?.imported ? t('导入的对话') : project?.name}
                 model={app.selection.model}
@@ -558,12 +566,6 @@ export default function App({
                 }}
               />
             )}
-            <QueuedMessages
-              items={queue.items.filter((item) => item.threadId === app.selectedTaskId)}
-              busy={conversation.busy}
-              onRemove={queue.remove}
-              onRetry={queue.retry}
-            />
             {interactions.elicitations
               .filter((r) => r.threadId === app.selectedTaskId)
               .map((request) => (

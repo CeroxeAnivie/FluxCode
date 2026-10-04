@@ -92,6 +92,7 @@ impl Drop for PendingRequest<'_> {
 }
 
 pub struct Engine {
+    _browser_tools: crate::browser_agent::Runtime,
     #[cfg(windows)]
     job: Mutex<Option<std::os::windows::io::OwnedHandle>>,
     child: AsyncMutex<Child>,
@@ -125,12 +126,32 @@ impl Engine {
             .map_err(|e| e.to_string())?;
         let sqlite_home = crate::runtime_paths::sqlite_home(home)
             .map_err(|e| format!("无法解析引擎数据目录：{e}"))?;
+        let browser_tools = crate::browser_agent::start(app.clone())?;
         let mut command = Command::new(binary);
         // CreateProcess still rejects some long working directories even when
         // filesystem APIs accept the extended-length path. This alias refers
         // to the exact same validated engine-home directory.
         command.current_dir(&sqlite_home);
         command.arg("app-server").arg("--listen").arg("stdio://");
+        let mut browser_config = toml_edit::InlineTable::new();
+        browser_config.insert(
+            "command",
+            std::env::current_exe()
+                .map_err(|_| "无法定位浏览器工具程序")?
+                .to_string_lossy()
+                .to_string()
+                .into(),
+        );
+        let mut browser_args = toml_edit::Array::new();
+        browser_args.push("--fluxcode-browser-mcp");
+        browser_args.push(browser_tools.pipe.as_str());
+        browser_config.insert("args", browser_args.into());
+        browser_config.insert("startup_timeout_sec", 15.into());
+        browser_config.insert("tool_timeout_sec", 25.into());
+        browser_config.insert("enabled", true.into());
+        command
+            .arg("-c")
+            .arg(format!("mcp_servers.fluxcode_browser={browser_config}"));
         let catalog_path = home.join("model-catalog.json");
         tokio::fs::write(
             &catalog_path,
@@ -185,6 +206,7 @@ impl Engine {
         let engine = Arc::new(Self {
             #[cfg(windows)]
             job: Mutex::new(Some(job)),
+            _browser_tools: browser_tools,
             child: AsyncMutex::new(child),
             stdin: AsyncMutex::new(stdin),
             pending: Mutex::new(HashMap::new()),

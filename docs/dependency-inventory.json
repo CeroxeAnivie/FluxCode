@@ -1850,6 +1850,11 @@
     "license": "MIT"
   },
   {
+    "name": "futures",
+    "version": "0.3.34",
+    "license": "MIT OR Apache-2.0"
+  },
+  {
     "name": "futures-channel",
     "version": "0.3.34",
     "license": "MIT OR Apache-2.0"
@@ -2620,6 +2625,11 @@
     "license": "MIT OR Apache-2.0"
   },
   {
+    "name": "pastey",
+    "version": "0.2.1",
+    "license": "MIT OR Apache-2.0"
+  },
+  {
     "name": "percent-encoding",
     "version": "2.3.2",
     "license": "MIT OR Apache-2.0"
@@ -2855,6 +2865,16 @@
     "license": "Apache-2.0 AND ISC"
   },
   {
+    "name": "rmcp",
+    "version": "3.2.0",
+    "license": "Apache-2.0"
+  },
+  {
+    "name": "rmcp-macros",
+    "version": "3.2.0",
+    "license": "Apache-2.0"
+  },
+  {
     "name": "rusqlite",
     "version": "0.37.0",
     "license": "MIT"
@@ -2940,6 +2960,11 @@
     "license": "MIT"
   },
   {
+    "name": "schemars_derive",
+    "version": "1.2.2",
+    "license": "MIT"
+  },
+  {
     "name": "scopeguard",
     "version": "1.2.0",
     "license": "MIT OR Apache-2.0"
@@ -2992,6 +3017,11 @@
   {
     "name": "serde_derive_internals",
     "version": "0.29.1",
+    "license": "MIT OR Apache-2.0"
+  },
+  {
+    "name": "serde_derive_internals",
+    "version": "0.30.0",
     "license": "MIT OR Apache-2.0"
   },
   {

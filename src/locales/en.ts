@@ -1,5 +1,22 @@
 /** Source-language keys keep UI text reviewable; dynamic provider text is never translated. */
 export const english: Record<string, string> = {
+  '已加入队列 · 再按 Ctrl + Enter 立即插入': 'Queued · Ctrl + Enter again to insert now',
+  'Ctrl + Enter 加入队列 · 再按一次立即插入': 'Ctrl + Enter to queue · Press again to insert now',
+  '正在插入当前任务，请勿重复发送。': 'Inserting into the current task. Do not send again.',
+  '插入未确认，请检查当前任务后重试。':
+    'Insertion was not confirmed. Check the current task before retrying.',
+  本次等待时间: 'Elapsed waiting time',
+  编辑待发送消息: 'Edit queued message',
+  取消排队: 'Cancel queued message',
+  编辑期间暂停发送: 'Sending is paused while editing',
+  取消编辑: 'Cancel editing',
+  保存修改: 'Save changes',
+  '正在编辑，保存后继续排队。': 'Editing; save to resume queuing.',
+  '消息已开始发送或正在另一个窗口编辑。':
+    'The message is sending or being edited in another window.',
+  '消息状态已改变，修改尚未保存，请保留编辑内容后重试。':
+    'The message state changed. Keep your edits and retry; changes are not saved.',
+  智能体浏览: 'Agent browsing',
   可选: 'Optional',
   开始一个新任务: 'Start a new task',
   '描述你想完成的事情，或选择一个起点。':

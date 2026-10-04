@@ -1,6 +1,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
+    let mut args = std::env::args().skip(1);
+    if args.next().as_deref() == Some("--fluxcode-browser-mcp") {
+        let result = args
+            .next()
+            .ok_or_else(|| "Missing browser IPC endpoint".to_owned())
+            .and_then(fluxcode_lib::browser_mcp::run);
+        if let Err(error) = result {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return;
+    }
     if let Err(error) = fluxcode_lib::run() {
         let english = startup_uses_english();
         let message = localized_startup_message(&error, english);

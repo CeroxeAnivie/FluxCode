@@ -1,5 +1,57 @@
 # Verification
 
+## 0.1.5 composer, queue and browser tool update — 2026-10-04
+
+TypeScript and the targeted 13 unit tests pass (keyboard, queue settlement,
+localization and conversation rendering). Twelve distinct browser scenarios pass
+across the final targeted runs: six Ctrl+Enter/activity cases, five existing queue
+and editor cases, and one Markdown/bubble layout case. The activity layout case
+also passed again after adding the full-width screenshot capture.
+
+The scenarios exercise queue-then-insert, immediate double presses with attachments,
+held-key suppression, draft/task changes, stopped turns, insertion failure retention,
+queue restart recovery, failed dispatch, confirmed stream completion, normal Enter,
+right-aligned controls at 960px, reduced-motion elapsed feedback, symmetric
+single-line bubble padding and actual GFM elements. A fixture initially returned no
+attachments; the attachment case now selects an explicit local fixture path and passes.
+An initial duplicate component key caused repeated conversation mounts; the composer
+now preserves its identity and scopes pending shortcuts by task and turn instead.
+
+The main and independent project windows share the new queue-promotion contract;
+native multi-window behavior was type-checked, not manually exercised in this round.
+Screenshots use local fixture data. No production API calls or upstream engine
+rebuilds were needed. The official rmcp dependency and its transitive additions are
+recorded in the dependency inventory and bundled license notices.
+
+Three final targeted Playwright scenarios pass: adjacent editable queue preserving
+attachments/order, editing while the running turn stops, and agent browser panel
+opening/visible reading/navigation failure/close with one acknowledgement per action.
+TypeScript passes after the final queue lease cleanup.
+
+The native browser smoke script passes against the debug desktop, real WebView2 and
+bundled Codex 0.157.0. A local Responses fixture discovers the namespaced MCP tool,
+opens a real local page, reads its actual text and URL, receives the expected unsafe
+URL rejection, and closes the panel (four tool calls). The test exposed a named-pipe
+instance reuse race, now fixed by preparing the next instance before replying.
+The fixture supplies model tool calls; this does not measure autonomous model choice
+or clicking/form interactions, which are not implemented. Native project-window
+coordination and production provider acceptance were not exercised in this round.
+
+The four Rust browser tests pass (URL/layout boundaries, action schema, MCP tool
+discovery). The Windows normal/build dependency scan queried OSV for 338 packages
+on 2026-10-04 and returned no advisory findings; see windows-rust-advisory-report.json.
+This records known database findings at scan time, not a guarantee of absence of
+vulnerabilities. Final modified text files passed strict UTF-8 decoding and the
+machine-only proxy check.
+
+Final Windows installer: `FluxCode_0.1.5_x64-setup.exe`, 103,678,444 bytes.
+SHA-256: `35168fadf59ad81ff3adbe8b8f004160cbf22b95f327cf451fd1c5847b722717`.
+`node scripts/verify-release.mjs` passed: extracted application matches the built
+executable, all 32 bundled engine/legal resources match, Codex 0.157.0 is reused,
+production test transport is absent, and the extracted release executable completes
+the MCP stdio handshake and exposes the browser tool. The installer is unsigned;
+clean-machine installation remains outside this round’s agreed scope.
+
 ## 0.1.4 interaction update — 2026-10-04
 
 The current UI change passes TypeScript, formatting and strict UTF-8 checks.

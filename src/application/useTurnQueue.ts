@@ -24,6 +24,10 @@ export function useTurnQueue(
   const [items, setItems] = useState<QueuedMessage[]>(initial.items);
   const itemsRef = useRef(items);
   itemsRef.current = items;
+  const editing = useRef(
+    new Map<string, { token: string; original: QueuedMessage; turnId?: string }>(),
+  );
+  const promoting = useRef(new Set<string>());
   const locks = useRef(new Set<string>());
   const dispatching = useRef<string | null>(null);
   const completed = useRef(new Map<string, { turnId: string; status: string; error?: string }>());
@@ -180,15 +184,16 @@ export function useTurnQueue(
       report('待发送消息已达 50 条，请先处理现有消息。');
       return false;
     }
+    const id = crypto.randomUUID();
     const next: QueuedMessage[] = [
       ...itemsRef.current,
-      { id: crypto.randomUUID(), threadId, text, selection, attachments, status: 'waiting' },
+      { id, threadId, text, selection, attachments, status: 'waiting' },
     ];
     if (JSON.stringify(next).length > 2_000_000) {
       report('待发送内容过大，请减少附件或消息。');
       return false;
     }
-    return commit(() => next);
+    return commit(() => next) ? id : false;
   }
   useEffect(() => {
     if (!ready) return;
@@ -313,8 +318,105 @@ export function useTurnQueue(
       ],
     });
   }
+  async function promote(id: string, threadId: string, turnId: string): Promise<boolean> {
+    const item = itemsRef.current.find((row) => row.id === id && row.threadId === threadId);
+    const conversation = conversations[threadId];
+    if (
+      !ready ||
+      !item ||
+      item.status !== 'waiting' ||
+      promoting.current.has(id) ||
+      !conversation?.busy ||
+      conversation.turnId !== turnId
+    )
+      return false;
+    // Persist a non-dispatchable state before contacting the engine. An interrupted
+    // request must never replay automatically, including after an application restart.
+    if (
+      !commit((rows) =>
+        rows.map((row) =>
+          row.id === id
+            ? { ...row, status: 'paused', error: '正在插入当前任务，请勿重复发送。' }
+            : row,
+        ),
+      )
+    )
+      return false;
+    promoting.current.add(id);
+    try {
+      await steer(threadId, turnId, item.text, item.attachments);
+      return commit((rows) => rows.filter((row) => row.id !== id));
+    } catch (error) {
+      commit((rows) =>
+        rows.map((row) =>
+          row.id === id
+            ? { ...row, status: 'failed', error: '插入未确认，请检查当前任务后重试。' }
+            : row,
+        ),
+      );
+      report(String(error));
+      return false;
+    } finally {
+      promoting.current.delete(id);
+    }
+  }
+  function beginEdit(id: string): { token: string; text: string } | false {
+    const item = itemsRef.current.find((row) => row.id === id);
+    if (!item || item.status === 'sending' || promoting.current.has(id) || editing.current.has(id))
+      return false;
+    const token = crypto.randomUUID();
+    if (
+      !commit((rows) =>
+        rows.map((row) =>
+          row.id === id ? { ...row, status: 'paused', error: '正在编辑，保存后继续排队。' } : row,
+        ),
+      )
+    )
+      return false;
+    editing.current.set(id, {
+      token,
+      original: item,
+      turnId: conversations[item.threadId]?.turnId ?? undefined,
+    });
+    return { token, text: item.text };
+  }
+  function finishEdit(id: string, token: string, text: string | null): boolean {
+    const lease = editing.current.get(id);
+    const item = itemsRef.current.find((row) => row.id === id);
+    if (!lease || lease.token !== token) return false;
+    if (!item) {
+      editing.current.delete(id);
+      return false;
+    }
+    if (item.status === 'sending') return false;
+    if (text !== null && (!text.trim() || text.length > 100_000)) return false;
+    const running = conversations[item.threadId];
+    const continues = ready && running?.busy && running.turnId === lease.turnId;
+    const original = lease.original;
+    const status = original.status === 'waiting' && !continues ? 'paused' : original.status;
+    const ok = commit((rows) =>
+      rows.map((row) =>
+        row.id === id
+          ? {
+              ...row,
+              text: text ?? original.text,
+              status,
+              error:
+                status === 'paused' && original.status === 'waiting'
+                  ? '任务已停止，请确认后继续发送。'
+                  : original.error,
+            }
+          : row,
+      ),
+    );
+    if (ok) editing.current.delete(id);
+    return ok;
+  }
   return {
     items,
+    beginEdit,
+    finishEdit,
+    promote,
     enqueue,
     steer,
     pause: (threadId: string) =>
@@ -325,11 +427,22 @@ export function useTurnQueue(
             : row,
         ),
       ),
-    remove: (id: string) =>
-      commit((rows) => rows.filter((row) => row.id !== id || row.status === 'sending')),
+    remove: (id: string) => {
+      const item = itemsRef.current.find((row) => row.id === id);
+      if (item?.status === 'sending' || promoting.current.has(id)) return false;
+      const removed = commit((rows) => rows.filter((row) => row.id !== id));
+      if (removed) editing.current.delete(id);
+      return removed;
+    },
     retry: (id: string) => {
       const item = itemsRef.current.find((row) => row.id === id);
-      if (!item || item.status === 'sending') return false;
+      if (
+        !item ||
+        item.status === 'sending' ||
+        promoting.current.has(id) ||
+        editing.current.has(id)
+      )
+        return false;
       if (conversations[item.threadId]?.busy || locks.current.has(item.threadId)) {
         report('任务仍在运行，请确认完成后再重试待发送消息。');
         return false;

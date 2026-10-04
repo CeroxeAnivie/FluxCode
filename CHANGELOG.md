@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.5 — Composer queue and visible browser tools (2026-10-04)
+
+- Remove the permanent Queue and Send now buttons while a task is running; retain Stop.
+- Ctrl+Enter queues the current draft. Pressing it again with an unchanged empty draft inserts that exact queued message into the running turn, including its attachments.
+- Reserve the queued message durably before insertion; repeated keys cannot send it twice, and uncertain failures require review instead of automatic replay. Changing tasks, editing the draft or ending the turn invalidates the shortcut target.
+- Align model and reasoning controls to the right in both the main and project windows; preserve wrapping in narrow panels.
+- Replace the subtle opacity pulse with staggered moving dots and elapsed waiting time. Reduced-motion preferences remain respected and the timer continues updating.
+- Remove the extra final-paragraph margin in sent messages, restore symmetric bubble padding and apply block-aware Markdown spacing using the existing react-markdown/GFM renderer.
+- Dock the editable, cancellable queue immediately above the composer. Pause messages while editing and preserve order, attachments and stopped-turn state.
+- Register a built-in MCP browser tool using the official rmcp SDK and a bounded Windows named-pipe bridge. Agent navigation automatically opens the main-window right panel with an agent badge; reading retrieves the same visible page. Support open/read/back/forward/reload/close, with no arbitrary scripts or form interaction.
+- Refresh browser tool guidance for new and resumed threads; acknowledge actual desktop actions and surface failures.
+- Reuse bundled Codex 0.157.0 binaries. Include the new dependency licenses; no database or user configuration migration.
+
 ## 0.1.4 — Clear next steps and persistent actions (2026-10-04)
 
 - Simplify the welcome view into a single heading and lightweight starters. Remove duplicate status and dialog headings, move context controls into the composer, and keep empty file panels out of the initial workspace.

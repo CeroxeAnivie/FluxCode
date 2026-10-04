@@ -1,5 +1,6 @@
 export interface InputKey {
   key: string;
+  repeat?: boolean;
   keyCode?: number;
   isComposing?: boolean;
   ctrlKey?: boolean;
@@ -29,6 +30,22 @@ export function shouldSubmitOnEnter(
     !event.ctrlKey &&
     !event.metaKey &&
     !event.altKey &&
+    !isImeCommitKey(event, compositionEndedAt, now)
+  );
+}
+
+export function shouldQueueOnEnter(
+  event: InputKey,
+  compositionEndedAt: number,
+  now: number,
+): boolean {
+  return (
+    event.key === 'Enter' &&
+    !!event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey &&
+    !event.shiftKey &&
+    !event.repeat &&
     !isImeCommitKey(event, compositionEndedAt, now)
   );
 }

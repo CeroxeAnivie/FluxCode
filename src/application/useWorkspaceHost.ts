@@ -105,7 +105,12 @@ export function useWorkspaceHost(
         if (!isModelSelection(command.selection)) throw new Error('模型选择无效');
         return app.createWindowTask(command.projectId, command.title, command.selection);
       }
+      if (command.kind === 'promoteQueue')
+        return queue.promote(command.id, command.taskId, command.turnId);
       if (command.kind === 'stop') return app.stopTask(command.taskId);
+      if (command.kind === 'beginQueueEdit') return queue.beginEdit(command.id);
+      if (command.kind === 'finishQueueEdit')
+        return queue.finishEdit(command.id, command.token, command.text);
       if (command.kind === 'removeQueue') return queue.remove(command.id);
       if (command.kind === 'retryQueue') return queue.retry(command.id);
       if (command.kind === 'send' || command.kind === 'queue' || command.kind === 'steer') {
@@ -118,9 +123,14 @@ export function useWorkspaceHost(
           throw new Error('发送内容无效');
         validateAttachments(command.attachments);
         if (command.kind === 'queue') {
-          if (!queue.enqueue(command.taskId, command.text, command.selection, command.attachments))
-            throw new Error('待发送消息保存失败，请检查主窗口。');
-          return true;
+          const id = queue.enqueue(
+            command.taskId,
+            command.text,
+            command.selection,
+            command.attachments,
+          );
+          if (!id) throw new Error('待发送消息保存失败，请检查主窗口。');
+          return id;
         }
         if (command.kind === 'steer') {
           const turnId = app.conversations[command.taskId]?.turnId;

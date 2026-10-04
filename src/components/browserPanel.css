@@ -109,3 +109,11 @@
     animation: none;
   }
 }
+
+.browser-heading > .browser-agent-badge {
+  margin-left: auto;
+  margin-right: 8px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 500;
+}

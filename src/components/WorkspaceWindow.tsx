@@ -150,7 +150,7 @@ export function WorkspaceWindow() {
       ...current,
       drafts: { ...current.drafts, [key]: value },
     }));
-  async function submit(kind: 'send' | 'queue' | 'steer', text: string): Promise<boolean> {
+  async function submit(kind: 'send' | 'queue', text: string): Promise<boolean | string> {
     if (sendingRef.current) return false;
     sendingRef.current = true;
     setSending(true);
@@ -170,7 +170,13 @@ export function WorkspaceWindow() {
         selected.current = { projectId, taskId: id };
         setTaskId(id);
       }
-      await requestWorkspace({ kind, taskId: id, text, selection, attachments: attachments.items });
+      const result = await requestWorkspace<string | boolean>({
+        kind,
+        taskId: id,
+        text,
+        selection,
+        attachments: attachments.items,
+      });
       const sent = id;
       continuity.setSession((current) => ({
         ...current,
@@ -181,7 +187,7 @@ export function WorkspaceWindow() {
       }));
       attachments.clear(id);
       await refresh();
-      return true;
+      return kind === 'queue' && typeof result === 'string' ? result : true;
     } catch (cause) {
       setError(String(cause));
       return false;
@@ -318,6 +324,50 @@ export function WorkspaceWindow() {
             />
           )}
           <Composer
+            queueControl={
+              <QueuedMessages
+                items={snapshot?.queue ?? []}
+                busy={state.busy}
+                onBeginEdit={async (id) =>
+                  requestWorkspace<{ token: string; text: string } | false>({
+                    kind: 'beginQueueEdit',
+                    id,
+                  })
+                }
+                onFinishEdit={async (id, token, text) => {
+                  const ok = await requestWorkspace<boolean>({
+                    kind: 'finishQueueEdit',
+                    id,
+                    token,
+                    text,
+                  });
+                  await refresh();
+                  return ok;
+                }}
+                onRemove={(id) => command({ kind: 'removeQueue', id })}
+                onRetry={(id) => command({ kind: 'retryQueue', id })}
+              />
+            }
+            queueScope={`${key}:${state.turnId ?? ''}`}
+            queuedIds={(snapshot?.queue ?? [])
+              .filter((row) => row.status === 'waiting')
+              .map((row) => row.id)}
+            onPromote={async (id) => {
+              if (!taskId || !state.turnId) return false;
+              try {
+                const ok = await requestWorkspace<boolean>({
+                  kind: 'promoteQueue',
+                  id,
+                  taskId,
+                  turnId: state.turnId,
+                });
+                await refresh();
+                return ok;
+              } catch (cause) {
+                setError(String(cause));
+                return false;
+              }
+            }}
             project={project?.name}
             model={selection.model}
             models={snapshot?.models ?? []}
@@ -334,9 +384,11 @@ export function WorkspaceWindow() {
             disabled={loading || !snapshot?.ready || !!task?.imported}
             text={text}
             onChange={setText}
-            onSend={(value) => submit('send', value)}
-            onQueue={(value) => submit('queue', value)}
-            onSteer={(value) => submit('steer', value)}
+            onSend={async (value) => !!(await submit('send', value))}
+            onQueue={async (value) => {
+              const result = await submit('queue', value);
+              return typeof result === 'string' ? result : false;
+            }}
             onStop={() => taskId && command({ kind: 'stop', taskId })}
             attachments={attachments.items}
             attachmentNotice={attachments.notice}
@@ -344,12 +396,6 @@ export function WorkspaceWindow() {
             onRemoveAttachment={attachments.remove}
             onChooseProject={() => void focusMainWindow()}
             onConfigureModel={() => void focusMainWindow()}
-          />
-          <QueuedMessages
-            items={snapshot?.queue ?? []}
-            busy={state.busy}
-            onRemove={(id) => command({ kind: 'removeQueue', id })}
-            onRetry={(id) => command({ kind: 'retryQueue', id })}
           />
           {snapshot?.questions.map((request) => (
             <AgentQuestionCard

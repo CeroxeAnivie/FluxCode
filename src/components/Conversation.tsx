@@ -1,3 +1,4 @@
+import { WorkingIndicator } from './WorkingIndicator';
 import { BrandMark } from './BrandMark';
 import { ErrorNotice } from './ErrorNotice';
 import { useAppearance } from '../application/AppearanceProvider';
@@ -304,19 +305,7 @@ export function Conversation({
             {t('回到最新消息')}
           </button>
         )}
-        {state.busy && (
-          <div
-            className="working-indicator"
-            role="status"
-            aria-live="polite"
-            aria-label={t('FluxCode 正在处理')}
-          >
-            <span aria-hidden="true" />
-            <span aria-hidden="true" />
-            <span aria-hidden="true" />
-            <span className="working-text">{t('FluxCode 正在处理')}</span>
-          </div>
-        )}
+        {state.busy && <WorkingIndicator key={state.turnId ?? 'working'} />}
         {state.error && (
           <div className="inline-error" role="alert" aria-live="assertive">
             <ErrorNotice message={state.error} />

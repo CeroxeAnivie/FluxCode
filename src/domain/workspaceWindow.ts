@@ -38,5 +38,8 @@ export type WorkspaceCommand =
       selection: ModelSelection;
       attachments: Attachment[];
     }
+  | { kind: 'promoteQueue'; id: string; taskId: string; turnId: string }
+  | { kind: 'beginQueueEdit'; id: string }
+  | { kind: 'finishQueueEdit'; id: string; token: string; text: string | null }
   | { kind: 'stop'; taskId: string }
   | { kind: 'removeQueue' | 'retryQueue'; id: string };
